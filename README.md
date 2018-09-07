@@ -16,12 +16,12 @@ The examples additionally require:
 Install `pytorch>=0.4.1` as described on their [website](https://pytorch.org/),
 then install FrEIA using pip:
 ```
-pip install git+[URL]
+pip install git+https://github.com/VLL-HD/FrEIA.git
 ```
 ### Development
 Clone the git repo
 ```
-git clone [URL]
+git clone https://github.com/VLL-HD/FrEIA.git
 ```
 then install it in "Development Mode", so that changes don't require a
 reinstall
@@ -31,8 +31,8 @@ python setup.py develop
 ```
 
 ## Documentation
-For documentation consider the docstrings in the code and check out the [usage
-example](./examples/toy_8-modes/toy_8-modes.ipynb).
+Documentation can be found [here](https://vll-hd.github.io/FrEIA). Also check out the [usage
+example](./examples/toy_8-modes.ipynb).
 
 ## Cite Us
 ```
