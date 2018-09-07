@@ -292,7 +292,7 @@ class ReversibleGraphNet(nn.Module):
 
     def jacobian(self, x=None, rev=False, run_forward=True):
         '''Compute the jacobian determinant of the whole net.'''
-        jacobian = 1
+        jacobian = 0
 
         if rev:
             use_list = self.indexed_ops_rev
