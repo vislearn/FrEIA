@@ -1,0 +1,781 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>FrEIA.modules &mdash; FrEIA  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Toy Data: 8-Modes Mixture Model" href="examples/toy_8-modes.html" />
+    <link rel="prev" title="FrEIA.framework" href="FrEIA.framework.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> FrEIA
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Package Reference:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="FrEIA.framework.html">FrEIA.framework</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">FrEIA.modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-FrEIA.modules.coeff_functs">Coefficient functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-FrEIA.modules.coupling_layers">Coupling layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-FrEIA.modules.fixed_transforms">Fixed transforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-FrEIA.modules.graph_topology">Graph topology</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-FrEIA.modules.reshapes">Reshapes</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Examples:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="examples/toy_8-modes.html">Toy Data: 8-Modes Mixture Model</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FrEIA</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>FrEIA.modules</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/FrEIA.modules.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast,
+.nboutput.nblast {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast + .nbinput {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+</style>
+<div class="section" id="module-FrEIA.modules">
+<span id="freia-modules"></span><h1>FrEIA.modules<a class="headerlink" href="#module-FrEIA.modules" title="Permalink to this headline">¶</a></h1>
+<p>Subclasses of torch.nn.Module, that are reversible and can be used in the
+nodes of the ReversibleGraphNet class. The only additional things that are
+needed compared to the base class is an &#64;staticmethod otuput_dims, and the
+‘rev’-argument of the forward-method.</p>
+<div class="section" id="module-FrEIA.modules.coeff_functs">
+<span id="coefficient-functions"></span><h2>Coefficient functions<a class="headerlink" href="#module-FrEIA.modules.coeff_functs" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="FrEIA.modules.coeff_functs.F_conv">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.coeff_functs.</code><code class="descname">F_conv</code><span class="sig-paren">(</span><em>in_channels</em>, <em>channels</em>, <em>channels_hidden=None</em>, <em>stride=None</em>, <em>kernel_size=3</em>, <em>leaky_slope=0.1</em>, <em>batch_norm=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coeff_functs.F_conv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>ResNet transformation, not itself reversible, just used below</p>
+<dl class="method">
+<dt id="FrEIA.modules.coeff_functs.F_conv.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coeff_functs.F_conv.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="FrEIA.modules.coeff_functs.F_fully_connected">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.coeff_functs.</code><code class="descname">F_fully_connected</code><span class="sig-paren">(</span><em>size_in</em>, <em>size</em>, <em>internal_size=None</em>, <em>dropout=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coeff_functs.F_fully_connected" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>Fully connected tranformation, not reversible, but used below.</p>
+<dl class="method">
+<dt id="FrEIA.modules.coeff_functs.F_fully_connected.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coeff_functs.F_fully_connected.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-FrEIA.modules.coupling_layers">
+<span id="coupling-layers"></span><h2>Coupling layers<a class="headerlink" href="#module-FrEIA.modules.coupling_layers" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="FrEIA.modules.coupling_layers.glow_coupling_layer">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.coupling_layers.</code><code class="descname">glow_coupling_layer</code><span class="sig-paren">(</span><em>dims_in</em>, <em>F_class=&lt;class 'FrEIA.modules.coeff_functs.F_fully_connected'&gt;</em>, <em>F_args={}</em>, <em>clamp=5.0</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.glow_coupling_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<dl class="method">
+<dt id="FrEIA.modules.coupling_layers.glow_coupling_layer.e">
+<code class="descname">e</code><span class="sig-paren">(</span><em>s</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.glow_coupling_layer.e" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.coupling_layers.glow_coupling_layer.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.glow_coupling_layer.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.coupling_layers.glow_coupling_layer.jacobian">
+<code class="descname">jacobian</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.glow_coupling_layer.jacobian" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.coupling_layers.glow_coupling_layer.log_e">
+<code class="descname">log_e</code><span class="sig-paren">(</span><em>s</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.glow_coupling_layer.log_e" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.coupling_layers.glow_coupling_layer.output_dims">
+<code class="descname">output_dims</code><span class="sig-paren">(</span><em>input_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.glow_coupling_layer.output_dims" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="FrEIA.modules.coupling_layers.rev_layer">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.coupling_layers.</code><code class="descname">rev_layer</code><span class="sig-paren">(</span><em>dims_in</em>, <em>F_class=&lt;class 'FrEIA.modules.coeff_functs.F_conv'&gt;</em>, <em>F_args={}</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.rev_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>General reversible layer modeled after the lifting scheme. Uses some
+non-reversible transformation F, but splits the channels up to make it
+revesible (see lifting scheme). F itself does not have to be revesible. See
+F_* classes above for examples.</p>
+<dl class="method">
+<dt id="FrEIA.modules.coupling_layers.rev_layer.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.rev_layer.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.coupling_layers.rev_layer.jacobian">
+<code class="descname">jacobian</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.rev_layer.jacobian" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.coupling_layers.rev_layer.output_dims">
+<code class="descname">output_dims</code><span class="sig-paren">(</span><em>input_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.rev_layer.output_dims" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="FrEIA.modules.coupling_layers.rev_multiplicative_layer">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.coupling_layers.</code><code class="descname">rev_multiplicative_layer</code><span class="sig-paren">(</span><em>dims_in</em>, <em>F_class=&lt;class 'FrEIA.modules.coeff_functs.F_fully_connected'&gt;</em>, <em>F_args={}</em>, <em>clamp=5.0</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.rev_multiplicative_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>The RevNet block is not a general function approximator. The reversible
+layer with a multiplicative term presented in the real-NVP paper is much
+more general. This class uses some non-reversible transformation F, but
+splits the channels up to make it revesible (see lifting scheme). F itself
+does not have to be revesible. See F_* classes above for examples.</p>
+<dl class="method">
+<dt id="FrEIA.modules.coupling_layers.rev_multiplicative_layer.e">
+<code class="descname">e</code><span class="sig-paren">(</span><em>s</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.rev_multiplicative_layer.e" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.coupling_layers.rev_multiplicative_layer.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.rev_multiplicative_layer.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.coupling_layers.rev_multiplicative_layer.jacobian">
+<code class="descname">jacobian</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.rev_multiplicative_layer.jacobian" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.coupling_layers.rev_multiplicative_layer.log_e">
+<code class="descname">log_e</code><span class="sig-paren">(</span><em>s</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.rev_multiplicative_layer.log_e" title="Permalink to this definition">¶</a></dt>
+<dd><p>log of the nonlinear function e</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.coupling_layers.rev_multiplicative_layer.output_dims">
+<code class="descname">output_dims</code><span class="sig-paren">(</span><em>input_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.coupling_layers.rev_multiplicative_layer.output_dims" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-FrEIA.modules.fixed_transforms">
+<span id="fixed-transforms"></span><h2>Fixed transforms<a class="headerlink" href="#module-FrEIA.modules.fixed_transforms" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="FrEIA.modules.fixed_transforms.linear_transform">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.fixed_transforms.</code><code class="descname">linear_transform</code><span class="sig-paren">(</span><em>dims_in</em>, <em>M</em>, <em>b</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.fixed_transforms.linear_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>Fixed transformation according to y = Mx + b, with invertible
+matrix M.</p>
+<dl class="method">
+<dt id="FrEIA.modules.fixed_transforms.linear_transform.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.fixed_transforms.linear_transform.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.fixed_transforms.linear_transform.jacobian">
+<code class="descname">jacobian</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.fixed_transforms.linear_transform.jacobian" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.fixed_transforms.linear_transform.output_dims">
+<code class="descname">output_dims</code><span class="sig-paren">(</span><em>input_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.fixed_transforms.linear_transform.output_dims" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="FrEIA.modules.fixed_transforms.permute_layer">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.fixed_transforms.</code><code class="descname">permute_layer</code><span class="sig-paren">(</span><em>dims_in</em>, <em>seed</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.fixed_transforms.permute_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>permutes input vector in a random but fixed way</p>
+<dl class="method">
+<dt id="FrEIA.modules.fixed_transforms.permute_layer.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.fixed_transforms.permute_layer.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.fixed_transforms.permute_layer.jacobian">
+<code class="descname">jacobian</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.fixed_transforms.permute_layer.jacobian" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.fixed_transforms.permute_layer.output_dims">
+<code class="descname">output_dims</code><span class="sig-paren">(</span><em>input_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.fixed_transforms.permute_layer.output_dims" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-FrEIA.modules.graph_topology">
+<span id="graph-topology"></span><h2>Graph topology<a class="headerlink" href="#module-FrEIA.modules.graph_topology" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="FrEIA.modules.graph_topology.cat_layer">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.graph_topology.</code><code class="descname">cat_layer</code><span class="sig-paren">(</span><em>dims_in</em>, <em>dim</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.cat_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>Merge multiple tensors along given dimension.</p>
+<dl class="method">
+<dt id="FrEIA.modules.graph_topology.cat_layer.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.cat_layer.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.graph_topology.cat_layer.jacobian">
+<code class="descname">jacobian</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.cat_layer.jacobian" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.graph_topology.cat_layer.output_dims">
+<code class="descname">output_dims</code><span class="sig-paren">(</span><em>input_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.cat_layer.output_dims" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="FrEIA.modules.graph_topology.channel_merge_layer">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.graph_topology.</code><code class="descname">channel_merge_layer</code><span class="sig-paren">(</span><em>dims_in</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.channel_merge_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>Merges along channels from two separate inputs, to one output
+(for skip connections etc.)</p>
+<dl class="method">
+<dt id="FrEIA.modules.graph_topology.channel_merge_layer.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.channel_merge_layer.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.graph_topology.channel_merge_layer.jacobian">
+<code class="descname">jacobian</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.channel_merge_layer.jacobian" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.graph_topology.channel_merge_layer.output_dims">
+<code class="descname">output_dims</code><span class="sig-paren">(</span><em>input_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.channel_merge_layer.output_dims" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="FrEIA.modules.graph_topology.channel_split_layer">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.graph_topology.</code><code class="descname">channel_split_layer</code><span class="sig-paren">(</span><em>dims_in</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.channel_split_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>Splits along channels to produce two separate outputs (for skip connections
+and such).</p>
+<dl class="method">
+<dt id="FrEIA.modules.graph_topology.channel_split_layer.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.channel_split_layer.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.graph_topology.channel_split_layer.jacobian">
+<code class="descname">jacobian</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.channel_split_layer.jacobian" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.graph_topology.channel_split_layer.output_dims">
+<code class="descname">output_dims</code><span class="sig-paren">(</span><em>input_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.channel_split_layer.output_dims" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="FrEIA.modules.graph_topology.split_layer">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.graph_topology.</code><code class="descname">split_layer</code><span class="sig-paren">(</span><em>dims_in</em>, <em>split_size_or_sections</em>, <em>dim</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.split_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>Splits along given dimension to produce list of separate outputs with
+given size.</p>
+<dl class="method">
+<dt id="FrEIA.modules.graph_topology.split_layer.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.split_layer.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.graph_topology.split_layer.jacobian">
+<code class="descname">jacobian</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.split_layer.jacobian" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.graph_topology.split_layer.output_dims">
+<code class="descname">output_dims</code><span class="sig-paren">(</span><em>input_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.graph_topology.split_layer.output_dims" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-FrEIA.modules.reshapes">
+<span id="reshapes"></span><h2>Reshapes<a class="headerlink" href="#module-FrEIA.modules.reshapes" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="FrEIA.modules.reshapes.flattening_layer">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.reshapes.</code><code class="descname">flattening_layer</code><span class="sig-paren">(</span><em>dims_in</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.flattening_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>Flattens N-D tensors into 1-D tensors.</p>
+<dl class="method">
+<dt id="FrEIA.modules.reshapes.flattening_layer.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.flattening_layer.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.reshapes.flattening_layer.jacobian">
+<code class="descname">jacobian</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.flattening_layer.jacobian" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.reshapes.flattening_layer.output_dims">
+<code class="descname">output_dims</code><span class="sig-paren">(</span><em>input_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.flattening_layer.output_dims" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="FrEIA.modules.reshapes.haar_multiplex_layer">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.reshapes.</code><code class="descname">haar_multiplex_layer</code><span class="sig-paren">(</span><em>dims_in</em>, <em>order_by_wavelet=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.haar_multiplex_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>Uses Haar wavelets to split each channel into 4 channels, with half the
+width and height.</p>
+<dl class="method">
+<dt id="FrEIA.modules.reshapes.haar_multiplex_layer.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.haar_multiplex_layer.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.reshapes.haar_multiplex_layer.jacobian">
+<code class="descname">jacobian</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.haar_multiplex_layer.jacobian" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.reshapes.haar_multiplex_layer.output_dims">
+<code class="descname">output_dims</code><span class="sig-paren">(</span><em>input_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.haar_multiplex_layer.output_dims" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="FrEIA.modules.reshapes.haar_restore_layer">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.reshapes.</code><code class="descname">haar_restore_layer</code><span class="sig-paren">(</span><em>dims_in</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.haar_restore_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>Uses Haar wavelets to merge 4 channels into one, with double the
+width and height.</p>
+<dl class="method">
+<dt id="FrEIA.modules.reshapes.haar_restore_layer.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.haar_restore_layer.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.reshapes.haar_restore_layer.jacobian">
+<code class="descname">jacobian</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.haar_restore_layer.jacobian" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.reshapes.haar_restore_layer.output_dims">
+<code class="descname">output_dims</code><span class="sig-paren">(</span><em>input_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.haar_restore_layer.output_dims" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="FrEIA.modules.reshapes.i_revnet_downsampling">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.reshapes.</code><code class="descname">i_revnet_downsampling</code><span class="sig-paren">(</span><em>dims_in</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.i_revnet_downsampling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>The invertible spatial downsampling used in i-RevNet, adapted from
+<a class="reference external" href="https://github.com/jhjacobsen/pytorch-i-revnet/blob/master/models/model_utils.py">https://github.com/jhjacobsen/pytorch-i-revnet/blob/master/models/model_utils.py</a></p>
+<dl class="method">
+<dt id="FrEIA.modules.reshapes.i_revnet_downsampling.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.i_revnet_downsampling.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.reshapes.i_revnet_downsampling.jacobian">
+<code class="descname">jacobian</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.i_revnet_downsampling.jacobian" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.reshapes.i_revnet_downsampling.output_dims">
+<code class="descname">output_dims</code><span class="sig-paren">(</span><em>input_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.i_revnet_downsampling.output_dims" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="FrEIA.modules.reshapes.i_revnet_upsampling">
+<em class="property">class </em><code class="descclassname">FrEIA.modules.reshapes.</code><code class="descname">i_revnet_upsampling</code><span class="sig-paren">(</span><em>dims_in</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.i_revnet_upsampling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#FrEIA.modules.reshapes.i_revnet_downsampling" title="FrEIA.modules.reshapes.i_revnet_downsampling"><code class="xref py py-class docutils literal notranslate"><span class="pre">FrEIA.modules.reshapes.i_revnet_downsampling</span></code></a></p>
+<p>Just the exact opposite of the i_revnet_downsampling layer.</p>
+<dl class="method">
+<dt id="FrEIA.modules.reshapes.i_revnet_upsampling.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.i_revnet_upsampling.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.reshapes.i_revnet_upsampling.jacobian">
+<code class="descname">jacobian</code><span class="sig-paren">(</span><em>x</em>, <em>rev=False</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.i_revnet_upsampling.jacobian" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="FrEIA.modules.reshapes.i_revnet_upsampling.output_dims">
+<code class="descname">output_dims</code><span class="sig-paren">(</span><em>input_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#FrEIA.modules.reshapes.i_revnet_upsampling.output_dims" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="examples/toy_8-modes.html" class="btn btn-neutral float-right" title="Toy Data: 8-Modes Mixture Model" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="FrEIA.framework.html" class="btn btn-neutral" title="FrEIA.framework" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Lynton Ardizzone.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
