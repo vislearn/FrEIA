@@ -93,7 +93,7 @@ class F_fully_connected(nn.Module):
             out = self.bn1(out)
         out = self.nl1(self.d1(out))
 
-        out = self.fc2(x)
+        out = self.fc2(out)
         if self.batch_norm:
             out = self.bn2(out)
         out = self.nl2(self.d2(out))
