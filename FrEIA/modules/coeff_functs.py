@@ -1,5 +1,6 @@
 import warnings
 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -59,8 +60,7 @@ class F_conv(nn.Module):
 class F_fully_connected(nn.Module):
     '''Fully connected tranformation, not reversible, but used below.'''
 
-    def __init__(self, size_in, size, internal_size=None, dropout=0.0,
-                 batch_norm=False):
+    def __init__(self, size_in, size, internal_size=None, dropout=0.0):
         super(F_fully_connected, self).__init__()
         if not internal_size:
             internal_size = 2*size
@@ -78,30 +78,26 @@ class F_fully_connected(nn.Module):
         self.nl2 = nn.ReLU()
         self.nl2b = nn.ReLU()
 
-        if batch_norm:
-            self.bn1 = nn.BatchNorm1d(internal_size)
-            self.bn1.weight.data.fill_(1)
-            self.bn2 = nn.BatchNorm1d(internal_size)
-            self.bn2.weight.data.fill_(1)
-            self.bn2b = nn.BatchNorm1d(internal_size)
-            self.bn2b.weight.data.fill_(1)
-        self.batch_norm = batch_norm
-
     def forward(self, x):
-        out = self.fc1(x)
-        if self.batch_norm:
-            out = self.bn1(out)
-        out = self.nl1(self.d1(out))
-
-        out = self.fc2(out)
-        if self.batch_norm:
-            out = self.bn2(out)
-        out = self.nl2(self.d2(out))
-
-        out = self.fc2b(out)
-        if self.batch_norm:
-            out = self.bn2b(out)
-        out = self.nl2b(self.d2b(out))
-
+        out = self.nl1(self.d1(self.fc1(x)))
+        out = self.nl2(self.d2(self.fc2(out)))
+        out = self.nl2b(self.d2b(self.fc2b(out)))
         out = self.fc3(out)
         return out
+
+class F_fully_convolutional(nn.Module):
+
+    def __init__(self, in_channels, out_channels, internal_size=256, kernel_size=3, leaky_slope=0.02):
+        super().__init__()
+
+        pad = kernel_size // 2
+
+        self.leaky_slope = leaky_slope
+        self.conv1 = nn.Conv2d(in_channels, internal_size,                  kernel_size=kernel_size, padding=pad)
+        self.conv2 = nn.Conv2d(in_channels + internal_size, internal_size,  kernel_size=kernel_size, padding=pad)
+        self.conv3 = nn.Conv2d(in_channels + 2*internal_size, out_channels, kernel_size=1, padding=0)
+
+    def forward(self, x):
+        x1 = F.leaky_relu(self.conv1(x), self.leaky_slope)
+        x2 = F.leaky_relu(self.conv2(torch.cat([x, x1], 1)), self.leaky_slope)
+        return self.conv3(torch.cat([x, x1, x2], 1))

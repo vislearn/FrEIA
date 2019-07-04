@@ -4,11 +4,11 @@ import torch
 import torch.nn as nn
 
 
-class channel_split_layer(nn.Module):
+class SplitChannel(nn.Module):
     '''Splits along channels to produce two separate outputs (for skip connections
     and such).'''
     def __init__(self, dims_in):
-        super(channel_split_layer, self).__init__()
+        super().__init__()
         assert len(dims_in) == 1, "Use channel_merge_layer instead"
         self.channels = dims_in[0][0]
 
@@ -28,11 +28,11 @@ class channel_split_layer(nn.Module):
                 [input_dims[0][0] - input_dims[0][0]//2, *input_dims[0][1:]]]
 
 
-class channel_merge_layer(nn.Module):
+class ConcatChannel(nn.Module):
     '''Merges along channels from two separate inputs, to one output
     (for skip connections etc.)'''
     def __init__(self, dims_in):
-        super(channel_merge_layer, self).__init__()
+        super().__init__()
         assert len(dims_in) == 2, "Can only merge 2 inputs"
         self.ch1 = dims_in[0][0]
         self.ch2 = dims_in[1][0]
@@ -53,11 +53,11 @@ class channel_merge_layer(nn.Module):
         return [[input_dims[0][0] + input_dims[1][0], *input_dims[0][1:]]]
 
 
-class split_layer(nn.Module):
+class Split1D(nn.Module):
     '''Splits along given dimension to produce list of separate outputs with
     given size.'''
     def __init__(self, dims_in, split_size_or_sections, dim):
-        super(split_layer, self).__init__()
+        super().__init__()
         assert len(dims_in) == 1, "Split layer takes exactly one input tensor"
         assert len(dims_in[0]) >= dim, "Split dimension index out of range"
         if isinstance(split_size_or_sections, int):
@@ -101,10 +101,10 @@ class split_layer(nn.Module):
                 for split_size in self.split_size_or_sections]
 
 
-class cat_layer(nn.Module):
+class Concat1d(nn.Module):
     '''Merge multiple tensors along given dimension.'''
     def __init__(self, dims_in, dim):
-        super(cat_layer, self).__init__()
+        super().__init__()
         assert len(dims_in) > 1, ("Concatenation only makes sense for "
                                   "multiple inputs")
         assert len(dims_in[0]) >= dim, "Merge dimension index out of range"
@@ -140,3 +140,21 @@ class cat_layer(nn.Module):
         output_dims[self.dim] = sum(input_dim[self.dim]
                                     for input_dim in input_dims)
         return [output_dims]
+
+import warnings
+
+def _deprecated_by(orig_class):
+    class deprecated_class(orig_class):
+        def __init__(self, *args, **kwargs):
+
+            warnings.warn(F"{self.__class__.__name__} is deprecated and will be removed in the public release. "
+                          F"Use {orig_class.__name__} instead.",
+                          DeprecationWarning)
+            super().__init__(*args, **kwargs)
+
+    return deprecated_class
+
+channel_split_layer = _deprecated_by(SplitChannel)
+channel_merge_layer = _deprecated_by(ConcatChannel)
+split_layer = _deprecated_by(Split1D)
+cat_layer = _deprecated_by(Concat1d)

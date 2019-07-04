@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="FrEIA",
-    version="0.1",
+    version="0.2",
     description="Framework for Easily Invertible Architectures",
     url="",
     author="",

@@ -1,13 +1,14 @@
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
-class permute_layer(nn.Module):
+class PermuteRandom(nn.Module):
     '''permutes input vector in a random but fixed way'''
 
     def __init__(self, dims_in, seed):
-        super(permute_layer, self).__init__()
+        super().__init__()
 
         self.in_channels = dims_in[0][0]
 
@@ -37,7 +38,7 @@ class permute_layer(nn.Module):
         return input_dims
 
 
-class linear_transform(nn.Module):
+class FixedLinearTransform(nn.Module):
     '''Fixed transformation according to y = Mx + b, with invertible
     matrix M.'''
 
@@ -58,11 +59,54 @@ class linear_transform(nn.Module):
             return [(x[0]-self.b).mm(self.M_inv)]
 
     def jacobian(self, x, rev=False):
-        # TODO use batch size
         if rev:
-            return -self.logDetM
+            return -self.logDetM.expand(x[0].shape[0])
         else:
-            return self.logDetM
+            return self.logDetM.expand(x[0].shape[0])
 
     def output_dims(self, input_dims):
         return input_dims
+
+class Fixed1x1Conv(nn.Module):
+    '''Fixed 1x1 conv transformation with matrix M.'''
+
+    def __init__(self, dims_in, M):
+        super().__init__()
+
+        self.M = nn.Parameter(M.t().view(*M.shape, 1, 1), requires_grad=False)
+        self.M_inv = nn.Parameter(M.t().inverse().view(*M.shape, 1, 1), requires_grad=False)
+
+        self.logDetM = nn.Parameter(torch.log(torch.det(M).abs()).sum(),
+                                    requires_grad=False)
+
+    def forward(self, x, rev=False):
+        if not rev:
+            return [F.conv2d(x[0], self.M)]
+        else:
+            return [F.conv2d(x[0], self.M_inv)]
+
+    def jacobian(self, x, rev=False):
+        if rev:
+            return -self.logDetM.expand(x[0].shape[0])
+        else:
+            return self.logDetM.expand(x[0].shape[0])
+
+    def output_dims(self, input_dims):
+        return input_dims
+
+import warnings
+
+def _deprecated_by(orig_class):
+    class deprecated_class(orig_class):
+        def __init__(self, *args, **kwargs):
+
+            warnings.warn(F"{self.__class__.__name__} is deprecated and will be removed in the public release. "
+                          F"Use {orig_class.__name__} instead.",
+                          DeprecationWarning)
+            super().__init__(*args, **kwargs)
+
+    return deprecated_class
+
+permute_layer = _deprecated_by(PermuteRandom)
+linear_transform = _deprecated_by(FixedLinearTransform)
+conv_1x1 = _deprecated_by(Fixed1x1Conv)
