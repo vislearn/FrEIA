@@ -18,17 +18,19 @@ Papers
 This repository contains code for the following papers. If you use the FrEIA for your research, please cite the appropriate one.
 
 **"Guided Image Generation with Conditional Invertible Neural Networks" (2019)** 
+
 Supplement found here: https://drive.google.com/file/d/1_OoiIGhLeVJGaZFeBt0OWOq8ZCtiI7li
 
-* `experiments/mnist_minimal_example` contains code to produce class-conditional MNIST samples in <150 lines total
-* `experiments/colorization_minimal_example` contains code to colorize LSUN bedrooms in <200 lines total
-* `experiments/colorization_cINN` contains the full research code used to produce all figure in the paper
+* ``experiments/mnist_minimal_example`` contains code to produce class-conditional MNIST samples in <150 lines total
+* ``experiments/colorization_minimal_example`` contains code to colorize LSUN bedrooms in <200 lines total
+* ``experiments/colorization_cINN`` contains the full research code used to produce all figure in the paper
 
 **"Analyzing inverse problems with invertible neural networks." (2018)** 
+
 https://arxiv.org/abs/1808.04730
 
-* `experiments/toy_8-modes` contains a jupyter notebook for the gaussian mixture example
-* `experiments/inverse_problems_science` contains the research code used for the science problems
+* ``experiments/toy_8-modes`` contains a jupyter notebook for the gaussian mixture example
+* ``experiments/inverse_problems_science`` contains the research code used for the science problems
   (without the datasets, as these are published separately)
 
 
