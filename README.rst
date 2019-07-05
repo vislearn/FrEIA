@@ -19,6 +19,8 @@ This repository contains code for the following papers. If you use the FrEIA for
 
 **"Guided Image Generation with Conditional Invertible Neural Networks" (2019)** 
 
+https://arxiv.org/abs/1907.02392
+
 Supplement found here: https://drive.google.com/file/d/1_OoiIGhLeVJGaZFeBt0OWOq8ZCtiI7li
 
 * ``experiments/mnist_minimal_example`` contains code to produce class-conditional MNIST samples in <150 lines total
@@ -91,7 +93,9 @@ Documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Besides the general tutorial below, the complete documentation is found in
-the ``./docs/`` directory, or at https://vll-hd.github.io/FrEIA
+the ``./docs/`` directory, or at 
+
+https://vll-hd.github.io/FrEIA
 
 Tutorial
 ----------------
@@ -252,9 +256,7 @@ The arguments of the ``Node`` constructor are the following:
 * ``module_type``: This argument gives the class of operation to be performed by this node,
   for example ``GLOWCouplingBlock`` for a coupling block following the GLOW-design.
   Many implemented classes can be found in the documentation under
-  ``./docs/FrEIA/modules/index.html``.
-  Details on how to modify them or produce your own operator class are provided
-  in the final section of the tutorial.
+  https://vll-hd.github.io/FrEIA/modules/index.html
 * ``module_args``: This argument is a dictionary. It provides arguments for the
   ``module_type``-constructor. For instance, a random invertible permutation
   (``module_type=PermuteLayer``) only has one argument ``seed``, so we could use
