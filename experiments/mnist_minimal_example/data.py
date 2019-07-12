@@ -8,7 +8,7 @@ data_mean = 0.128
 data_std = 0.305
 
 # amplitude for the noise augmentation
-augm_sigma = 1.25e-2
+augm_sigma = 0.08
 data_dir = 'mnist_data'
 
 def unnormalize(x):

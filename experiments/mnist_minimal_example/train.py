@@ -2,17 +2,18 @@ from time import time
 
 from tqdm import tqdm
 import torch
+import torch.nn
 import torch.optim
 import numpy as np
 
 import model
 import data
 
-cinn = model.MNIST_cINN(1e-3)
+cinn = model.MNIST_cINN(5e-4)
 cinn.cuda()
-scheduler = torch.optim.lr_scheduler.MultiStepLR(cinn.optimizer, milestones=[40, 80], gamma=0.1)
+scheduler = torch.optim.lr_scheduler.MultiStepLR(cinn.optimizer, milestones=[20, 40], gamma=0.1)
 
-N_epochs = 120
+N_epochs = 60
 t_start = time()
 nll_mean = []
 
@@ -24,6 +25,7 @@ for epoch in range(N_epochs):
 
         nll = torch.mean(z**2) / 2 - torch.mean(log_j) / model.ndim_total
         nll.backward()
+        torch.nn.utils.clip_grad_norm_(cinn.trainable_parameters, 10.)
         nll_mean.append(nll.item())
         cinn.optimizer.step()
         cinn.optimizer.zero_grad()
