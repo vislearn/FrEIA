@@ -25,7 +25,8 @@ Supplement found here: https://drive.google.com/file/d/1_OoiIGhLeVJGaZFeBt0OWOq8
 
 * ``experiments/mnist_minimal_example`` contains code to produce class-conditional MNIST samples in <150 lines total
 * ``experiments/colorization_minimal_example`` contains code to colorize LSUN bedrooms in <200 lines total
-* ``experiments/colorization_cINN`` contains the full research code used to produce all figure in the paper
+* ``experiments/colorization_cINN`` contains the full research code used to produce all colorization figures in the paper
+* ``experiments/mnist_cINN`` contains the full research code used to produce all mnist figures in the paper
 
 **"Analyzing inverse problems with invertible neural networks." (2018)** 
 
