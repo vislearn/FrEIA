@@ -156,7 +156,6 @@ try:
         if (i_epoch % c.checkpoint_save_interval) == 0:
             model.save(c.filename + '_checkpoint_%.4i' % (i_epoch * (1-c.checkpoint_save_overwrite)))
 
-    viz.visualizer.viz.text('<h1 style="color:green">Done</h1>', win=running_box)
     model.save(c.filename)
 
 except:
