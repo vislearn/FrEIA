@@ -5,7 +5,6 @@ import numpy as np
 
 from FrEIA.framework import *
 from FrEIA.modules import *
-from cbn_layer import *
 from subnet_coupling import *
 import data
 import config as c
