@@ -23,7 +23,7 @@ for epoch in range(N_epochs):
         x, l = x.cuda(), l.cuda()
         z, log_j = cinn(x, l)
 
-        nll = torch.mean(z**2) / 2 - torch.mean(log_j) / model.ndim_total
+        nll = (torch.mean(z**2) / 2 - torch.mean(log_j)) / model.ndim_total
         nll.backward()
         torch.nn.utils.clip_grad_norm_(cinn.trainable_parameters, 10.)
         nll_mean.append(nll.item())
