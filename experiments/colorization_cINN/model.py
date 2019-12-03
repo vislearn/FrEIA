@@ -1,3 +1,5 @@
+import warnings
+
 import torch.optim
 import torch.nn as nn
 import torch.nn.functional as F
@@ -158,9 +160,14 @@ if c.load_inn_only:
 
 import feature_net
 efros_net = feature_net.KitModel(None)
-pretrained_dict = torch.load('./features_pretrained.pt')
-pretrained_dict = {k:v for k,v in pretrained_dict.items() if 'num_batches_tracked' not in k}
-efros_net.load_state_dict(pretrained_dict)
+
+try:
+    pretrained_dict = torch.load('./features_pretrained.pt')
+    pretrained_dict = {k:v for k,v in pretrained_dict.items() if 'num_batches_tracked' not in k}
+    efros_net.load_state_dict(pretrained_dict)
+except FileNotFoundError:
+    warnings.warn("No loading pretrained weights for conditioning network (./features_pretrained.pt)")
+
 efros_net.cuda()
 efros_net.class8_ab.state_dict()['weight'].copy_(torch.from_numpy(np.load('./pts_in_hull.npy').T).view(2, 313, 1, 1))
 
