@@ -237,7 +237,7 @@ class Reshape(nn.Module):
             return [x[0].reshape(x[0].shape[0], *self.size)]
 
     def jacobian(self, x, rev=False):
-        return 1
+        return 0.
 
     def output_dims(self, dim):
         return [self.target_dim]
