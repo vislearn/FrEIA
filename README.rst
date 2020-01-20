@@ -17,6 +17,12 @@ Papers
 
 This repository contains code for the following papers. If you use the FrEIA for your research, please cite the appropriate one.
 
+**"Exact Information Bottleneck with Invertible Neural Networks: Getting the Best of Discriminative and Generative Modeling" (2020)** 
+
+https://arxiv.org/abs/2001.06448
+
+The code will be added within the next days.
+
 **"Guided Image Generation with Conditional Invertible Neural Networks" (2019)** 
 
 https://arxiv.org/abs/1907.02392
