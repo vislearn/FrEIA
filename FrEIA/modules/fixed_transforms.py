@@ -49,7 +49,7 @@ class FixedLinearTransform(nn.Module):
         self.M_inv = nn.Parameter(M.t().inverse(), requires_grad=False)
         self.b = nn.Parameter(b, requires_grad=False)
 
-        self.logDetM = nn.Parameter(torch.log(torch.potrf(M).diag()).sum(),
+        self.logDetM = nn.Parameter(torch.log(torch.cholesky(M).diag()).sum(),
                                     requires_grad=False)
 
     def forward(self, x, rev=False):
