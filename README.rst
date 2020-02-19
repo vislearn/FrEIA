@@ -19,28 +19,19 @@ This repository contains code for the following papers. If you use the FrEIA for
 
 **"Exact Information Bottleneck with Invertible Neural Networks: Getting the Best of Discriminative and Generative Modeling" (2020)** 
 
-https://arxiv.org/abs/2001.06448
-
-The code will be added within the next days.
+* Paper: https://arxiv.org/abs/1907.02392
+* Code: https://github.com/VLL-HD/exact_information_bottleneck
 
 **"Guided Image Generation with Conditional Invertible Neural Networks" (2019)** 
 
-https://arxiv.org/abs/1907.02392
-
-Supplement found here: https://drive.google.com/file/d/1_OoiIGhLeVJGaZFeBt0OWOq8ZCtiI7li
-
-* ``experiments/mnist_minimal_example`` contains code to produce class-conditional MNIST samples in <150 lines total
-* ``experiments/colorization_minimal_example`` contains code to colorize LSUN bedrooms in <200 lines total
-* ``experiments/colorization_cINN`` contains the full research code used to produce all colorization figures in the paper
-* ``experiments/mnist_cINN`` contains the full research code used to produce all mnist figures in the paper
+* Paper: https://arxiv.org/abs/1907.02392
+* Supplement: https://drive.google.com/file/d/1_OoiIGhLeVJGaZFeBt0OWOq8ZCtiI7li
+* Code: https://github.com/VLL-HD/conditional_invertible_neural_networks
 
 **"Analyzing inverse problems with invertible neural networks." (2018)** 
 
-https://arxiv.org/abs/1808.04730
-
-* ``experiments/toy_8-modes`` contains a jupyter notebook for the gaussian mixture example
-* ``experiments/inverse_problems_science`` contains the research code used for the science problems
-  (without the datasets, as these are published separately)
+* Paper: https://arxiv.org/abs/1808.04730
+* Code: https://github.com/VLL-HD/analyzing_inverse_problems
 
 
 Installation
@@ -49,31 +40,15 @@ Installation
 Dependencies
 ^^^^^^^^^^^^^^^^
 
-Except for pytorch, any fairly recent version will probably work, 
-these are just the confirmed ones:
-
 +---------------------------+-------------------------------+
 | **Package**               | **Version**                   |
 +---------------------------+-------------------------------+
-| Pytorch                   | 1.0.X                         |
+| Pythton                   | >= 3.7                        |
++---------------------------+-------------------------------+
+| Pytorch                   | >= 1.0.0                      |
 +---------------------------+-------------------------------+
 | Numpy                     | >= 1.15.0                     |
 +---------------------------+-------------------------------+
-| *Optionally for the experiments:*                         |
-+---------------------------+-------------------------------+
-| Matplotlib                | 2.2.3                         |
-+---------------------------+-------------------------------+
-| Visdom                    | 0.1.8.5                       |
-+---------------------------+-------------------------------+
-| Torchvision               | 0.2.1                         |
-+---------------------------+-------------------------------+
-| scikit-learn              | 0.20.3                        |
-+---------------------------+-------------------------------+
-| scikit-image              | 0.14.2                        |
-+---------------------------+-------------------------------+
-| Pillow                    | 6.0.0                         |
-+---------------------------+-------------------------------+
-
 
 Downloading + Installing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
