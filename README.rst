@@ -15,7 +15,7 @@ This is the **Fr**\ amework for **E**\ asily **I**\ nvertible **A**\ rchitecture
 Papers
 --------------
 
-This repository contains code for the following papers. If you use the FrEIA for your research, please cite the appropriate one.
+Our following papers use FrEIA, with links to code given below.
 
 **"Exact Information Bottleneck with Invertible Neural Networks: Getting the Best of Discriminative and Generative Modeling" (2020)** 
 
