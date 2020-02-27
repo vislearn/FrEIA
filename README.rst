@@ -19,7 +19,7 @@ Our following papers use FrEIA, with links to code given below.
 
 **"Exact Information Bottleneck with Invertible Neural Networks: Getting the Best of Discriminative and Generative Modeling" (2020)** 
 
-* Paper: https://arxiv.org/abs/1907.02392
+* Paper: https://arxiv.org/abs/2001.06448
 * Code: https://github.com/VLL-HD/exact_information_bottleneck
 
 **"Guided Image Generation with Conditional Invertible Neural Networks" (2019)** 
