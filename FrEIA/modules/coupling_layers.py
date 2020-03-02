@@ -195,13 +195,13 @@ class GLOWCouplingBlock(nn.Module):
             r2 = self.s2(torch.cat([y2, *c], 1) if self.conditional else y2)
             s2, t2 = r2[:, :self.split_len1], r2[:, self.split_len1:]
             y1 = (x1 - t2) / self.e(s2)
-            self.last_jac = (- torch.sum(self.log_e(s1), dim=tuple(range(1, self.ndims+1)))
-                             - torch.sum(self.log_e(s2), dim=tuple(range(1, self.ndims+1))))
+            self.last_jac = (  torch.sum(self.log_e(s1), dim=tuple(range(1, self.ndims+1)))
+                             + torch.sum(self.log_e(s2), dim=tuple(range(1, self.ndims+1))))
 
         return [torch.cat((y1, y2), 1)]
 
     def jacobian(self, x, c=[], rev=False):
-        return self.last_jac
+        return self.last_jac * (-1 if rev else 1)
 
     def output_dims(self, input_dims):
         return input_dims
