@@ -57,6 +57,7 @@ from .coeff_functs import *
 from .orthogonal import *
 from .inv_auto_layers import *
 from .invertible_resnet import *
+from .gaussian_mixture import *
 
 __all__ = [
             'glow_coupling_layer',
@@ -110,4 +111,5 @@ __all__ = [
             'HaarUpsampling',
             'Flatten',
             'Reshape',
+            'GaussianMixtureModel',
             ]
