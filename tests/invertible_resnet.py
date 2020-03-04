@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 import torch.optim
 
+import sys
+sys.path.append('../')
 from FrEIA.modules import *
 from FrEIA.framework import *
 

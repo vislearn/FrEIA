@@ -3,6 +3,8 @@ import unittest
 import torch
 import torch.nn as nn
 
+import sys
+sys.path.append('../')
 from FrEIA.modules import *
 from FrEIA.framework import *
 
