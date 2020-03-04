@@ -17,18 +17,18 @@ Papers
 
 Our following papers use FrEIA, with links to code given below.
 
-**"Exact Information Bottleneck with Invertible Neural Networks: Getting the Best of Discriminative and Generative Modeling" (2020)** 
+**"Exact Information Bottleneck with Invertible Neural Networks: Getting the Best of Discriminative and Generative Modeling" (2020)**
 
 * Paper: https://arxiv.org/abs/2001.06448
 * Code: https://github.com/VLL-HD/exact_information_bottleneck
 
-**"Guided Image Generation with Conditional Invertible Neural Networks" (2019)** 
+**"Guided Image Generation with Conditional Invertible Neural Networks" (2019)**
 
 * Paper: https://arxiv.org/abs/1907.02392
 * Supplement: https://drive.google.com/file/d/1_OoiIGhLeVJGaZFeBt0OWOq8ZCtiI7li
 * Code: https://github.com/VLL-HD/conditional_invertible_neural_networks
 
-**"Analyzing inverse problems with invertible neural networks." (2018)** 
+**"Analyzing inverse problems with invertible neural networks." (2018)**
 
 * Paper: https://arxiv.org/abs/1808.04730
 * Code: https://github.com/VLL-HD/analyzing_inverse_problems
@@ -75,7 +75,7 @@ Documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Besides the general tutorial below, the complete documentation is found in
-the ``./docs/`` directory, or at 
+the ``./docs/`` directory, or at
 
 https://vll-hd.github.io/FrEIA
 
@@ -257,7 +257,7 @@ they are the most used invertible transforms.
   Therefore, the subnetworks can not be directly passed as ``nn.Modules``, but
   rather in the form of a function or class, that constructs the subnetworks
   given in- and output size. This is a lot simpler than it sounds, for a fully connected subnetwork we could use e.g.
-  
+
   .. code:: python
 
    def fc_constr(c_in, c_out):
@@ -459,7 +459,7 @@ For convolutional INNs in particular:
 * Coupling blocks using 1x1 convolutions in the subnets seem important for the quality,
   they should constitute every other, or every third coupling block
 
-.. |Logo| image:: docs/freia_logo.gif
+.. |Logo| image:: docs/freia_logo.png
 .. |complicatedINN| image:: docs/inn_example_architecture.png
                             :scale: 60
 
