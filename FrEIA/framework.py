@@ -485,6 +485,22 @@ class ReversibleGraphNet(nn.Module):
 
         return super().load_state_dict(state_dict_no_buffers, *args, **kwargs)
 
+    def get_node_by_name(self, name):
+        # Return the first node in the graph with the provided name
+        for node in self.node_list:
+            if node.name == name:
+                return node
+        return None
+
+    def get_module_by_name(self, name):
+        # Return module of the first node in the graph with the provided name
+        node = self.get_node_by_name(name)
+        try:
+            return node.module
+        except:
+            return None
+
+
 
 # Testing example
 if __name__ == '__main__':
