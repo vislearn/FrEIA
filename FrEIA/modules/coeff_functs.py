@@ -11,7 +11,7 @@ class F_conv(nn.Module):
     def __init__(self, in_channels, channels, channels_hidden=None,
                  stride=None, kernel_size=3, leaky_slope=0.1,
                  batch_norm=False):
-        super(F_conv, self).__init__()
+        super().__init__()
 
         if stride:
             warnings.warn("Stride doesn't do anything, the argument should be "
@@ -61,7 +61,7 @@ class F_fully_connected(nn.Module):
     '''Fully connected tranformation, not reversible, but used below.'''
 
     def __init__(self, size_in, size, internal_size=None, dropout=0.0):
-        super(F_fully_connected, self).__init__()
+        super().__init__()
         if not internal_size:
             internal_size = 2*size
 
