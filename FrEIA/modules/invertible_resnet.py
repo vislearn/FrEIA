@@ -20,6 +20,13 @@ class ActNorm(nn.Module):
         else:
             self.init_on_next_batch = True
 
+        def on_load_state_dict(*args):
+            # when this module is loading state dict, we SHOULDN'T init with data,
+            # because that will reset the trained parameters. Registering a hook
+            # that disable this initialisation.
+            self.init_on_next_batch = False
+        self._register_load_state_dict_pre_hook(on_load_state_dict)
+
     def initialize_with_data(self, data):
         # Initialize to mean 0 and std 1 with sample batch
         # 'data' expected to be of shape (batch, channels[, ...])
