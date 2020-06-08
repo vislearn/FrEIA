@@ -195,7 +195,7 @@ class OutputNode(Node):
     class dummy(nn.Module):
 
         def __init__(self, *args):
-            super(OutputNode.dummy, self).__init__()
+            super().__init__()
 
         def __call__(*args):
             return args
@@ -229,7 +229,7 @@ class ReversibleGraphNet(nn.Module):
         '''node_list should be a list of all nodes involved, and ind_in,
         ind_out are the indexes of the special nodes InputNode and OutputNode
         in this list.'''
-        super(ReversibleGraphNet, self).__init__()
+        super().__init__()
 
         # Gather lists of input, output and condition nodes
         if ind_in is not None:
