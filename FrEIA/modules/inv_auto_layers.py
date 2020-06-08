@@ -83,9 +83,9 @@ class LearnedElementwiseScaling(nn.Module):
 
     def forward(self, x, rev=False):
         if not rev:
-            return x * self.s.exp()
+            return [x[0] * self.s.exp()]
         else:
-            return x * self.s.neg().exp_()
+            return [x[0] * self.s.neg().exp_()]
 
     def output_dims(self, input_dims):
         assert len(input_dims) == 1, "Can only use 1 input"
