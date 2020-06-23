@@ -17,7 +17,7 @@ Papers
 
 Our following papers use FrEIA, with links to code given below.
 
-**"Exact Information Bottleneck with Invertible Neural Networks: Getting the Best of Discriminative and Generative Modeling" (2020)**
+**"Training Normalizing Flows with the Information Bottleneck for Competitive Generative Classification" (2020)**
 
 * Paper: https://arxiv.org/abs/2001.06448
 * Code: https://github.com/VLL-HD/exact_information_bottleneck
