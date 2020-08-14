@@ -5,6 +5,7 @@ needed compared to the base class is an @staticmethod otuput_dims, and the
 
 Coupling blocks:
 
+* AllInOneBlock
 * NICECouplingBlock
 * RNVPCouplingBlock
 * GLOWCouplingBlock
@@ -32,7 +33,6 @@ Fixed (non-learned) transforms:
 
 Graph topology:
 
-
 * SplitChannel
 * ConcatChannel
 * Split1D
@@ -49,6 +49,7 @@ Reshaping:
 
 '''
 
+from .all_in_one_block import *
 from .fixed_transforms import *
 from .reshapes import *
 from .coupling_layers import *
@@ -60,6 +61,7 @@ from .invertible_resnet import *
 from .gaussian_mixture import *
 
 __all__ = [
+            'AllInOneBlock',
             'glow_coupling_layer',
             'rev_layer',
             'rev_multiplicative_layer',
