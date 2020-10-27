@@ -50,7 +50,7 @@ class Node:
                 raise RuntimeError(f"Cannot parse inputs provided to node '{self.name}'.")
         else:
             assert isinstance(inputs, Node), "Received object of invalid type "\
-                f"({type(inputs)}) as input for node '{name}'."
+                f"({type(inputs)}) as input for node '{self.name}'."
             return [(inputs, 0),]
 
     def build_modules(self, verbose=True):
