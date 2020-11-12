@@ -8,6 +8,7 @@ Coupling blocks:
 * NICECouplingBlock
 * RNVPCouplingBlock
 * GLOWCouplingBlock
+* GINCouplingBlock
 * AffineCouplingOneSided
 * ConditionalAffineTransform
 
@@ -94,6 +95,7 @@ __all__ = [
             'NICECouplingBlock',
             'RNVPCouplingBlock',
             'GLOWCouplingBlock',
+            'GINCouplingBlock',
             'AffineCouplingOneSided',
             'ConditionalAffineTransform',
             'PermuteRandom',
