@@ -45,7 +45,7 @@ class NICECouplingBlock(nn.Module):
 
         return [torch.cat((y1, y2), 1)]
 
-    def jacobian(self, x, rev=False):
+    def jacobian(self, x, c=[], rev=False):
         return 0
 
     def output_dims(self, input_dims):
