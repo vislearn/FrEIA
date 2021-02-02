@@ -20,7 +20,8 @@ class NICECouplingBlock(nn.Module):
         self.split_len1 = channels // 2
         self.split_len2 = channels - channels // 2
 
-        assert all([dims_c[i][1:] == dims_in[0][1:] for i in range(len(dims_c))]), \
+        # assert all([dims_c[i][1:] == dims_in[0][1:] for i in range(len(dims_c))]), \
+        assert all([tuple(dims_c[i][1:]) == tuple(dims_in[0][1:]) for i in range(len(dims_c))]), \
             "Dimensions of input and one or more conditions don't agree."
         self.conditional = (len(dims_c) > 0)
         condition_length = sum([dims_c[i][0] for i in range(len(dims_c))])
@@ -45,7 +46,7 @@ class NICECouplingBlock(nn.Module):
 
         return [torch.cat((y1, y2), 1)]
 
-    def jacobian(self, x, rev=False):
+    def jacobian(self, x, c=[], rev=False):
         return 0
 
     def output_dims(self, input_dims):
