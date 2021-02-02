@@ -1,7 +1,3 @@
-'''The framework module contains the logic used in building the graph and
-inferring the order that the nodes have to be executed in forward and backward
-direction.'''
-
 import sys
 import warnings
 import numpy as np
@@ -499,23 +495,3 @@ class ReversibleGraphNet(nn.Module):
             return node.module
         except:
             return None
-
-
-
-# Testing example
-if __name__ == '__main__':
-    inp = InputNode(4, 64, 64, name='input')
-    t1 = Node([(inp, 0)], dummys.dummy_mux, {}, name='t1')
-    s1 = Node([(t1, 0)], dummys.dummy_2split, {}, name='s1')
-
-    t2 = Node([(s1, 0)], dummys.dummy_module, {}, name='t2')
-    s2 = Node([(s1, 1)], dummys.dummy_2split, {}, name='s2')
-    t3 = Node([(s2, 0)], dummys.dummy_module, {}, name='t3')
-
-    m1 = Node([(t3, 0), (s2, 1)], dummys.dummy_2merge, {}, name='m1')
-    m2 = Node([(t2, 0), (m1, 0)], dummys.dummy_2merge, {}, name='m2')
-    outp = OutputNode([(m2, 0)], name='output')
-
-    all_nodes = [inp, outp, t1, s1, t2, s2, t3, m1, m2]
-
-    net = ReversibleGraphNet(all_nodes, 0, 1)
