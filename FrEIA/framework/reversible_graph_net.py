@@ -1,7 +1,3 @@
-'''The framework module contains the logic used in building the graph and
-inferring the order that the nodes have to be executed in forward and backward
-direction.'''
-
 import sys
 import warnings
 import numpy as np
@@ -50,7 +46,7 @@ class Node:
                 raise RuntimeError(f"Cannot parse inputs provided to node '{self.name}'.")
         else:
             assert isinstance(inputs, Node), "Received object of invalid type "\
-                f"({type(inputs)}) as input for node '{name}'."
+                f"({type(inputs)}) as input for node '{self.name}'."
             return [(inputs, 0),]
 
     def build_modules(self, verbose=True):
@@ -195,7 +191,7 @@ class OutputNode(Node):
     class dummy(nn.Module):
 
         def __init__(self, *args):
-            super(OutputNode.dummy, self).__init__()
+            super().__init__()
 
         def __call__(*args):
             return args
@@ -229,7 +225,7 @@ class ReversibleGraphNet(nn.Module):
         '''node_list should be a list of all nodes involved, and ind_in,
         ind_out are the indexes of the special nodes InputNode and OutputNode
         in this list.'''
-        super(ReversibleGraphNet, self).__init__()
+        super().__init__()
 
         # Gather lists of input, output and condition nodes
         if ind_in is not None:
@@ -485,21 +481,17 @@ class ReversibleGraphNet(nn.Module):
 
         return super().load_state_dict(state_dict_no_buffers, *args, **kwargs)
 
+    def get_node_by_name(self, name):
+        # Return the first node in the graph with the provided name
+        for node in self.node_list:
+            if node.name == name:
+                return node
+        return None
 
-# Testing example
-if __name__ == '__main__':
-    inp = InputNode(4, 64, 64, name='input')
-    t1 = Node([(inp, 0)], dummys.dummy_mux, {}, name='t1')
-    s1 = Node([(t1, 0)], dummys.dummy_2split, {}, name='s1')
-
-    t2 = Node([(s1, 0)], dummys.dummy_module, {}, name='t2')
-    s2 = Node([(s1, 1)], dummys.dummy_2split, {}, name='s2')
-    t3 = Node([(s2, 0)], dummys.dummy_module, {}, name='t3')
-
-    m1 = Node([(t3, 0), (s2, 1)], dummys.dummy_2merge, {}, name='m1')
-    m2 = Node([(t2, 0), (m1, 0)], dummys.dummy_2merge, {}, name='m2')
-    outp = OutputNode([(m2, 0)], name='output')
-
-    all_nodes = [inp, outp, t1, s1, t2, s2, t3, m1, m2]
-
-    net = ReversibleGraphNet(all_nodes, 0, 1)
+    def get_module_by_name(self, name):
+        # Return module of the first node in the graph with the provided name
+        node = self.get_node_by_name(name)
+        try:
+            return node.module
+        except:
+            return None

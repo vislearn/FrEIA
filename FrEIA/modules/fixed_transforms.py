@@ -7,14 +7,14 @@ import torch.nn.functional as F
 class PermuteRandom(nn.Module):
     '''permutes input vector in a random but fixed way'''
 
-    def __init__(self, dims_in, seed):
+    def __init__(self, dims_in, seed=None):
         super().__init__()
 
         self.in_channels = dims_in[0][0]
 
-        np.random.seed(seed)
+        if seed is not None:
+            np.random.seed(seed)
         self.perm = np.random.permutation(self.in_channels)
-        np.random.seed()
 
         self.perm_inv = np.zeros_like(self.perm)
         for i, p in enumerate(self.perm):
