@@ -38,7 +38,7 @@ class InvAutoActTwoSided(nn.Module):
 class InvAutoAct(nn.Module):
 
     def __init__(self, dims_in):
-        super(InvAutoAct, self).__init__()
+        super().__init__()
         self.alpha = nn.Parameter(0.01 * torch.randn(dims_in[0][0]) + 0.7)
 
     def forward(self, x, rev=False):
@@ -78,14 +78,14 @@ class InvAutoActFixed(nn.Module):
 class LearnedElementwiseScaling(nn.Module):
 
     def __init__(self, dims_in):
-        super(ScalingLayer, self).__init__()
+        super().__init__()
         self.s = nn.Parameter(torch.zeros(*dims_in[0]))
 
     def forward(self, x, rev=False):
         if not rev:
-            return x * self.s.exp()
+            return [x[0] * self.s.exp()]
         else:
-            return x * self.s.neg().exp_()
+            return [x[0] * self.s.neg().exp_()]
 
     def output_dims(self, input_dims):
         assert len(input_dims) == 1, "Can only use 1 input"
@@ -95,7 +95,7 @@ class LearnedElementwiseScaling(nn.Module):
 class InvAutoFC(nn.Module):
 
     def __init__(self, dims_in, dims_out=None):
-        super(InvAutoFC, self).__init__()
+        super().__init__()
         self.dims_in = dims_in
         if dims_out is None:
             self.dims_out = deepcopy(dims_in)
@@ -119,7 +119,7 @@ class InvAutoFC(nn.Module):
 class InvAutoConv2D(nn.Module):
 
     def __init__(self, dims_in, dims_out, kernel_size=3, padding=1):
-        super(InvAutoConv2D, self).__init__()
+        super().__init__()
         self.dims_in = dims_in
         self.dims_out = dims_out
         self.kernel_size = kernel_size

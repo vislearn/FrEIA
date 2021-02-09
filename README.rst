@@ -17,10 +17,15 @@ Papers
 
 Our following papers use FrEIA, with links to code given below.
 
-**"Exact Information Bottleneck with Invertible Neural Networks: Getting the Best of Discriminative and Generative Modeling" (2020)**
+**"Training Normalizing Flows with the Information Bottleneck for Competitive Generative Classification" (2020)**
 
 * Paper: https://arxiv.org/abs/2001.06448
 * Code: https://github.com/VLL-HD/exact_information_bottleneck
+
+**"Disentanglement by Nonlinear ICA with General Incompressible-flow Networks (GIN)" (2020)**
+
+* Paper: https://arxiv.org/abs/2001.04872
+* Code: https://github.com/VLL-HD/GIN
 
 **"Guided Image Generation with Conditional Invertible Neural Networks" (2019)**
 
@@ -43,7 +48,7 @@ Dependencies
 +---------------------------+-------------------------------+
 | **Package**               | **Version**                   |
 +---------------------------+-------------------------------+
-| Pythton                   | >= 3.7                        |
+| Python                    | >= 3.7                        |
 +---------------------------+-------------------------------+
 | Pytorch                   | >= 1.0.0                      |
 +---------------------------+-------------------------------+
@@ -65,7 +70,7 @@ For development:
 .. code:: sh
 
    # first clone the repository
-   git clone 'github.com/VLL-HD/FrEIA.git'
+   git clone https://github.com/VLL-HD/FrEIA.git
    # then install in development mode, so that changes don't require a reinstall
    cd FrEIA
    python setup.py develop
