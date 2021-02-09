@@ -129,7 +129,7 @@ class HouseholderPerm(nn.Module):
         if self.conditional:
             assert len(dims_c) == 1, "No more than one conditional input supported."
             assert not self.fixed, "Permutation can't be fixed and conditional simultaneously."
-            assert prod(dims_c[0]) == self.width * self.n_reflections,\
+            assert np.prod(dims_c[0]) == self.width * self.n_reflections,\
                 "Dimensions of input, n_reflections and condition don't agree."
         else:
             if self.fixed:
