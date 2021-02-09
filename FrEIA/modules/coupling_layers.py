@@ -229,8 +229,8 @@ class AffineCouplingOneSided(nn.Module):
         self.max_s = exp(clamp)
         self.min_s = exp(-clamp)
 
-        assert all([dims_c[i][1:] == dims_in[0][1:] for i in range(len(dims_c))]), \
-            "Dimensions of input and one or more conditions don't agree."
+        assert all([list(dims_c[i][1:]) == dims_in[0][1:] for i in range(len(dims_c))]), \
+            "Dimensions of input and one or more conditions don't agree." + str(dims_in[0][1:]) + str(dims_c[0][1:])
         self.conditional = (len(dims_c) > 0)
         condition_length = sum([dims_c[i][0] for i in range(len(dims_c))])
 
