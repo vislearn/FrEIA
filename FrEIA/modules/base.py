@@ -53,6 +53,8 @@ class InvertibleModule(nn.Module):
         *Note to implementers:*
         Subclasses MUST return a Jacobian when jac=True.
         Subclasses CAN return a valid Jacobian when jac=False (not punished).
+        Subclasses MUST follow the convention that the returned Jacobian
+        be the flipped in sign if rev=True.
 
         input parameters:
         x_or_z .. input data (array-like of one or more tensors)
