@@ -1,10 +1,11 @@
 import sys
 import warnings
-import numpy as np
+from collections import deque, defaultdict
+from typing import List
 
+import numpy as np
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 
 from . import dummy_modules as dummys
 
@@ -12,6 +13,7 @@ from . import dummy_modules as dummys
 class Node:
     '''The Node class represents one transformation in the graph, with an
     arbitrary number of in- and outputs.'''
+
     def __init__(self, inputs, module_type, module_args, conditions=[], name=None):
         if name:
             self.name = name
@@ -24,7 +26,7 @@ class Node:
         if isinstance(conditions, (list, tuple)):
             self.conditions = conditions
         else:
-            self.conditions = [conditions,]
+            self.conditions = [conditions, ]
 
         self.outputs = []
         self.module_type = module_type
@@ -41,13 +43,13 @@ class Node:
             if isinstance(inputs[0], (list, tuple)):
                 return inputs
             elif len(inputs) == 2:
-                return [inputs,]
+                return [inputs, ]
             else:
                 raise RuntimeError(f"Cannot parse inputs provided to node '{self.name}'.")
         else:
-            assert isinstance(inputs, Node), "Received object of invalid type "\
-                f"({type(inputs)}) as input for node '{self.name}'."
-            return [(inputs, 0),]
+            assert isinstance(inputs, Node), "Received object of invalid type " \
+                                             f"({type(inputs)}) as input for node '{self.name}'."
+            return [(inputs, 0), ]
 
     def build_modules(self, verbose=True):
         ''' Returns a list with the dimension of each output of this node,
@@ -188,6 +190,7 @@ class ConditionNode(Node):
 class OutputNode(Node):
     '''Special type of node that represents the output of the whole net (of the
     input when running in reverse)'''
+
     class dummy(nn.Module):
 
         def __init__(self, *args):
@@ -280,7 +283,7 @@ class ReversibleGraphNet(nn.Module):
 
         self.module_list = nn.ModuleList([n.module for n in node_list])
         self.module_cond = [(len(n.conditions) > 0) for n in node_list]
-        self._buffers = {F'tmp_var_{i}' : None for i in range(len(variables))}
+        self._buffers = {F'tmp_var_{i}': None for i in range(len(variables))}
 
         # Find out the order of operations for reverse calculations
         ops_rev = []
@@ -450,7 +453,7 @@ class ReversibleGraphNet(nn.Module):
         J_num = torch.zeros(batch_size, ndim_x_total, ndim_x_total)
         for i in range(ndim_x_total):
             offset = x[0].new_zeros(batch_size, ndim_x_total)
-            offset[:,i] = h
+            offset[:, i] = h
             if isinstance(x, (list, tuple)):
                 x_upper = torch.split(x_flat + offset, ndim_x_separate, dim=1)
                 x_upper = [x_upper[i].view(*x[i].shape) for i in range(len(x))]
@@ -464,17 +467,17 @@ class ReversibleGraphNet(nn.Module):
             if isinstance(y_upper, (list, tuple)):
                 y_upper = torch.cat([y_i.view(batch_size, -1) for y_i in y_upper], dim=1)
                 y_lower = torch.cat([y_i.view(batch_size, -1) for y_i in y_lower], dim=1)
-            J_num[:,:,i] = (y_upper - y_lower).view(batch_size, -1) / (2*h)
+            J_num[:, :, i] = (y_upper - y_lower).view(batch_size, -1) / (2 * h)
         logdet_num = x[0].new_zeros(batch_size)
         for i in range(batch_size):
-            logdet_num[i] = torch.det(J_num[i,:,:]).abs().log()
+            logdet_num[i] = torch.det(J_num[i, :, :]).abs().log()
 
         return logdet_num
 
     def load_state_dict(self, state_dict, *args, **kwargs):
 
         state_dict_no_buffers = {}
-        for k,p in state_dict.items():
+        for k, p in state_dict.items():
             if k in self._buffers and self._buffers[k] is None:
                 continue
             state_dict_no_buffers[k] = p
@@ -495,3 +498,37 @@ class ReversibleGraphNet(nn.Module):
             return node.module
         except:
             return None
+
+
+def topological_order(in_nodes: List[InputNode], nodes: List[Node], out_nodes: List[OutputNode]):
+    """
+    Computes the topological order of nodes.
+    """
+    # Edge dicts in both directions
+    edges_out_to_in = {node_b: {node_a for node_a, out_idx in node_b.inputs} for node_b in nodes + out_nodes}
+    edges_in_to_out = defaultdict(list)
+    for node_out, node_ins in edges_out_to_in:
+        for node_in in node_ins:
+            edges_in_to_out[node_in].append(node_out)
+
+    # Kahn's algorithm
+    sorted_nodes = []
+    no_pending_edges = deque(out_nodes)
+
+    while len(no_pending_edges) > 0:
+        node = no_pending_edges.popleft()
+        sorted_nodes.append(node)
+        for in_node in edges_out_to_in[node]:
+            edges_out_to_in[node].remove(in_node)
+            edges_in_to_out[in_node].remove(node)
+
+            if len(edges_in_to_out) == 0:
+                no_pending_edges.append(node)
+
+    for in_node in in_nodes:
+        assert in_node in sorted_nodes, f"Error in graph: Input node {in_node} is not connected to any output."
+
+    if sum(map(len, edges_in_to_out)) == 0:
+        return sorted_nodes[::-1]
+    else:
+        raise ValueError("Graph is cyclic.")
