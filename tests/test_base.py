@@ -24,8 +24,8 @@ class BaseLayerTest(unittest.TestCase):
 
         torch.manual_seed(self.batch_size)
 
-        self.x = torch.randn(self.batch_size, *input_size).to(DEVICE)
-        self.c = torch.randn(self.batch_size, *cond_size).to(DEVICE)
+        self.x = torch.randn(self.batch_size, input_size).to(DEVICE)
+        self.c = torch.randn(self.batch_size, cond_size).to(DEVICE)
 
     def test_constructs(self):
 
