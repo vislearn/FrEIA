@@ -56,7 +56,6 @@ from .fixed_transforms import *
 from .reshapes import *
 from .coupling_layers import *
 from .graph_topology import *
-from .coeff_functs import *
 from .orthogonal import *
 from .inv_auto_layers import *
 from .invertible_resnet import *
@@ -93,9 +92,6 @@ __all__ = [
             'haar_restore_layer',
             'i_revnet_downsampling',
             'i_revnet_upsampling',
-            'F_conv',
-            'F_fully_connected',
-            'F_fully_convolutional',
             'NICECouplingBlock',
             'RNVPCouplingBlock',
             'GLOWCouplingBlock',
