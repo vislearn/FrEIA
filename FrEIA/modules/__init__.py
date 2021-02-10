@@ -50,6 +50,7 @@ Reshaping:
 
 '''
 
+from .base import InvertibleModule
 from .all_in_one_block import *
 from .fixed_transforms import *
 from .reshapes import *
@@ -62,6 +63,7 @@ from .invertible_resnet import *
 from .gaussian_mixture import *
 
 __all__ = [
+            'InvertibleModule',
             'AllInOneBlock',
             'glow_coupling_layer',
             'rev_layer',
