@@ -3,7 +3,7 @@ from copy import deepcopy
 import torch
 import torch.nn as nn
 
-from .base import InvertibleModule
+from FrEIA.modules import InvertibleModule
 
 
 class Split(InvertibleModule):

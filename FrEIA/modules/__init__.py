@@ -51,6 +51,10 @@ Reshaping:
 
 '''
 
+# Import the base class first
+from .base import *
+
+# Then all inheriting modules
 from .all_in_one_block import *
 from .fixed_transforms import *
 from .reshapes import *
@@ -61,7 +65,6 @@ from .orthogonal import *
 from .inv_auto_layers import *
 from .invertible_resnet import *
 from .gaussian_mixture import *
-from .base import *
 
 __all__ = [
             'AllInOneBlock',
