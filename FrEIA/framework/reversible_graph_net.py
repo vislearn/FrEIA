@@ -1,7 +1,7 @@
 import sys
 import warnings
 from collections import deque, defaultdict
-from typing import List, Dict, Tuple, Iterable
+from typing import List, Dict, Tuple, Iterable, Union, Optional, Sized
 
 import numpy as np
 import torch
@@ -13,10 +13,17 @@ from ..modules.base import InvertibleModule
 
 
 class Node:
-    '''The Node class represents one transformation in the graph, with an
-    arbitrary number of in- and outputs.'''
+    """
+    The Node class represents one transformation in the graph, with an
+    arbitrary number of in- and outputs.
 
-    def __init__(self, inputs, module_type, module_args, conditions=[], name=None):
+    The user specifies the input, and the underlying module computes the
+    number of outputs.
+    """
+    def __init__(self, inputs: Union["Node", Tuple["Node", int], Iterable[Tuple["Node", int]]], module_type, module_args: dict, conditions=None, name=None):
+        if conditions is None:
+            conditions = []
+
         if name:
             self.name = name
         else:
@@ -30,20 +37,31 @@ class Node:
         else:
             self.conditions = [conditions, ]
 
-        self.outputs = []
+        # Entry at position co -> (n, ci) means: My output co goes to input channel ci of n.
+        self.outputs: List[Tuple[Node, int]] = []
         self.module_type = module_type
         self.module_args = module_args
 
-        self.input_dims = None
+        # This is initialised once the module is instantiated
         self.module = None
-        self.computed = None
-        self.computed_rev = None
-        self.id = None
+        self.input_dims = None
+        self.condition_shapes = None
+        self.output_dims = None
 
-    def parse_inputs(self, inputs):
+    def parse_inputs(self, inputs: Union["Node", Tuple["Node", int], Iterable[Tuple["Node", int]]]) -> List[Tuple["Node", int]]:
+        """
+        Converts specified inputs to a node to a canonical format.
+        Inputs can be specified in three forms:
+
+        - a single node, then this nodes first output is taken as input
+        - a single tuple (node, idx), specifying output idx of node
+        - a list of tuples [(node, idx)], each specifying output idx of node
+
+        All such formats are converted to the last format.
+        """
         if isinstance(inputs, (list, tuple)):
             if isinstance(inputs[0], (list, tuple)):
-                return inputs
+                pass
             elif len(inputs) == 2:
                 return [inputs, ]
             else:
@@ -51,96 +69,39 @@ class Node:
         else:
             assert isinstance(inputs, Node), "Received object of invalid type " \
                                              f"({type(inputs)}) as input for node '{self.name}'."
-            return [(inputs, 0), ]
+            inputs = [(inputs, 0), ]
 
-    def build_modules(self, verbose=True):
-        ''' Returns a list with the dimension of each output of this node,
-        recursively calling build_modules of the nodes connected to the input.
-        Use this information to initialize the pytorch nn.Module of this node.
-        '''
+        for in_idx, (in_node, out_idx) in enumerate(inputs):
+            in_node.outputs.append((self, in_idx))
 
-        if not self.input_dims:  # Only do it if this hasn't been computed yet
-            self.input_dims = [n.build_modules(verbose=verbose)[c]
-                               for n, c in self.inputs]
-            try:
-                if len(self.conditions) > 0:
-                    c_dims = [c.build_modules(verbose=verbose)[0] for c in self.conditions]
-                    self.module = self.module_type(self.input_dims, dims_c=c_dims,
-                                                   **self.module_args)
-                else:
-                    self.module = self.module_type(self.input_dims,
-                                                   **self.module_args)
-            except Exception as e:
-                print('Error in node %s' % (self.name))
-                raise e
+        return inputs
 
-            if verbose:
-                print(f"Node '{self.name}' takes the following inputs:")
-                for d, (n, c) in zip(self.input_dims, self.inputs):
-                    print(f"\t Output #{c} of node '{n.name}' with dims {d}")
-                for c in self.conditions:
-                    print(f"\t conditioned on node '{c.name}' " +
-                          f"with dims {c.data.shape}")
-                print()
+    def build_module(self, input_shapes, condition_shapes, verbose=True):
+        """
+        Initialize the pytorch nn.Module of this node and determine the output shapes.
+        """
+        assert len(input_shapes) == len(self.inputs)
+        assert len(condition_shapes) == len(self.conditions)
 
-            self.output_dims = self.module.output_dims(self.input_dims)
-            self.n_outputs = len(self.output_dims)
+        assert self.module is None, f"Node {self} has been initialised before. This may occur if you insert a node several times into a ReversibleGraphNet."
 
-        return self.output_dims
+        self.input_dims = input_shapes
+        self.condition_shapes = condition_shapes
 
-    def run_forward(self, op_list):
-        '''Determine the order of operations needed to reach this node. Calls
-        run_forward of parent nodes recursively. Each operation is appended to
-        the global list op_list, in the form (node ID, input variable IDs,
-        output variable IDs)'''
+        if len(self.conditions) > 0:
+            self.module = self.module_type(input_shapes, dims_c=condition_shapes, **self.module_args)
+        else:
+            self.module = self.module_type(self.input_dims, **self.module_args)
 
-        if not self.computed:
+        if verbose:
+            print(f"Node '{self.name}' takes the following inputs:")
+            for d, (n, c) in zip(self.input_dims, self.inputs):
+                print(f"\t Output #{c} of node '{n.name}' with dims {d}")
+            for c in self.conditions:
+                print(f"\t conditioned on node '{c.name}' with dims {c.data.shape}")
+            print()
 
-            # Compute all nodes which provide inputs, filter out the
-            # channels you need
-            self.input_vars = []
-            for i, (n, c) in enumerate(self.inputs):
-                self.input_vars.append(n.run_forward(op_list)[c])
-                # Register self as an output in the input node
-                n.outputs.append((self, i))
-            # Compute all nodes which provide conditioning
-            self.condition_vars = []
-            for i, c in enumerate(self.conditions):
-                self.condition_vars.append(c.run_forward(op_list)[0])
-                # Register self as an output in the condition node
-                c.outputs.append((self, i))
-
-            # All outputs could now be computed
-            self.computed = [(self.id, i) for i in range(self.n_outputs)]
-            op_list.append((self.id, self.input_vars, self.computed, self.condition_vars))
-
-        # Return the variables you have computed (this happens mulitple times
-        # without recomputing if called repeatedly)
-        return self.computed
-
-    def run_backward(self, op_list):
-        '''See run_forward, this is the same, only for the reverse computation.
-        Need to call run_forward first, otherwise this function will not
-        work'''
-
-        assert len(self.outputs) > 0, "Call run_forward first"
-        if not self.computed_rev:
-
-            # These are the input variables that must be computed first
-            output_vars = [(self.id, i) for i in range(self.n_outputs)]
-
-            # Recursively compute these
-            for n, c in self.outputs:
-                n.run_backward(op_list)
-
-            # The variables that this node computes are the input variables
-            # from the forward pass
-            self.computed_rev = self.input_vars
-            if len(self.condition_vars) == 0:
-                self.condition_vars = [c.run_forward(op_list)[0] for c in self.conditions]
-            op_list.append((self.id, output_vars, self.computed_rev, self.condition_vars))
-
-        return self.computed_rev
+        self.output_dims = self.module.output_dims(input_shapes)
 
 
 class InputNode(Node):
@@ -221,16 +182,20 @@ class OutputNode(Node):
         return [(self.id, 0)]
 
 
+
+
 class ReversibleGraphNet(InvertibleModule):
     '''This class represents the invertible net itself. It is a subclass of
     torch.nn.Module and supports the same methods. The forward method has an
     additional option 'rev', whith which the net can be computed in reverse.'''
 
-    def __init__(self, node_list, ind_in=None, ind_out=None, verbose=True):
+    def __init__(self, node_list, ind_in=None, ind_out=None, verbose=True, force_tuple_output=False):
         """
         todo properly inherit signature
         """
         super().__init__()
+
+        self.force_tuple_output = force_tuple_output
 
         # Gather lists of input, output and condition nodes
         if ind_in is not None:
@@ -266,34 +231,68 @@ class ReversibleGraphNet(InvertibleModule):
         for node in self.node_list:
             input_shapes = [node_out_shapes[in_tuple] for in_tuple in node.inputs]
             condition_shapes = [node_out_shapes[con_tuple] for con_tuple in node.conditions]
-            node.build_modules(input_shapes, condition_shapes, verbose=verbose)
+            node.build_module(input_shapes, condition_shapes, verbose=verbose)
             for out_idx, output_shape in enumerate(node.output_dims):
                 node_out_shapes[node, out_idx] = output_shape
-            # todo input shapes
 
         self.module_list = nn.ModuleList([n.module for n in node_list])
 
-    def forward(self, x_or_z: Iterable[Tensor], c: Iterable[Tensor], rev: bool = False, jac: bool = True, intermediate_outputs: bool=False) -> Tuple[Tuple[Tensor], Tensor]:
+    def forward(self, x_or_z: Union[Tensor, Iterable[Tensor]], c: Iterable[Tensor], rev: bool = False, jac: bool = True, intermediate_outputs: bool=False) -> Tuple[Tuple[Tensor], Tensor]:
         """
         Forward or backward computation of the whole net.
         """
-        # Go backwards throguh nodes if rev=True
         jacobian = None
-        # todo fill with input/output values
         outs = {}
-        for node in self.node_list[::1 if not rev else -1]:
+        for tensor, start_point in zip(x_or_z, self.out_nodes if rev else self.in_nodes):
+            outs[start_point, 0] = tensor
+
+        # Go backwards through nodes if rev=True
+        for node in self.node_list[::-1 if rev else 1]:
             has_condition = len(node.conditions) > 0
+
+            mod_in = []
+            for node, channel in (node.outputs if rev else node.inputs):
+                mod_in.append(outs[node, channel])
+            mod_in = tuple(mod_in)
+
             if has_condition:
-                out, mod_jac = node.module(x_or_z, c=c, rev=rev, jac=jac)
+                mod_out = node.module(mod_in, c=c, rev=rev, jac=jac)
             else:
-                out, mod_jac = node.module(x_or_z, rev=rev, jac=jac)
+                mod_out = node.module(mod_in, rev=rev, jac=jac)
+
+            if torch.is_tensor(mod_out):
+                raise ValueError(f"The node {node}'s module returned a tensor only. This is deprecated without fallback. Please follow the signature of InvertibleOperator#forward in your module if you want to use it in a ReversibleGraphNet.")
+            if len(mod_out) != 2:
+                raise ValueError(f"The node {node}'s module returned a tuple of length {len(mod_out)}, but should return a tuple `z_or_x, jac`.")
+
+            out, mod_jac = mod_out
+
+            if torch.is_tensor(out):
+                # Not according to specification!
+                add_text = " Consider passing force_tuple_output=True to the contained ReversibleGraphNet" if isinstance(node.module, ReversibleGraphNet) else ""
+                raise ValueError(f"The node {node}'s module returns a tensor.{add_text}")
+            if len(out) != len(node.inputs if rev else node.outputs):
+                raise ValueError(f"The node {node}'s module returned {len(out)} output variables, but should return {len(node.inputs if rev else node.outputs)}.")
+            if not torch.is_tensor(mod_jac):
+                if jac:
+                    raise ValueError(f"The node {node}'s module returned a non-tensor as Jacobian.")
+                elif not jac and mod_jac is not None:
+                    raise ValueError(f"The node {node}'s module returned neither None nor a Jacobian.")
+
+            for out_idx, out_value in enumerate(out):
+                outs[self, out_idx] = out_value
+
             if jac:
                 jacobian = jacobian + mod_jac
 
         if intermediate_outputs:
-            return outs
+            return outs, jacobian
         else:
-            return [outs[(out_node, 0)] for out_node in self.out_nodes]
+            out_list = [outs[(out_node, 0)] for out_node in self.out_nodes]
+            if len(out_list) == 1 and not self.force_tuple_output:
+                return out_list[0], jacobian
+            else:
+                return tuple(out_list), jacobian
 
     def log_jacobian_numerical(self, x, c=None, rev=False, h=1e-04):
         '''Approximate log Jacobian determinant via finite differences.'''
@@ -331,29 +330,23 @@ class ReversibleGraphNet(InvertibleModule):
 
         return logdet_num
 
-    def load_state_dict(self, state_dict, *args, **kwargs):
-
-        state_dict_no_buffers = {}
-        for k, p in state_dict.items():
-            if k in self._buffers and self._buffers[k] is None:
-                continue
-            state_dict_no_buffers[k] = p
-
-        return super().load_state_dict(state_dict_no_buffers, *args, **kwargs)
-
-    def get_node_by_name(self, name):
-        # Return the first node in the graph with the provided name
+    def get_node_by_name(self, name) -> Optional[Node]:
+        """
+        Return the first node in the graph with the provided name.
+        """
         for node in self.node_list:
             if node.name == name:
                 return node
         return None
 
-    def get_module_by_name(self, name):
-        # Return module of the first node in the graph with the provided name
+    def get_module_by_name(self, name) -> Optional[nn.Module]:
+        """
+        Return module of the first node in the graph with the provided name.
+        """
         node = self.get_node_by_name(name)
         try:
             return node.module
-        except:
+        except AttributeError:
             return None
 
 
