@@ -1,13 +1,15 @@
 import sys
 import warnings
 from collections import deque, defaultdict
-from typing import List
+from typing import List, Dict, Tuple, Iterable
 
 import numpy as np
 import torch
 import torch.nn as nn
+from torch import Tensor
 
 from . import dummy_modules as dummys
+from ..modules.base import InvertibleModule
 
 
 class Node:
@@ -219,15 +221,15 @@ class OutputNode(Node):
         return [(self.id, 0)]
 
 
-class ReversibleGraphNet(nn.Module):
+class ReversibleGraphNet(InvertibleModule):
     '''This class represents the invertible net itself. It is a subclass of
     torch.nn.Module and supports the same methods. The forward method has an
     additional option 'rev', whith which the net can be computed in reverse.'''
 
     def __init__(self, node_list, ind_in=None, ind_out=None, verbose=True):
-        '''node_list should be a list of all nodes involved, and ind_in,
-        ind_out are the indexes of the special nodes InputNode and OutputNode
-        in this list.'''
+        """
+        todo properly inherit signature
+        """
         super().__init__()
 
         # Gather lists of input, output and condition nodes
@@ -235,208 +237,63 @@ class ReversibleGraphNet(nn.Module):
             warnings.warn("Use of 'ind_in' and 'ind_out' for ReversibleGraphNet is deprecated, " +
                           "input and output nodes are detected automatically.")
             if isinstance(ind_in, int):
-                self.ind_in = list([ind_in])
-            else:
-                self.ind_in = ind_in
+                ind_in = [ind_in]
+
+            self.in_nodes = [node_list[i] for i in ind_in]
         else:
-            self.ind_in = [i for i in range(len(node_list))
-                           if isinstance(node_list[i], InputNode)]
-            assert len(self.ind_in) > 0, "No input nodes specified."
+            self.in_nodes = [node_list[i] for i in range(len(node_list))
+                             if isinstance(node_list[i], InputNode)]
+        assert len(self.in_nodes) > 0, "No input nodes specified."
+
         if ind_out is not None:
             warnings.warn("Use of 'ind_in' and 'ind_out' for ReversibleGraphNet is deprecated, " +
                           "input and output nodes are detected automatically.")
             if isinstance(ind_out, int):
-                self.ind_out = list([ind_out])
-            else:
-                self.ind_out = ind_out
+                self.ind_out = [ind_out]
+
+            self.out_nodes = [node_list[i] for i in ind_in]
         else:
-            self.ind_out = [i for i in range(len(node_list))
-                            if isinstance(node_list[i], OutputNode)]
-            assert len(self.ind_out) > 0, "No output nodes specified."
-        self.ind_cond = [i for i in range(len(node_list))
-                         if isinstance(node_list[i], ConditionNode)]
+            self.out_nodes = [node_list[i] for i in range(len(node_list))
+                              if isinstance(node_list[i], OutputNode)]
+        assert len(self.out_nodes) > 0, "No output nodes specified."
 
-        self.return_vars = []
-        self.input_vars = []
-        self.cond_vars = []
+        self.condition_nodes = [i for i in range(len(node_list))
+                                if isinstance(node_list[i], ConditionNode)]
 
-        # Assign each node a unique ID
-        self.node_list = node_list
-        for i, n in enumerate(node_list):
-            n.id = i
-            n.graph = self
-
-        # Recursively build the nodes nn.Modules and determine order of
-        # operations
-        ops = []
-        for i in self.ind_out:
-            node_list[i].build_modules(verbose=verbose)
-            node_list[i].run_forward(ops)
-
-        # create list of Pytorch variables that are used
-        variables = set()
-        for o in ops:
-            variables = variables.union(set(o[1] + o[2] + o[3]))
-        self.variables_ind = list(variables)
-
-        self.indexed_ops = self.ops_to_indexed(ops)
+        # Build the graph and tell nodes about their dimensions so that they can build the modules
+        self.node_list = topological_order(self.in_nodes, node_list, self.out_nodes)
+        node_out_shapes: Dict[Tuple[Node, int], Iterable[Tuple[int]]] = {}
+        for node in self.node_list:
+            input_shapes = [node_out_shapes[in_tuple] for in_tuple in node.inputs]
+            condition_shapes = [node_out_shapes[con_tuple] for con_tuple in node.conditions]
+            node.build_modules(input_shapes, condition_shapes, verbose=verbose)
+            for out_idx, output_shape in enumerate(node.output_dims):
+                node_out_shapes[node, out_idx] = output_shape
+            # todo input shapes
 
         self.module_list = nn.ModuleList([n.module for n in node_list])
-        self.module_cond = [(len(n.conditions) > 0) for n in node_list]
-        self._buffers = {F'tmp_var_{i}': None for i in range(len(variables))}
 
-        # Find out the order of operations for reverse calculations
-        ops_rev = []
-        for i in self.ind_in + self.ind_cond:
-            node_list[i].run_backward(ops_rev)
-        self.indexed_ops_rev = self.ops_to_indexed(ops_rev)
-
-    def ops_to_indexed(self, ops):
-        '''Helper function to translate the list of variables (origin ID, channel),
-        to variable IDs.'''
-        result = []
-
-        for o in ops:
-            try:
-                vars_in = [self.variables_ind.index(v) for v in o[1]]
-            except ValueError:
-                vars_in = -1
-
-            vars_out = [self.variables_ind.index(v) for v in o[2]]
-            vars_cond = [self.variables_ind.index(v) for v in o[3]]
-
-            # Collect input/output/conditioning nodes in separate lists, but don't
-            # add to indexed ops
-            if o[0] in self.ind_out:
-                self.return_vars.append(self.variables_ind.index(o[1][0]))
-                continue
-            if o[0] in self.ind_in:
-                self.input_vars.append(self.variables_ind.index(o[1][0]))
-                continue
-            if o[0] in self.ind_cond:
-                if self.variables_ind.index(o[1][0]) not in self.cond_vars:
-                    self.cond_vars.append(self.variables_ind.index(o[1][0]))
-                else:
-                    print('Is this branch ever reached?')
-                continue
-
-            result.append((o[0], vars_in, vars_out, vars_cond))
-
-        # Sort input/output/conditioning variables so they correspond to initial
-        # node list order
-        self.return_vars.sort(key=lambda i: self.variables_ind[i][0])
-        self.input_vars.sort(key=lambda i: self.variables_ind[i][0])
-        self.cond_vars.sort(key=lambda i: self.variables_ind[i][0])
-
-        return result
-
-    def forward(self, x, c=None, rev=False, intermediate_outputs=False):
-        '''Forward or backward computation of the whole net.'''
-
-        if rev:
-            use_list = self.indexed_ops_rev
-            input_vars, output_vars = self.return_vars, self.input_vars
-        else:
-            use_list = self.indexed_ops
-            input_vars, output_vars = self.input_vars, self.return_vars
-
-        # Assign input data to respective variables
-        if isinstance(x, (list, tuple)):
-            assert len(x) == len(input_vars), (
-                f"Got list of {len(x)} input tensors for "
-                f"{'inverse' if rev else 'forward'} pass, but expected "
-                f"{len(input_vars)}."
-            )
-            for i in range(len(input_vars)):
-                self._buffers[F'tmp_var_{input_vars[i]}'] = x[i]
-        else:
-            assert len(input_vars) == 1, (f"Got single input tensor for "
-                                          f"{'inverse' if rev else 'forward'} "
-                                          f"pass, but expected list of "
-                                          f"{len(input_vars)}.")
-            self._buffers[F'tmp_var_{input_vars[0]}'] = x
-
-        # Assign conditioning data to respective variables
-        if c is None:
-            assert len(self.cond_vars) == 0
-        elif isinstance(c, (list, tuple)):
-            assert len(c) == len(self.cond_vars), f'{len(c)}, {len(self.cond_vars)}'
-            for i in range(len(self.cond_vars)):
-                self._buffers[F'tmp_var_{self.cond_vars[i]}'] = c[i]
-        else:
-            assert len(self.cond_vars) == 1
-            self._buffers[F'tmp_var_{self.cond_vars[0]}'] = c
-
-        # Prepare dictionary for intermediate node outputs
-        out_dict = {}
-
-        # Run all modules with the given inputs
-        for o in use_list:
-            try:
-                x = [self._buffers[F'tmp_var_{i}'] for i in o[1]]
-                if self.module_cond[o[0]]:
-                    c = [self._buffers[F'tmp_var_{i}'] for i in o[3]]
-                    results = self.module_list[o[0]](x, c=c, rev=rev)
-                else:
-                    results = self.module_list[o[0]](x, rev=rev)
-            except TypeError:
-                print("Are you sure all used Nodes are in the Node list?", file=sys.stderr)
-                raise
-            out_dict[self.node_list[o[0]].name] = results
-            for i, r in zip(o[2], results):
-                self._buffers[F'tmp_var_{i}'] = r
+    def forward(self, x_or_z: Iterable[Tensor], c: Iterable[Tensor], rev: bool = False, jac: bool = True, intermediate_outputs: bool=False) -> Tuple[Tuple[Tensor], Tensor]:
+        """
+        Forward or backward computation of the whole net.
+        """
+        # Go backwards throguh nodes if rev=True
+        jacobian = None
+        # todo fill with input/output values
+        outs = {}
+        for node in self.node_list[::1 if not rev else -1]:
+            has_condition = len(node.conditions) > 0
+            if has_condition:
+                out, mod_jac = node.module(x_or_z, c=c, rev=rev, jac=jac)
+            else:
+                out, mod_jac = node.module(x_or_z, rev=rev, jac=jac)
+            if jac:
+                jacobian = jacobian + mod_jac
 
         if intermediate_outputs:
-            return out_dict
+            return outs
         else:
-            out = [self._buffers[F'tmp_var_{output_vars[i]}']
-                   for i in range(len(output_vars))]
-            if len(out) == 1:
-                return out[0]
-            else:
-                return out
-
-    def log_jacobian(self, x=None, c=None, rev=False, run_forward=True, intermediate_outputs=False):
-        '''Compute the log jacobian determinant of the whole net.'''
-        if run_forward or c is not None:
-            self.condition = c
-        jacobian = 0
-
-        if rev:
-            use_list = self.indexed_ops_rev
-        else:
-            use_list = self.indexed_ops
-
-        if run_forward:
-            if x is None:
-                raise RuntimeError("You need to provide an input if you want "
-                                   "to run a forward pass")
-            self.forward(x, c, rev=rev)
-
-        # Prepare dictionary for intermediate node outputs
-        jacobian_dict = {}
-
-        # Run all modules with the given inputs
-        for o in use_list:
-            x = [self._buffers[F'tmp_var_{i}'] for i in o[1]]
-            if self.module_cond[o[0]]:
-                c = [self._buffers[F'tmp_var_{i}'] for i in o[3]]
-                module_jacobian = self.module_list[o[0]].jacobian(x, c=c, rev=rev)
-            else:
-                module_jacobian = self.module_list[o[0]].jacobian(x, rev=rev)
-            jacobian = jacobian + module_jacobian
-            jacobian_dict[self.node_list[o[0]].name] = module_jacobian
-
-        if intermediate_outputs:
-            return jacobian_dict
-        else:
-            return jacobian
-
-    def jacobian(self, *args, **kwargs):
-        '''Compute the log jacobian determinant of the whole net.'''
-        warnings.warn("This function computes the log-jacobian determinant, not the "
-                      "jacobian as the name suggest. Will be removed in the future.")
-        return self.log_jacobian(*args, **kwargs)
+            return [outs[(out_node, 0)] for out_node in self.out_nodes]
 
     def log_jacobian_numerical(self, x, c=None, rev=False, h=1e-04):
         '''Approximate log Jacobian determinant via finite differences.'''
@@ -500,18 +357,27 @@ class ReversibleGraphNet(nn.Module):
             return None
 
 
-def topological_order(in_nodes: List[InputNode], nodes: List[Node], out_nodes: List[OutputNode]):
+def topological_order(all_nodes: List[Node], in_nodes: List[InputNode], out_nodes: List[OutputNode]) -> List[Node]:
     """
     Computes the topological order of nodes.
+
+    Parameters:
+        all_nodes: All nodes in the computation graph.
+        in_nodes: Input nodes (must also be present in `all_nodes`)
+        out_nodes: Output nodes (must also be present in `all_nodes`)
+
+    Returns:
+        A sorted list of nodes, where the inputs to some node in the list
+        are available when all previous nodes in the list have been executed.
     """
     # Edge dicts in both directions
-    edges_out_to_in = {node_b: {node_a for node_a, out_idx in node_b.inputs} for node_b in nodes + out_nodes}
+    edges_out_to_in = {node_b: {node_a for node_a, out_idx in node_b.inputs} for node_b in all_nodes + out_nodes}
     edges_in_to_out = defaultdict(list)
     for node_out, node_ins in edges_out_to_in:
         for node_in in node_ins:
             edges_in_to_out[node_in].append(node_out)
 
-    # Kahn's algorithm
+    # Kahn's algorithm starting from the output nodes
     sorted_nodes = []
     no_pending_edges = deque(out_nodes)
 
