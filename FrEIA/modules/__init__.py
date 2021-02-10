@@ -5,6 +5,7 @@ needed compared to the base class is an @staticmethod otuput_dims, and the
 
 Coupling blocks:
 
+* InvertibleModule
 * AllInOneBlock
 * NICECouplingBlock
 * RNVPCouplingBlock
@@ -60,6 +61,7 @@ from .orthogonal import *
 from .inv_auto_layers import *
 from .invertible_resnet import *
 from .gaussian_mixture import *
+from .base import *
 
 __all__ = [
             'AllInOneBlock',
@@ -76,6 +78,7 @@ __all__ = [
             'InvAutoActTwoSided',
             'InvAutoConv2D',
             'InvAutoFC',
+            'InvertibleModule',
             'LearnedElementwiseScaling',
             'orthogonal_layer',
             'conv_1x1',
