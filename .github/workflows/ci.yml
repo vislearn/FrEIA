@@ -42,7 +42,7 @@ jobs:
       #https://github.com/phohenecker/torch-test-case
       run: |
         pwd && ls 
-        python -m unittest tests/
+        python -m unittest tests/test_*py
 
     # - name: Test with pytest
     #   run: |
