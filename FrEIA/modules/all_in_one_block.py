@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from scipy.stats import special_ortho_group
 
+
 class AllInOneBlock(InvertibleModule):
     '''Module combining the most common operations in a normalizing flow or similar model.
 
@@ -75,18 +76,18 @@ class AllInOneBlock(InvertibleModule):
         self.splits = [split_len1, split_len2]
 
         try:
-            self.permute_function = {0 : F.linear,
-                                     1 : F.conv1d,
-                                     2 : F.conv2d,
-                                     3 : F.conv3d}[self.input_rank]
+            self.permute_function = {0: F.linear,
+                                     1: F.conv1d,
+                                     2: F.conv2d,
+                                     3: F.conv3d}[self.input_rank]
         except KeyError:
             raise ValueError(f"Data is {1 + self.input_rank}D. Must be 1D-4D.")
 
-        self.in_channels = channels
-        self.clamp = affine_clamping
-        self.GIN = gin_block
+        self.in_channels         = channels
+        self.clamp               = affine_clamping
+        self.GIN                 = gin_block
         self.reverse_pre_permute = reverse_permutation
-        self.householder = learned_householder_permutation
+        self.householder         = learned_householder_permutation
 
         if permute_soft and channels > 512:
             warnings.warn(("Soft permutation will take a very long time to initialize "
@@ -98,7 +99,7 @@ class AllInOneBlock(InvertibleModule):
         # the 'magic numbers' (specifically for sigmoid) scale the activation to
         # a sensible range.
         if global_affine_type == 'SIGMOID':
-            global_scale = 2. - np.log(10. / global_affine_init -1.)
+            global_scale = 2. - np.log(10. / global_affine_init - 1.)
             self.global_scale_activation = (lambda a: 10 * torch.sigmoid(a - 2.))
         elif global_affine_type == 'SOFTPLUS':
             global_scale = 2. * np.log(np.exp(0.5 * 10. * global_affine_init) - 1)
@@ -111,14 +112,14 @@ class AllInOneBlock(InvertibleModule):
             raise ValueError('Global affine activation must be "SIGMOID", "SOFTPLUS" or "EXP"')
 
         self.global_scale = nn.Parameter(torch.ones(1, self.in_channels, *([1] * self.input_rank)) * float(global_scale))
-        self.global_offset = nn.Parameter(torch.zeros(1, self.in_channels,  *([1] * self.input_rank)))
+        self.global_offset = nn.Parameter(torch.zeros(1, self.in_channels, *([1] * self.input_rank)))
 
         if permute_soft:
             w = special_ortho_group.rvs(channels)
         else:
-            w = np.zeros((channels,channels))
-            for i,j in enumerate(np.random.permutation(channels)):
-                w[i,j] = 1.
+            w = np.zeros((channels, channels))
+            for i, j in enumerate(np.random.permutation(channels)):
+                w[i, j] = 1.
 
         if self.householder:
             # instead of just the permutation matrix w, the learned housholder
@@ -130,9 +131,9 @@ class AllInOneBlock(InvertibleModule):
             self.w_0 = nn.Parameter(torch.FloatTensor(w), requires_grad=False)
         else:
             self.w_perm = nn.Parameter(torch.FloatTensor(w).view(channels, channels, *([1] * self.input_rank)),
-                                  requires_grad=False)
+                                       requires_grad=False)
             self.w_perm_inv = nn.Parameter(torch.FloatTensor(w.T).view(channels, channels, *([1] * self.input_rank)),
-                                  requires_grad=False)
+                                           requires_grad=False)
 
         if subnet_constructor is None:
             raise ValueError("Please supply a callable subnet_constructor"
@@ -166,7 +167,7 @@ class AllInOneBlock(InvertibleModule):
                     perm_log_jac)
         else:
             return (self.permute_function(x * scale + self.global_offset, self.w_perm),
-                   perm_log_jac)
+                    perm_log_jac)
 
     def _pre_permute(self, x, rev=False):
         '''Permutes before the coupling block, only used if
@@ -186,15 +187,15 @@ class AllInOneBlock(InvertibleModule):
         a *= 0.1
         ch = x.shape[1]
 
-        sub_jac = self.clamp * torch.tanh(a[:,:ch])
+        sub_jac = self.clamp * torch.tanh(a[:, :ch])
         if self.GIN:
             sub_jac -= torch.mean(sub_jac, dim=self.sum_dims, keepdim=True)
 
         if not rev:
-            return (x * torch.exp(sub_jac) + a[:,ch:],
+            return (x * torch.exp(sub_jac) + a[:, ch:],
                     torch.sum(sub_jac, dim=self.sum_dims))
         else:
-            return ((x - a[:,ch:]) * torch.exp(-sub_jac),
+            return ((x - a[:, ch:]) * torch.exp(-sub_jac),
                     -torch.sum(sub_jac, dim=self.sum_dims))
 
     def forward(self, x, c=[], rev=False, jac=True):
@@ -202,7 +203,7 @@ class AllInOneBlock(InvertibleModule):
         if self.householder:
             self.w_perm = self._construct_householder_permutation()
             if rev or self.reverse_pre_permute:
-                self.w_perm_inv = self.w_perm.transpose(0,1).contiguous()
+                self.w_perm_inv = self.w_perm.transpose(0, 1).contiguous()
 
         if rev:
             x, global_scaling_jac = self._permute(x[0], rev=True)
