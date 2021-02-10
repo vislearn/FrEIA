@@ -25,7 +25,7 @@ class InvertibleModule(nn.Module):
     ```
     The `module` returns $\log \det J = \log \det \frac{\partial f}{\partial x}$
     of the operation in forward mode, and
-    $-\log \det J = \log \det \frac{\partial f}{\partial z} = -\log \det \frac{\partial f}{\partial z}$
+    $-\log \det J = \log \det \frac{\partial f^{-1}}{\partial z} = -\log \det \frac{\partial f}{\partial x}$
     in backward mode (`rev=True`).
 
     Then, `torch.allclose(x, x_rev[0]) == True` and `jac == -jac_rev`.
@@ -59,7 +59,7 @@ class InvertibleModule(nn.Module):
           Let $f$ be the function that the subclass represents. Then:
           $$$
           J = \log \det \frac{\partial f}{\partial x} \\
-          -J = \log \det \frac{\partial f}{\partial z}.
+          -J = \log \det \frac{\partial f^{-1}}{\partial z}.
           $$$
           Any subclass MUST return $J$ for forward evaluation (`rev=False`),
           and $-J$ for backward evaluation (`rev=True`).
