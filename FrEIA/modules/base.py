@@ -13,6 +13,15 @@ class InvertibleOperator(nn.Module):
         self.dims_c = dims_c
 
     def forward(self, x: Union[Iterable[Tensor], Tensor], c: Union[Iterable[Tensor], Tensor], rev=False, jac=True):
+        """
+        perform a forward pass through this module/operator
+        
+        input parameters:
+        x   .. input data (can be an iterable over a tensor or a tensor)
+        c   .. conditioing data (can be an iterable over a tensor or a tensor)
+        rev .. perform backward pass
+        jac .. return jacobian
+        """
         # Tupelize input
         is_tensor_input = is_tensor(x)
         if is_tensor_input:
