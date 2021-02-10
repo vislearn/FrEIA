@@ -3,6 +3,10 @@ nodes of the ReversibleGraphNet class. The only additional things that are
 needed compared to the base class is an @staticmethod otuput_dims, and the
 'rev'-argument of the forward-method.
 
+Abstract template:
+
+* InvertibleModule
+
 Coupling blocks:
 
 * AllInOneBlock
@@ -50,7 +54,11 @@ Reshaping:
 
 '''
 
-from .base import InvertibleModule
+
+# Import the base class first
+from .base import *
+
+# Then all inheriting modules
 from .all_in_one_block import *
 from .fixed_transforms import *
 from .reshapes import *
@@ -77,6 +85,7 @@ __all__ = [
             'InvAutoActTwoSided',
             'InvAutoConv2D',
             'InvAutoFC',
+            'InvertibleModule',
             'LearnedElementwiseScaling',
             'orthogonal_layer',
             'conv_1x1',
@@ -103,8 +112,8 @@ __all__ = [
             'Fixed1x1Conv',
             'SplitChannel',
             'ConcatChannel',
-            'Split1D',
-            'Concat1d',
+            'Split',
+            'Concat',
             'OrthogonalTransform',
             'HouseholderPerm',
             'IRevNetDownsampling',
