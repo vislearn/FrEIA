@@ -421,7 +421,7 @@ class ReversibleGraphNet(nn.Module):
                 module_jacobian = self.module_list[o[0]].jacobian(x, c=c, rev=rev)
             else:
                 module_jacobian = self.module_list[o[0]].jacobian(x, rev=rev)
-            jacobian += module_jacobian
+            jacobian = jacobian + module_jacobian
             jacobian_dict[self.node_list[o[0]].name] = module_jacobian
 
         if intermediate_outputs:
