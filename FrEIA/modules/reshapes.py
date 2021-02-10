@@ -227,7 +227,7 @@ class Reshape(nn.Module):
         super().__init__()
         self.size = dims_in[0]
         self.target_dim = target_dim
-        assert int(np.prod(dims_in[0])) == int(np.prod(self.target_dim)), "Output and input dim don't match."
+        assert int(np.prod(dims_in[0])) == int(np.prod(self.target_dim)), f"Incoming dimensions ({dims_in[0]}) and target_dim ({target_dim}) don't match."
 
     def forward(self, x, rev=False):
         if not rev:
