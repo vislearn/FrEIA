@@ -25,7 +25,7 @@ class InvertibleModule(nn.Module):
     ```
     The `module` returns $\log \det J = \log \det \frac{\partial f}{\partial x}$
     of the operation in forward mode, and
-    $-\log \det J = \log \det \frac{\partial f}{\partial z} = -\log \det \frac{\partial f}{\partial z}$
+    $-\log \det J = \log \det \frac{\partial f^{-1}}{\partial z} = -\log \det \frac{\partial f}{\partial x}$
     in backward mode (`rev=True`).
 
     Then, `torch.allclose(x, x_rev[0]) == True` and `jac == -jac_rev`.
@@ -51,8 +51,18 @@ class InvertibleModule(nn.Module):
         through this module/operator.
 
         *Note to implementers:*
-        Subclasses MUST return a Jacobian when jac=True.
-        Subclasses CAN return a valid Jacobian when jac=False (not punished).
+        - Subclasses MUST return a Jacobian when jac=True, but CAN return a
+          valid Jacobian when jac=False (not punished). The latter is only recommended
+          if the computation of the Jacobian is trivial.
+        - Subclasses MUST follow the convention that the returned Jacobian be
+          consistent with the evaluation direction. Let's make this more precise:
+          Let $f$ be the function that the subclass represents. Then:
+          $$$
+          J = \log \det \frac{\partial f}{\partial x} \\
+          -J = \log \det \frac{\partial f^{-1}}{\partial z}.
+          $$$
+          Any subclass MUST return $J$ for forward evaluation (`rev=False`),
+          and $-J$ for backward evaluation (`rev=True`).
 
         input parameters:
         x_or_z .. input data (array-like of one or more tensors)
