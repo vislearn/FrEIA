@@ -76,7 +76,7 @@ class RNVPCouplingBlock(nn.Module):
         self.max_s = exp(clamp)
         self.min_s = exp(-clamp)
 
-        assert all([dims_c[i][1:] == dims_in[0][1:] for i in range(len(dims_c))]), \
+        assert all([tuple(dims_c[i][1:]) == tuple(dims_in[0][1:]) for i in range(len(dims_c))]), \
             "Dimensions of input and one or more conditions don't agree."
         self.conditional = (len(dims_c) > 0)
         condition_length = sum([dims_c[i][0] for i in range(len(dims_c))])
@@ -210,13 +210,13 @@ class GLOWCouplingBlock(nn.Module):
 
 class GINCouplingBlock(nn.Module):
     '''Coupling Block following the GIN design. The difference from the RealNVP coupling blocks
-    is that it uses a single subnetwork (like the GLOW coupling blocks) to jointly predict [s_i, t_i], 
-    instead of two separate subnetworks, and the Jacobian determinant is constrained to be 1. 
+    is that it uses a single subnetwork (like the GLOW coupling blocks) to jointly predict [s_i, t_i],
+    instead of two separate subnetworks, and the Jacobian determinant is constrained to be 1.
     This constrains the block to be volume-preserving. Volume preservation is achieved by subtracting
-    the mean of the output of the s subnetwork from itself. 
-    Note: this implementation differs slightly from the originally published implementation, which 
+    the mean of the output of the s subnetwork from itself.
+    Note: this implementation differs slightly from the originally published implementation, which
     scales the final component of the s subnetwork so the sum of the outputs of s is zero. There was
-    no difference found between the implementations in practice, but subtracting the mean guarantees 
+    no difference found between the implementations in practice, but subtracting the mean guarantees
     that all outputs of s are at most ±exp(clamp), which might be more stable in certain cases.
 
     subnet_constructor: function or class, with signature constructor(dims_in, dims_out).
@@ -267,7 +267,7 @@ class GINCouplingBlock(nn.Module):
             s1 = self.log_e(s1)
             s1 -= s1.mean(1, keepdim=True)
             y2 = torch.exp(s1) * x2 + t1
-            
+
             self.last_jac = (  torch.sum(s1, dim=tuple(range(1, self.ndims+1)))
                              + torch.sum(s2, dim=tuple(range(1, self.ndims+1))))
 
