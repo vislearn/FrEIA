@@ -3,61 +3,34 @@ from copy import deepcopy
 import torch
 import torch.nn as nn
 
-
-class SplitChannel(nn.Module):
-    '''Splits along channels to produce two separate outputs (for skip connections
-    and such).'''
-    def __init__(self, dims_in):
-        super().__init__()
-        assert len(dims_in) == 1, "Use channel_merge_layer instead"
-        self.channels = dims_in[0][0]
-
-    def forward(self, x, rev=False):
-        if rev:
-            return [torch.cat(x, dim=1)]
-        else:
-            return [x[0][:, :self.channels//2], x[0][:, self.channels//2:]]
-
-    def jacobian(self, x, rev=False):
-        # TODO batch size
-        return 0
-
-    def output_dims(self, input_dims):
-        assert len(input_dims) == 1, "Use channel_merge_layer instead"
-        return [[input_dims[0][0]//2, *input_dims[0][1:]],
-                [input_dims[0][0] - input_dims[0][0]//2, *input_dims[0][1:]]]
+from .base import InvertibleModule
 
 
-class ConcatChannel(nn.Module):
-    '''Merges along channels from two separate inputs, to one output
-    (for skip connections etc.)'''
-    def __init__(self, dims_in):
-        super().__init__()
-        assert len(dims_in) == 2, "Can only merge 2 inputs"
-        self.ch1 = dims_in[0][0]
-        self.ch2 = dims_in[1][0]
+class Split(InvertibleModule):
+    """Invertible split operation.
 
-    def forward(self, x, rev=False):
-        if rev:
-            return [x[0][:, :self.ch1], x[0][:, self.ch1:]]
-        else:
-            return [torch.cat(x, dim=1)]
+    Splits the incoming tensor along the given dimension, and returns a list of
+    separate output tensors. The inverse is the corresponding merge operation.
 
-    def jacobian(self, x, rev=False):
-        # TODO batch size
-        return 0
+    Attributes:
+      dims_in:
+        A list of tuples containing the non-batch dimensionality of all
+        incoming tensors. Handled automatically during compute graph setup.
+        Split only takes one input tensor.
+      split_size_or_sections:
+        Same behavior as in `torch.split()`. Either an integer that is a valid
+        divisor of the size of `dim`, or a list of integers that add up to the
+        size of `dim`. Defaults to `2`, i.e. splitting the input in two halves
+        of equal size.
+      dim:
+        Index of the dimension along which to split, not counting the batch
+        dimension. Defaults to 0, i.e. the channel dimension in structured data.
+    """
 
-    def output_dims(self, input_dims):
-        assert len(input_dims) == 2, "Can only merge 2 inputs"
-
-        return [[input_dims[0][0] + input_dims[1][0], *input_dims[0][1:]]]
-
-
-class Split1D(nn.Module):
-    '''Splits along given dimension to produce list of separate outputs with
-    given size.'''
-    def __init__(self, dims_in, split_size_or_sections, dim):
-        super().__init__()
+    def __init__(self, dims_in, split_size_or_sections=2, dim=0):
+        """Inits the Split module with the attributes described above and
+        checks that split sizes and dimensionality are compatible."""
+        super().__init__(dims_in)
         assert len(dims_in) == 1, "Split layer takes exactly one input tensor"
         assert len(dims_in[0]) >= dim, "Split dimension index out of range"
         if isinstance(split_size_or_sections, int):
@@ -78,6 +51,7 @@ class Split1D(nn.Module):
         self.dim = dim
 
     def forward(self, x, rev=False):
+        """See super class InvertibleModule."""
         if rev:
             return [torch.cat(x, dim=self.dim+1)]
         else:
@@ -85,26 +59,48 @@ class Split1D(nn.Module):
                                dim=self.dim+1)
 
     def jacobian(self, x, rev=False):
-        # TODO batch size
+        """See super class InvertibleModule."""
         return 0
 
     def output_dims(self, input_dims):
+        """See super class InvertibleModule."""
         assert len(input_dims) == 1, ("Split layer takes exactly one input "
                                       "tensor")
+        # Turn number of sections into list of section sizes
         if isinstance(self.split_size_or_sections, int):
             self.split_size_or_sections = (
-                [self.split_size_or_sections]
-                * (input_dims[0][self.dim] // self.split_size_or_sections)
+                [input_dims[0][self.dim] // self.split_size_or_sections]
+                * self.split_size_or_sections
             )
-        return [[input_dims[0][j] if j != self.dim else split_size
-                 for j in range(len(input_dims[0]))]
+        # Assemble dims of all resulting outputs
+        return [tuple(input_dims[0][j] if (j != self.dim) else split_size
+                      for j in range(len(input_dims[0])))
                 for split_size in self.split_size_or_sections]
 
 
-class Concat1d(nn.Module):
-    '''Merge multiple tensors along given dimension.'''
-    def __init__(self, dims_in, dim):
-        super().__init__()
+class Concat(InvertibleModule):
+    """Invertible merge operation.
+
+    Concatenates a list of incoming tensors along a given dimension and passes
+    on the result. Inverse is the corresponding split operation.
+
+    Attributes:
+      dims_in:
+        A list of tuples containing the non-batch dimensionality of all
+        incoming tensors. Handled automatically during compute graph setup.
+        Dimensionality of incoming tensors must be identical, except in the
+        merge dimension `dim`. Concat only makes sense with multiple input
+        tensors.
+      dim:
+        Index of the dimension along which to concatenate, not counting the
+        batch dimension. Defaults to 0, i.e. the channel dimension in structured
+        data.
+    """
+
+    def __init__(self, dims_in, dim=0):
+        """Inits the Concat module with the attributes described above and
+        checks that all dimensions are compatible."""
+        super().__init__(dims_in)
         assert len(dims_in) > 1, ("Concatenation only makes sense for "
                                   "multiple inputs")
         assert len(dims_in[0]) >= dim, "Merge dimension index out of range"
@@ -123,6 +119,7 @@ class Concat1d(nn.Module):
                                        for i in range(len(dims_in))]
 
     def forward(self, x, rev=False):
+        """See super class InvertibleModule."""
         if rev:
             return torch.split(x[0], self.split_size_or_sections,
                                dim=self.dim+1)
@@ -130,16 +127,19 @@ class Concat1d(nn.Module):
             return [torch.cat(x, dim=self.dim+1)]
 
     def jacobian(self, x, rev=False):
-        # TODO batch size
+        """See super class InvertibleModule."""
         return 0
 
     def output_dims(self, input_dims):
+        """See super class InvertibleModule."""
         assert len(input_dims) > 1, ("Concatenation only makes sense for "
                                      "multiple inputs")
         output_dims = deepcopy(list(input_dims[0]))
         output_dims[self.dim] = sum(input_dim[self.dim]
                                     for input_dim in input_dims)
-        return [output_dims]
+        return [tuple(output_dims)]
+
+
 
 import warnings
 
@@ -154,7 +154,11 @@ def _deprecated_by(orig_class):
 
     return deprecated_class
 
-channel_split_layer = _deprecated_by(SplitChannel)
-channel_merge_layer = _deprecated_by(ConcatChannel)
-split_layer = _deprecated_by(Split1D)
-cat_layer = _deprecated_by(Concat1d)
+channel_split_layer = _deprecated_by(Split)
+split_layer = _deprecated_by(Split)
+Split1D = _deprecated_by(Split)
+SplitChannel = _deprecated_by(Split)
+channel_merge_layer = _deprecated_by(Concat)
+cat_layer = _deprecated_by(Concat)
+Concat1d = _deprecated_by(Concat)
+ConcatChannel = _deprecated_by(Concat)
