@@ -18,13 +18,10 @@ class Node:
     The user specifies the input, and the underlying module computes the
     number of outputs.
     """
-    module: InvertibleModule
 
-    input_dims: List[Tuple[int]]
-    condition_shapes: List[Tuple[int]]
-    output_dims: List[Tuple[int]]
-
-    def __init__(self, inputs: Union["Node", Tuple["Node", int], Iterable[Tuple["Node", int]]], module_type, module_args: dict, conditions=None, name=None):
+    def __init__(self, inputs: Union["Node", Tuple["Node", int],
+                                     Iterable[Tuple["Node", int]]],
+                 module_type, module_args: dict, conditions=None, name=None):
         if conditions is None:
             conditions = []
 
@@ -41,12 +38,47 @@ class Node:
         else:
             self.conditions = [conditions, ]
 
-        # Entry at position co -> (n, ci) means: My output co goes to input channel ci of n.
         self.outputs: List[Tuple[Node, int]] = []
         self.module_type = module_type
         self.module_args = module_args
 
-    def parse_inputs(self, inputs: Union["Node", Tuple["Node", int], Iterable[Tuple["Node", int]]]) -> List[Tuple["Node", int]]:
+        input_shapes = [input_node.output_dims[node_out_idx]
+                        for input_node, node_out_idx in self.inputs]
+        condition_shapes = [cond_node.output_dims[node_out_idx]
+                            for cond_node, node_out_idx in self.conditions]
+
+        self.input_dims = input_shapes
+        self.condition_dims = condition_shapes
+        self.module, self.output_dims = self.build_module(condition_shapes,
+                                                          input_shapes)
+
+        # Notify preceding nodes that their output ends up here
+        # Entry at position co -> (n, ci) means:
+        # My output co goes to input channel ci of n.
+        for in_idx, (in_node, out_idx) in enumerate(self.inputs):
+            in_node.outputs.append((self, in_idx))
+
+    def __getattr__(self, item: str):
+        if item.startswith("out_"):
+            return self, int(item[4:])
+        raise AttributeError(item)
+
+    def build_module(self, condition_shapes, input_shapes) \
+            -> Tuple[InvertibleModule, List[Tuple[int]]]:
+        """
+        Instantiates the module and determines the output dimension by
+        calling InvertibleModule#output_dims.
+        """
+        if len(self.conditions) > 0:
+            module = self.module_type(input_shapes, dims_c=condition_shapes,
+                                      **self.module_args)
+        else:
+            module = self.module_type(input_shapes, **self.module_args)
+        return module, module.output_dims(input_shapes)
+
+    def parse_inputs(self, inputs: Union["Node", Tuple["Node", int],
+                                         Iterable[Tuple["Node", int]]]) \
+            -> List[Tuple["Node", int]]:
         """
         Converts specified inputs to a node to a canonical format.
         Inputs can be specified in three forms:
@@ -59,47 +91,16 @@ class Node:
         """
         if isinstance(inputs, (list, tuple)):
             if isinstance(inputs[0], (list, tuple)):
-                pass
+                return inputs
             elif len(inputs) == 2:
                 return [inputs, ]
             else:
-                raise RuntimeError(f"Cannot parse inputs provided to node '{self.name}'.")
+                raise RuntimeError(
+                    f"Cannot parse inputs provided to node '{self.name}'.")
         else:
             assert isinstance(inputs, Node), "Received object of invalid type " \
                                              f"({type(inputs)}) as input for node '{self.name}'."
-            inputs = [(inputs, 0), ]
-
-        for in_idx, (in_node, out_idx) in enumerate(inputs):
-            in_node.outputs.append((self, in_idx))
-
-        return inputs
-
-    def build_module(self, input_shapes, condition_shapes, verbose=True):
-        """
-        Initialize the pytorch nn.Module of this node and determine the output shapes.
-        """
-        assert len(input_shapes) == len(self.inputs)
-        assert len(condition_shapes) == len(self.conditions)
-
-        assert self.module is None, f"Node {self} has been initialised before. This may occur if you insert a node several times into a ReversibleGraphNet."
-
-        self.input_dims = input_shapes
-        self.condition_shapes = condition_shapes
-
-        if len(self.conditions) > 0:
-            self.module = self.module_type(input_shapes, dims_c=condition_shapes, **self.module_args)
-        else:
-            self.module = self.module_type(self.input_dims, **self.module_args)
-
-        if verbose:
-            print(f"Node '{self.name}' takes the following inputs:")
-            for d, (n, c) in zip(self.input_dims, self.inputs):
-                print(f"\t Output #{c} of node '{n.name}' with dims {d}")
-            for c in self.conditions:
-                print(f"\t conditioned on node '{c.name}' with dims {c.data.shape}")
-            print()
-
-        self.output_dims = self.module.output_dims(input_shapes)
+            return [(inputs, 0), ]
 
 
 class InputNode(Node):
@@ -110,10 +111,13 @@ class InputNode(Node):
 
     def __init__(self, *dims: int, name=None):
         super().__init__([], None, {}, name=name)
-        self.output_dims = [dims]
 
-    def build_module(self, input_shapes, condition_shapes, verbose=True):
-        raise AssertionError("build_module on an InputNode should never be called.")
+    def build_module(self, condition_shapes, input_shapes) \
+            -> Tuple[None, List[Tuple[int]]]:
+        if len(condition_shapes) > 0:
+            raise ValueError(
+                f"{self.__class__.__name__} does not accept conditions")
+        return None, input_shapes
 
 
 class ConditionNode(Node):
@@ -124,23 +128,30 @@ class ConditionNode(Node):
 
     def __init__(self, *dims: int, name=None):
         super().__init__([], None, {}, name=name)
-        self.output_dims = [dims]
 
-    def build_module(self, input_shapes, condition_shapes, verbose=True):
-        raise AssertionError("build_module on an InputNode should never be called.")
+    def build_module(self, condition_shapes, input_shapes) \
+            -> Tuple[None, List[Tuple[int]]]:
+        if len(condition_shapes) > 0:
+            raise ValueError(
+                f"{self.__class__.__name__} does not accept conditions")
+        return None, input_shapes
 
 
 class OutputNode(Node):
     """
     Special type of node that represents the output of the whole net (or the
-    input when running in reverse)
+    input when running in reverse).
     """
 
-    def __init__(self, name=None):
-        super().__init__([], None, {}, name=name)
+    def __init__(self, inputs, name=None):
+        super().__init__(inputs, None, {}, name=name)
 
-    def build_module(self, input_shapes, condition_shapes, verbose=True):
-        raise AssertionError("build_module on an InputNode should never be called.")
+    def build_module(self, condition_shapes, input_shapes) \
+            -> Tuple[None, List[Tuple[int]]]:
+        if len(condition_shapes) > 0:
+            raise ValueError(
+                f"{self.__class__.__name__} does not accept conditions")
+        return None, []
 
 
 class ReversibleGraphNet(InvertibleModule):
@@ -149,15 +160,19 @@ class ReversibleGraphNet(InvertibleModule):
     InvertibleModule and supports the same methods.
 
     The forward method has an additional option 'rev', with which the net can be
-    computed in reverse. Passing `jac` to the forward method additionally computes
-    the log determinant of the (inverse) Jacobian of the forward (backward) pass.
+    computed in reverse. Passing `jac` to the forward method additionally
+    computes the log determinant of the (inverse) Jacobian of the forward
+    (backward) pass.
     """
 
-    def __init__(self, node_list, ind_in=None, ind_out=None, verbose=True, force_tuple_output=False):
+    def __init__(self, node_list, ind_in=None, ind_out=None, verbose=True,
+                 force_tuple_output=False):
         # Gather lists of input, output and condition nodes
         if ind_in is not None:
-            warnings.warn("Use of 'ind_in' and 'ind_out' for ReversibleGraphNet is deprecated, " +
-                          "input and output nodes are detected automatically.")
+            warnings.warn(
+                "Use of 'ind_in' and 'ind_out' for ReversibleGraphNet is "
+                "deprecated, input and output nodes are detected "
+                "automatically.")
             if isinstance(ind_in, int):
                 ind_in = [ind_in]
 
@@ -168,8 +183,10 @@ class ReversibleGraphNet(InvertibleModule):
         assert len(in_nodes) > 0, "No input nodes specified."
 
         if ind_out is not None:
-            warnings.warn("Use of 'ind_in' and 'ind_out' for ReversibleGraphNet is deprecated, " +
-                          "input and output nodes are detected automatically.")
+            warnings.warn(
+                "Use of 'ind_in' and 'ind_out' for ReversibleGraphNet is "
+                "deprecated, input and output nodes are detected "
+                "automatically.")
             if isinstance(ind_out, int):
                 ind_out = [ind_out]
 
@@ -179,15 +196,19 @@ class ReversibleGraphNet(InvertibleModule):
                          if isinstance(node_list[i], OutputNode)]
         assert len(out_nodes) > 0, "No output nodes specified."
 
-        condition_nodes = [i for i in range(len(node_list)) if isinstance(node_list[i], ConditionNode)]
+        condition_nodes = [i for i in range(len(node_list)) if
+                           isinstance(node_list[i], ConditionNode)]
 
-        # Build the graph and tell nodes about their dimensions so that they can build the modules
+        # Build the graph and tell nodes about their dimensions so that they can
+        # build the modules
         node_list = topological_order(in_nodes, node_list, out_nodes)
         node_out_shapes: Dict[Tuple[Node, int], List[Tuple[int]]] = {}
         global_in_shapes: List[Tuple[int]] = []
         for node in self.node_list:
-            input_shapes = [node_out_shapes[in_tuple] for in_tuple in node.inputs]
-            condition_shapes = [node_out_shapes[con_tuple] for con_tuple in node.conditions]
+            input_shapes = [node_out_shapes[in_tuple] for in_tuple in
+                            node.inputs]
+            condition_shapes = [node_out_shapes[con_tuple] for con_tuple in
+                                node.conditions]
             node.build_module(input_shapes, condition_shapes, verbose=verbose)
             for out_idx, output_shape in enumerate(node.output_dims):
                 node_out_shapes[node, out_idx] = output_shape
@@ -197,7 +218,8 @@ class ReversibleGraphNet(InvertibleModule):
         # Only now we
         super().__init__(global_in_shapes, )
 
-        # Now we can store everything -- before calling super constructor, nn.Module doesn't allow assigning anything
+        # Now we can store everything -- before calling super constructor,
+        # nn.Module doesn't allow assigning anything
         self.in_nodes = in_nodes
         self.condition_nodes = condition_nodes
         self.out_nodes = out_nodes
@@ -205,13 +227,17 @@ class ReversibleGraphNet(InvertibleModule):
         self.force_tuple_output = force_tuple_output
         self.module_list = nn.ModuleList([n.module for n in node_list])
 
-    def forward(self, x_or_z: Union[Tensor, Iterable[Tensor]], c: Iterable[Tensor], rev: bool = False, jac: bool = True, intermediate_outputs: bool = False) -> Tuple[Tuple[Tensor], Tensor]:
+    def forward(self, x_or_z: Union[Tensor, Iterable[Tensor]],
+                c: Iterable[Tensor], rev: bool = False, jac: bool = True,
+                intermediate_outputs: bool = False) -> Tuple[
+        Tuple[Tensor], Tensor]:
         """
         Forward or backward computation of the whole net.
         """
         jacobian = None
         outs = {}
-        for tensor, start_node in zip(x_or_z, self.out_nodes if rev else self.in_nodes):
+        for tensor, start_node in zip(x_or_z,
+                                      self.out_nodes if rev else self.in_nodes):
             outs[start_node, 0] = tensor
         for tensor, condition_node in zip(c, self.condition_nodes):
             outs[condition_node, 0] = tensor
@@ -235,23 +261,41 @@ class ReversibleGraphNet(InvertibleModule):
                 mod_out = node.module(mod_in, rev=rev, jac=jac)
 
             if torch.is_tensor(mod_out):
-                raise ValueError(f"The node {node}'s module returned a tensor only. This is deprecated without fallback. Please follow the signature of InvertibleOperator#forward in your module if you want to use it in a ReversibleGraphNet.")
+                raise ValueError(
+                    f"The node {node}'s module returned a tensor only. This "
+                    f"is deprecated without fallback. Please follow the "
+                    f"signature of InvertibleOperator#forward in your module "
+                    f"if you want to use it in a ReversibleGraphNet.")
             if len(mod_out) != 2:
-                raise ValueError(f"The node {node}'s module returned a tuple of length {len(mod_out)}, but should return a tuple `z_or_x, jac`.")
+                raise ValueError(
+                    f"The node {node}'s module returned a tuple of length "
+                    f"{len(mod_out)}, but should return a tuple `z_or_x, jac`.")
 
             out, mod_jac = mod_out
 
             if torch.is_tensor(out):
                 # Not according to specification!
-                add_text = " Consider passing force_tuple_output=True to the contained ReversibleGraphNet" if isinstance(node.module, ReversibleGraphNet) else ""
-                raise ValueError(f"The node {node}'s module returns a tensor.{add_text}")
+                if isinstance(node.module, ReversibleGraphNet):
+                    add_text = (" Consider passing force_tuple_output=True to"
+                                " the contained ReversibleGraphNet")
+                else:
+                    add_text = ""
+                raise ValueError(
+                    f"The node {node}'s module returns a tensor.{add_text}")
             if len(out) != len(node.inputs if rev else node.outputs):
-                raise ValueError(f"The node {node}'s module returned {len(out)} output variables, but should return {len(node.inputs if rev else node.outputs)}.")
+                raise ValueError(
+                    f"The node {node}'s module returned {len(out)} output "
+                    f"variables, but should return "
+                    f"{len(node.inputs if rev else node.outputs)}.")
             if not torch.is_tensor(mod_jac):
                 if jac:
-                    raise ValueError(f"The node {node}'s module returned a non-tensor as Jacobian.")
+                    raise ValueError(
+                        f"The node {node}'s module returned a non-tensor as "
+                        f"Jacobian.")
                 elif not jac and mod_jac is not None:
-                    raise ValueError(f"The node {node}'s module returned neither None nor a Jacobian.")
+                    raise ValueError(
+                        f"The node {node}'s module returned neither None nor a "
+                        f"Jacobian.")
 
             for out_idx, out_value in enumerate(out):
                 outs[self, out_idx] = out_value
@@ -297,8 +341,10 @@ class ReversibleGraphNet(InvertibleModule):
             y_upper = self.forward(x_upper, c=c, rev=rev, jac=False)
             y_lower = self.forward(x_lower, c=c, rev=rev, jac=False)
             if isinstance(y_upper, (list, tuple)):
-                y_upper = torch.cat([y_i.view(batch_size, -1) for y_i in y_upper], dim=1)
-                y_lower = torch.cat([y_i.view(batch_size, -1) for y_i in y_lower], dim=1)
+                y_upper = torch.cat(
+                    [y_i.view(batch_size, -1) for y_i in y_upper], dim=1)
+                y_lower = torch.cat(
+                    [y_i.view(batch_size, -1) for y_i in y_lower], dim=1)
             J_num[:, :, i] = (y_upper - y_lower).view(batch_size, -1) / (2 * h)
         logdet_num = x[0].new_zeros(batch_size)
         for i in range(batch_size):
@@ -326,7 +372,8 @@ class ReversibleGraphNet(InvertibleModule):
             return None
 
 
-def topological_order(all_nodes: List[Node], in_nodes: List[InputNode], out_nodes: List[OutputNode]) -> List[Node]:
+def topological_order(all_nodes: List[Node], in_nodes: List[InputNode],
+                      out_nodes: List[OutputNode]) -> List[Node]:
     """
     Computes the topological order of nodes.
 
@@ -340,7 +387,8 @@ def topological_order(all_nodes: List[Node], in_nodes: List[InputNode], out_node
         are available when all previous nodes in the list have been executed.
     """
     # Edge dicts in both directions
-    edges_out_to_in = {node_b: {node_a for node_a, out_idx in node_b.inputs} for node_b in all_nodes + out_nodes}
+    edges_out_to_in = {node_b: {node_a for node_a, out_idx in node_b.inputs} for
+                       node_b in all_nodes + out_nodes}
     edges_in_to_out = defaultdict(list)
     for node_out, node_ins in edges_out_to_in:
         for node_in in node_ins:
