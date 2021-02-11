@@ -33,7 +33,7 @@ class AllInOneBlock(InvertibleModule):
             class or callable f, called as f(channels_in, channels_out) and
             should return a torch.nn.Module
           affine_clamping:
-            clamp the output of the mutliplicative coefficients (before
+            clamp the output of the multiplicative coefficients (before
             exponentiation) to +/- affine_clamping.
           gin_block:
             Turn the block into a GIN block from Sorrenson et al, 2019
@@ -59,7 +59,7 @@ class AllInOneBlock(InvertibleModule):
         channels = dims_in[0][0]
         # rank of the tensors means 1d, 2d, 3d tensor etc.
         self.input_rank = len(dims_in[0]) - 1
-        # tuple contiaining all dims except for batch-dim (used at various points)
+        # tuple containing all dims except for batch-dim (used at various points)
         self.sum_dims = tuple(range(1, 2 + self.input_rank))
 
         if len(dims_c) == 0:
@@ -233,7 +233,7 @@ class AllInOneBlock(InvertibleModule):
         elif self.reverse_pre_permute:
             x_out = self._pre_permute(x_out, rev=True)
 
-        # add the global scaling jacobian to the total.
+        # add the global scaling Jacobian to the total.
         # trick to get the total number of non-channel dimensions:
         # number of elements of the first channel of the first batch member
         n_pixels = x_out[0, :1].numel()
