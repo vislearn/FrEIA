@@ -436,6 +436,127 @@ just enocde image noise, so we can split them off early.
    conv_inn = Ff.ReversibleGraphNet(nodes)
 
 
+Writing Custom Invertible Operations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Custom invertible modules can be written as extensions of the ``Fm.InvertibleModule`` base class. Refer to the documentation of this class for detailed information on requirements. 
+
+Below are two simple examples which illustrate the definition and use of custom modules and can be used as basic templates.
+The first multiplies each dimension of an input tensor by either 1 or 2, chosen in a random but fixed way. 
+The second is a conditional operation which takes two inputs and swaps them if the condition is positive, doing nothing otherwise.
+
+Notes:
+
+* The ``Fm.InvertibleModule`` must be initialized with the ``dims_in`` argument and optionally ``dims_c`` if there is a conditioning input.
+* ``forward`` should return a tuple of outputs (even if there is only one), with additional ``log_jac_det`` term if ``jac==True``. 
+
+Definition:
+
+.. code:: python
+
+		class FixedRandomElementwiseMultiply(Fm.InvertibleModule):
+				
+				def __init__(self, dims_in):
+						super().__init__(dims_in)
+						self.random_factor = torch.randint(1, 3, size=(1, dims_in))
+						
+				def forward(self, x, rev=False, jac=True):
+						if not rev:
+								# forward operation
+								x = x * self.random_factor
+								log_jac_det = self.random_factor.log().sum()
+						else:
+								# backward operation
+								x = x / self.random_factor
+								log_jac_det = -self.random_factor.log().sum()
+						
+						if jac:
+								return (x,), log_jac_det
+						else:
+								return (x,)
+		
+		
+		
+		class ConditionalSwap(Fm.InvertibleModule):
+				
+				def __init__(self, dims_in, dims_c):
+						super().__init__(dims_in, dims_c=dims_c)
+						
+				def forward(self, x, c, rev=False, jac=True):
+						# in this case, the forward and reverse operations are identical
+						# so we don't use the rev argument
+						x1, x2 = x
+						log_jac_det = 0.
+						
+						if c > 0:
+								out = (x2, x1)
+						else:
+								out = (x1, x2)
+						
+						if jac:
+								return out, log_jac_det
+						else:
+								return out
+
+
+Basic Usage Example:
+
+.. code:: python
+
+		BATCHSIZE = 10
+		DIMS_IN = 2
+		
+		# build up basic net using ReversibleSequential
+		net = Ff.ReversibleSequential(DIMS_IN)
+		for i in range(2):
+				net.append(FixedRandomElementwiseMultiply)
+				
+		# define inputs
+		x = torch.randn(BATCHSIZE, DIMS_IN)
+		
+		# run forward
+		z, log_jac_det = net(x)
+		
+		# run in reverse
+		x_rev, log_jac_det_rev = net(z, rev=True)
+
+
+
+More Complicated Example:
+
+.. code:: python
+
+		BATCHSIZE = 10
+		DIMS_IN = 2
+		
+		# define a reversible graph net
+		
+		input_1 = Ff.InputNode(DIMS_IN, name='input_1')
+		input_2 = Ff.InputNode(DIMS_IN, name='input_2')
+		
+		cond = Ff.ConditionNode(1, name='condition')
+		
+		mult_1 = Ff.Node(input_1.out0, FixedRandomElementwiseMultiply, name='mult_1')
+		cond_swap = Ff.Node((mult.out0, input_2.out0), ConditionalSwap, conditions=cond, name='conditional_swap')
+		mult_2 = Ff.Node(cond_swap.out1, FixedRandomElementwiseMultiply, name='mult_2')
+		
+		output_1 = Ff.OutputNode(cond_swap.out0, name='output_1')
+		output_2 = Ff.OutputNode(mult_2.out0, name='output_2')
+		
+		net = Ff.ReversibleGraphNet([input_1, input_2, cond, mult_1, cond_swap, mult_2, output_1, output_2])
+		
+		# define inputs
+		x1 = torch.randn(BATCHSIZE, DIMS_IN)
+		x2 = torch.randn(BATCHSIZE, DIMS_IN)
+		c = torch.randn(BATCHSIZE)
+		
+		# run forward
+		(z1, z2), log_jac_det = net((x1, x2), c=c)
+		
+		# run in reverse without returning Jacobian term
+		x1_rev, x2_rev = net((z1, z2), c=c, rev=True, jac=False)
+
+
 
 Useful Tips & Engineering Heuristics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
