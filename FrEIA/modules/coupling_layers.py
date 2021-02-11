@@ -32,7 +32,7 @@ class _BaseCouplingBlock(InvertibleModule):
 
         self.channels = dims_in[0][0]
 
-        # ndims means the rank of thensor strictly speaking.
+        # ndims means the rank of tensor strictly speaking.
         # i.e. 1D, 2D, 3D tensor, etc.
         self.ndims = len(dims_in[0])
 
@@ -59,13 +59,13 @@ class _BaseCouplingBlock(InvertibleModule):
             self.f_clamp = clamp_activation
 
     def forward(self, x, c=[], rev=False, jac=True):
-        '''See base class Docstring'''
+        '''See base class docstring'''
 
         # notation:
         # x1, x2: two halves of the input
         # y1, y2: two halves of the output
         # *_c: variable with condition concatenated
-        # j1, j2: jacobians of the two coupling operations
+        # j1, j2: Jacobians of the two coupling operations
 
         x1, x2 = torch.split(x[0], [self.split_len1, self.split_len2], dim=1)
 
@@ -93,8 +93,8 @@ class _BaseCouplingBlock(InvertibleModule):
             which the transformation is computed.
         Returns:
           y1 (Tensor): same shape as x1, the transformed 'active' half.
-          j1 (float or Tensor): the jacobian, only has batch dimesion.
-            If the jacobian is zero of fixed, may also return float.
+          j1 (float or Tensor): the Jacobian, only has batch dimension.
+            If the Jacobian is zero of fixed, may also return float.
         '''
         raise NotImplementedError()
 
@@ -106,8 +106,8 @@ class _BaseCouplingBlock(InvertibleModule):
             which the transformation is computed.
         Returns:
           y2 (Tensor): same shape as x1, the transformed 'active' half.
-          j2 (float or Tensor): the jacobian, only has batch dimesion.
-            If the jacobian is zero of fixed, may also return float.
+          j2 (float or Tensor): the Jacobian, only has batch dimension.
+            If the Jacobian is zero of fixed, may also return float.
         '''
         raise NotImplementedError()
 
@@ -120,8 +120,8 @@ class _BaseCouplingBlock(InvertibleModule):
 
 class NICECouplingBlock(_BaseCouplingBlock):
     '''Coupling Block following the NICE (Dinh et al, 2015) design.
-    The inputs are split in two halves. For 2D, 3D, 4D imputs, the split is
-    performed along the channel dimesnion. Then, residual coefficiens are
+    The inputs are split in two halves. For 2D, 3D, 4D inputs, the split is
+    performed along the channel dimension. Then, residual coefficients are
     predicted by two subnetworks that are added to each half in turn.
     '''
 
@@ -135,7 +135,7 @@ class NICECouplingBlock(_BaseCouplingBlock):
             constructor(dims_in, dims_out). The result should be a torch
             nn.Module, that takes dims_in input channels, and dims_out output
             channels. See tutorial for examples.
-            Two of these subnetworks will be initalized inside the block.
+            Two of these subnetworks will be initialized inside the block.
         '''
         super().__init__(dims_in, dims_c, clamp=0., clamp_activation=(lambda u: u))
 
@@ -156,8 +156,8 @@ class NICECouplingBlock(_BaseCouplingBlock):
 class RNVPCouplingBlock(_BaseCouplingBlock):
     '''Coupling Block following the RealNVP design (Dinh et al, 2017) with some
     minor differences. The inputs are split in two halves. For 2D, 3D, 4D
-    imputs, the split is performed along the channel dimesnion. For
-    checkerboard-splitting, prepend an i_RevNet downsampling module. Two affine
+    inputs, the split is performed along the channel dimension. For
+    checkerboard-splitting, prepend an i_RevNet_downsampling module. Two affine
     coupling operations are performed in turn on both halves of the input.
     '''
 
@@ -172,7 +172,7 @@ class RNVPCouplingBlock(_BaseCouplingBlock):
             constructor(dims_in, dims_out).  The result should be a torch
             nn.Module, that takes dims_in input channels, and dims_out output
             channels. See tutorial for examples. Four of these subnetworks will be
-            initalized in the block.
+            initialized in the block.
           clamp: Soft clamping for the multiplicative component. The
             amplification or attenuation of each input dimension can be at most
             exp(±clamp).
@@ -198,7 +198,7 @@ class RNVPCouplingBlock(_BaseCouplingBlock):
         # *1, *2: left half, right half
         # a: all affine coefficients
         # s, t: multiplicative and additive coefficients
-        # j: log det jacobian
+        # j: log det Jacobian
 
         s2, t2 = self.subnet_s2(u2), self.subnet_t2(u2)
         s2 = self.clamp * self.f_clamp(s2)
@@ -226,7 +226,7 @@ class RNVPCouplingBlock(_BaseCouplingBlock):
 
 class GLOWCouplingBlock(_BaseCouplingBlock):
     '''Coupling Block following the GLOW design. Note, this is only the coupling
-    part itself, and does not include Actorm, invertible 1x1 convolutions, etc.
+    part itself, and does not include ActNorm, invertible 1x1 convolutions, etc.
     See AllInOneBlock for a block combining these functions at once.
     The only difference to the RNVPCouplingBlock coupling blocks
     is that it uses a single subnetwork to jointly predict [s_i, t_i], instead of two separate
@@ -244,7 +244,7 @@ class GLOWCouplingBlock(_BaseCouplingBlock):
             constructor(dims_in, dims_out).  The result should be a torch
             nn.Module, that takes dims_in input channels, and dims_out output
             channels. See tutorial for examples. Two of these subnetworks will be
-            initalized in the block.
+            initialized in the block.
           clamp: Soft clamping for the multiplicative component. The
             amplification or attenuation of each input dimension can be at most
             exp(±clamp).
@@ -268,7 +268,7 @@ class GLOWCouplingBlock(_BaseCouplingBlock):
         # *1, *2: left half, right half
         # a: all affine coefficients
         # s, t: multiplicative and additive coefficients
-        # j: log det jacobian
+        # j: log det Jacobian
 
         a2 = self.subnet2(u2)
         s2, t2 = a2[:, :self.split_len1], a2[:, self.split_len1:]
@@ -301,9 +301,9 @@ class GINCouplingBlock(_BaseCouplingBlock):
     GLOWCouplingBlock (and other affine coupling blocks) is that the Jacobian
     determinant is constrained to be 1.  This constrains the block to be
     volume-preserving. Volume preservation is achieved by subtracting the mean
-    of the output of the s subnetwork from itself.  While volue preserving, GIN
+    of the output of the s subnetwork from itself.  While volume preserving, GIN
     is still more powerful than NICE, as GIN is not volume preserving within
-    each dimesion.
+    each dimension.
     Note: this implementation differs slightly from the originally published
     implementation, which scales the final component of the s subnetwork so the
     sum of the outputs of s is zero. There was no difference found between the
@@ -322,7 +322,7 @@ class GINCouplingBlock(_BaseCouplingBlock):
             constructor(dims_in, dims_out).  The result should be a torch
             nn.Module, that takes dims_in input channels, and dims_out output
             channels. See tutorial for examples. Two of these subnetworks will be
-            initalized in the block.
+            initialized in the block.
           clamp: Soft clamping for the multiplicative component. The
             amplification or attenuation of each input dimension can be at most
             exp(±clamp).
@@ -346,7 +346,7 @@ class GINCouplingBlock(_BaseCouplingBlock):
         # *1, *2: left half, right half
         # a: all affine coefficients
         # s, t: multiplicative and additive coefficients
-        # j: log det jacobian
+        # j: log det Jacobian
 
         a2 = self.subnet2(u2)
         s2, t2 = a2[:, :self.split_len1], a2[:, self.split_len1:]
@@ -391,7 +391,7 @@ class AffineCouplingOneSided(_BaseCouplingBlock):
             constructor(dims_in, dims_out).  The result should be a torch
             nn.Module, that takes dims_in input channels, and dims_out output
             channels. See tutorial for examples. One subnetwork will be
-            initalized in the block.
+            initialized in the block.
           clamp: Soft clamping for the multiplicative component. The
             amplification or attenuation of each input dimension can be at most
             exp(±clamp).
@@ -413,7 +413,7 @@ class AffineCouplingOneSided(_BaseCouplingBlock):
         # y1, y2: two halves of the output
         # a: all affine coefficients
         # s, t: multiplicative and additive coefficients
-        # j: log det jacobian
+        # j: log det Jacobian
 
         a = self.subnet(x1_c)
         s, t = a[:, :self.split_len2], a[:, self.split_len2:]
@@ -446,7 +446,7 @@ class ConditionalAffineTransform(_BaseCouplingBlock):
             constructor(dims_in, dims_out).  The result should be a torch
             nn.Module, that takes dims_in input channels, and dims_out output
             channels. See tutorial for examples. One subnetwork will be
-            initalized in the block.
+            initialized in the block.
           clamp: Soft clamping for the multiplicative component. The
             amplification or attenuation of each input dimension can be at most
             exp(±clamp).
@@ -476,7 +476,7 @@ class ConditionalAffineTransform(_BaseCouplingBlock):
         # *1, *2: left half, right half
         # a: all affine coefficients
         # s, t: multiplicative and additive coefficients
-        # j: log det jacobian
+        # j: log det Jacobian
 
         a = self.subnet(cond)
         s, t = a[:, :self.channels], a[:, self.channels:]
