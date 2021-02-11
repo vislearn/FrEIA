@@ -3,10 +3,12 @@
 
 name: Docs
 
-on:
-  push: 
-    branches: 
-      - master
+# on:
+#   push: 
+#     branches: 
+#       - master
+
+on: push
 
 jobs:
   build-and-install:
@@ -24,13 +26,14 @@ jobs:
 
     - name: check git log
       run: |
+        git checkout setup-docs
         git --no-pager log -2
         
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install flake8 
+        python -m pip install sphinx pydata-sphinx-theme
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Install package
@@ -42,5 +45,6 @@ jobs:
 
     - name: Make docs
       run: |
-          make -C docs html
-          git status
+          cd docs
+          make html
+          git diff _build/html/FrEIA.html
