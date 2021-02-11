@@ -23,6 +23,17 @@ def F_fully_connected(cin, cout):
                          nn.Linear(128, cout))
 
 
+class SimpleComputeGraph(unittest.TestCase):
+    def test_build(self):
+        in_node = InputNode(3, 10, 10)
+        self.assertEqual(in_node.input_dims, [])
+        out_node = OutputNode(in_node)
+        self.assertEqual(in_node.output_dims, out_node.input_dims)
+        self.assertEqual(out_node.output_dims, [])
+        graph = ReversibleGraphNet([in_node, out_node])
+        self.assertEqual(graph.dims_in, in_node.output_dims)
+
+
 class ComplexComputeGraph(unittest.TestCase):
 
 

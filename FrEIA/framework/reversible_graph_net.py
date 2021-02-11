@@ -44,8 +44,8 @@ class Node:
 
         input_shapes = [input_node.output_dims[node_out_idx]
                         for input_node, node_out_idx in self.inputs]
-        condition_shapes = [cond_node.output_dims[node_out_idx]
-                            for cond_node, node_out_idx in self.conditions]
+        condition_shapes = [cond_node.output_dims[0]
+                            for cond_node in self.conditions]
 
         self.input_dims = input_shapes
         self.condition_dims = condition_shapes
@@ -58,9 +58,9 @@ class Node:
         for in_idx, (in_node, out_idx) in enumerate(self.inputs):
             in_node.outputs.append((self, in_idx))
 
-    def __getattr__(self, item: str):
-        if item.startswith("out_"):
-            return self, int(item[4:])
+    def __getattr__(self, item):
+        if item.startswith("out"):
+            return self, int(item[3:])
         raise AttributeError(item)
 
     def build_module(self, condition_shapes, input_shapes) \
@@ -90,7 +90,9 @@ class Node:
         All such formats are converted to the last format.
         """
         if isinstance(inputs, (list, tuple)):
-            if isinstance(inputs[0], (list, tuple)):
+            if len(inputs) == 0:
+                return inputs
+            elif isinstance(inputs[0], (list, tuple)):
                 return inputs
             elif len(inputs) == 2:
                 return [inputs, ]
@@ -98,9 +100,19 @@ class Node:
                 raise RuntimeError(
                     f"Cannot parse inputs provided to node '{self.name}'.")
         else:
-            assert isinstance(inputs, Node), "Received object of invalid type " \
-                                             f"({type(inputs)}) as input for node '{self.name}'."
+            assert isinstance(inputs, Node), "Received object of invalid " \
+                                             "type ({type(inputs)}) as input " \
+                                             "for node '{self.name}'."
             return [(inputs, 0), ]
+
+    def __str__(self):
+        module_name = (self.module_type.__name__ if self.module_type is not None
+                       else "")
+        return f"{self.__class__.__name__}({self.input_dims} -> " \
+               f"{module_name} -> {self.output_dims})"
+
+    def __repr__(self):
+        return str(self)
 
 
 class InputNode(Node):
@@ -110,6 +122,7 @@ class InputNode(Node):
     """
 
     def __init__(self, *dims: int, name=None):
+        self.dims = dims
         super().__init__([], None, {}, name=name)
 
     def build_module(self, condition_shapes, input_shapes) \
@@ -117,7 +130,8 @@ class InputNode(Node):
         if len(condition_shapes) > 0:
             raise ValueError(
                 f"{self.__class__.__name__} does not accept conditions")
-        return None, input_shapes
+        assert len(input_shapes) == 0, "Forbidden by constructor"
+        return None, [self.dims]
 
 
 class ConditionNode(Node):
@@ -127,6 +141,7 @@ class ConditionNode(Node):
     """
 
     def __init__(self, *dims: int, name=None):
+        self.dims = dims
         super().__init__([], None, {}, name=name)
 
     def build_module(self, condition_shapes, input_shapes) \
@@ -134,7 +149,8 @@ class ConditionNode(Node):
         if len(condition_shapes) > 0:
             raise ValueError(
                 f"{self.__class__.__name__} does not accept conditions")
-        return None, input_shapes
+        assert len(input_shapes) == 0, "Forbidden by constructor"
+        return None, [self.dims]
 
 
 class OutputNode(Node):
@@ -196,27 +212,19 @@ class ReversibleGraphNet(InvertibleModule):
                          if isinstance(node_list[i], OutputNode)]
         assert len(out_nodes) > 0, "No output nodes specified."
 
-        condition_nodes = [i for i in range(len(node_list)) if
+        condition_nodes = [node_list[i] for i in range(len(node_list)) if
                            isinstance(node_list[i], ConditionNode)]
 
         # Build the graph and tell nodes about their dimensions so that they can
         # build the modules
         node_list = topological_order(in_nodes, node_list, out_nodes)
-        node_out_shapes: Dict[Tuple[Node, int], List[Tuple[int]]] = {}
-        global_in_shapes: List[Tuple[int]] = []
-        for node in self.node_list:
-            input_shapes = [node_out_shapes[in_tuple] for in_tuple in
-                            node.inputs]
-            condition_shapes = [node_out_shapes[con_tuple] for con_tuple in
-                                node.conditions]
-            node.build_module(input_shapes, condition_shapes, verbose=verbose)
-            for out_idx, output_shape in enumerate(node.output_dims):
-                node_out_shapes[node, out_idx] = output_shape
-            if isinstance(node, InputNode):
-                global_in_shapes.extend(node.output_dims)
+        global_in_shapes = [node.output_dims[0] for node in in_nodes]
+        global_out_shapes = [node.input_dims[0] for node in out_nodes]
+        global_cond_shapes = [node.input_dims[0] for node in condition_nodes]
 
-        # Only now we
-        super().__init__(global_in_shapes, )
+        # Only now we can set out shapes
+        super().__init__(global_in_shapes, global_cond_shapes)
+        self.global_out_shapes = global_out_shapes
 
         # Now we can store everything -- before calling super constructor,
         # nn.Module doesn't allow assigning anything
@@ -227,10 +235,13 @@ class ReversibleGraphNet(InvertibleModule):
         self.force_tuple_output = force_tuple_output
         self.module_list = nn.ModuleList([n.module for n in node_list])
 
+    def output_dims(self, input_dims: List[Tuple[int]]) -> List[Tuple[int]]:
+        return self.global_out_shapes
+
     def forward(self, x_or_z: Union[Tensor, Iterable[Tensor]],
                 c: Iterable[Tensor], rev: bool = False, jac: bool = True,
-                intermediate_outputs: bool = False) -> Tuple[
-        Tuple[Tensor], Tensor]:
+                intermediate_outputs: bool = False)\
+            -> Tuple[Tuple[Tensor], Tensor]:
         """
         Forward or backward computation of the whole net.
         """
@@ -389,10 +400,10 @@ def topological_order(all_nodes: List[Node], in_nodes: List[InputNode],
     # Edge dicts in both directions
     edges_out_to_in = {node_b: {node_a for node_a, out_idx in node_b.inputs} for
                        node_b in all_nodes + out_nodes}
-    edges_in_to_out = defaultdict(list)
-    for node_out, node_ins in edges_out_to_in:
+    edges_in_to_out = defaultdict(set)
+    for node_out, node_ins in edges_out_to_in.items():
         for node_in in node_ins:
-            edges_in_to_out[node_in].append(node_out)
+            edges_in_to_out[node_in].add(node_out)
 
     # Kahn's algorithm starting from the output nodes
     sorted_nodes = []
@@ -401,17 +412,19 @@ def topological_order(all_nodes: List[Node], in_nodes: List[InputNode],
     while len(no_pending_edges) > 0:
         node = no_pending_edges.popleft()
         sorted_nodes.append(node)
-        for in_node in edges_out_to_in[node]:
+        for in_node in list(edges_out_to_in[node]):
             edges_out_to_in[node].remove(in_node)
             edges_in_to_out[in_node].remove(node)
 
-            if len(edges_in_to_out) == 0:
-                no_pending_edges.append(node)
+            if len(edges_in_to_out[in_node]) == 0:
+                no_pending_edges.append(in_node)
 
     for in_node in in_nodes:
-        assert in_node in sorted_nodes, f"Error in graph: Input node {in_node} is not connected to any output."
+        assert in_node in sorted_nodes, f"Error in graph: Input node " \
+                                        f"{in_node} is not connected " \
+                                        f"to any output."
 
-    if sum(map(len, edges_in_to_out)) == 0:
+    if sum(map(len, edges_in_to_out.values())) == 0:
         return sorted_nodes[::-1]
     else:
         raise ValueError("Graph is cyclic.")
