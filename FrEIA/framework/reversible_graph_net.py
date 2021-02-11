@@ -245,6 +245,8 @@ class ReversibleGraphNet(InvertibleModule):
 
         self.global_out_shapes = global_out_shapes
         self.force_tuple_output = force_tuple_output
+        self.module_list = nn.ModuleList([n.module for n in node_list
+                                          if n.module is not None])
 
     def output_dims(self, input_dims: List[Tuple[int]]) -> List[Tuple[int]]:
         if len(self.global_out_shapes) == 1 and not self.force_tuple_output:
