@@ -3,6 +3,10 @@ nodes of the ReversibleGraphNet class. The only additional things that are
 needed compared to the base class is an @staticmethod otuput_dims, and the
 'rev'-argument of the forward-method.
 
+Abstract template:
+
+* InvertibleModule
+
 Coupling blocks:
 
 * InvertibleModule

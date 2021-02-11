@@ -3,11 +3,12 @@
 
 name: CI
 
-on:
-  push:
-    branches: [ $default-branch ]
-  pull_request:
-    branches: [ $default-branch ]
+on: [push, pull_request]
+
+  # push:
+  #   branches: [ $default-branch ]
+  # pull_request:
+  #   branches: [ $default-branch ]
 
 jobs:
   build:
@@ -40,7 +41,8 @@ jobs:
       #if this project, continues to stick with the python builtin unittest package, I suggest to consider pip-installing this oldie
       #https://github.com/phohenecker/torch-test-case
       run: |
-         python -m unittest
+        pwd && ls 
+        python -m unittest tests/test_*py
 
     # - name: Test with pytest
     #   run: |
