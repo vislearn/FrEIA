@@ -1,6 +1,7 @@
 import unittest
 
 import torch
+import torch.nn as nn
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 import sys
@@ -8,6 +9,18 @@ sys.path.append('../')
 from FrEIA.modules import *
 from FrEIA.framework import *
 
+
+def F_conv(cin, cout):
+    '''Simple convolutional subnetwork'''
+    return nn.Sequential(nn.Conv2d(cin, 32, 3, padding=1),
+                         nn.ReLU(),
+                         nn.Conv2d(32, cout, 3, padding=1))
+
+def F_fully_connected(cin, cout):
+    '''Simple fully connected subnetwork'''
+    return nn.Sequential(nn.Linear(cin, 128),
+                         nn.ReLU(),
+                         nn.Linear(128, cout))
 
 
 class ComplexComputeGraph(unittest.TestCase):
