@@ -5,18 +5,13 @@ name: CI
 
 on: [push, pull_request]
 
-  # push:
-  #   branches: [ $default-branch ]
-  # pull_request:
-  #   branches: [ $default-branch ]
-
 jobs:
-  build:
+  build-and-install:
     
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.6, 3.7, 3.8, 3.9]
 
     steps:
     - uses: actions/checkout@v2
@@ -37,11 +32,30 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+  run-tests:
+
+    needs: build-and-install
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        #excluding python 3.9 for now due to know pytorch bug
+        #https://github.com/pytorch/pytorch/issues/50014 
+        python-version: [3.6, 3.7, 3.8 # , 3.9
+        ]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
     - name: Test with builtin unittests
       #if this project, continues to stick with the python builtin unittest package, I suggest to consider pip-installing this oldie
       #https://github.com/phohenecker/torch-test-case
       run: |
-        pwd && ls 
         python -m unittest tests/test_*py
 
     # - name: Test with pytest
