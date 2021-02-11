@@ -28,7 +28,7 @@ jobs:
 
     - name: check git log
       run: |
-        git --no-pager log -1
+        git --no-pager log -2
         
 
     - name: Install dependencies
@@ -74,8 +74,7 @@ jobs:
       #if this project, continues to stick with the python builtin unittest package, I suggest to consider pip-installing this oldie
       #https://github.com/phohenecker/torch-test-case
       run: |
-        echo ${GITHUB_REF}
-        git --no-pager log -1
+        git --no-pager log -2
         python -m pip install --upgrade pip
         python -m pip install torch==1.7.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
         python -m pip install -e .
