@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 HTTPS_GITHUB_URL = "https://github.com/VLL-HD/FrEIA"
 
-with open("README.md", "r") as fh:
+with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 setup(
@@ -14,7 +14,7 @@ setup(
     author="VLL-HD team and collaborators",
     author_email="",
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/rst",
     url=HTTPS_GITHUB_URL,
     classifiers=[
         "Programming Language :: Python :: 3",
