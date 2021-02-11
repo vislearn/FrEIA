@@ -34,7 +34,6 @@
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="FrEIA.framework package" href="FrEIA.framework.html" />
@@ -216,27 +215,34 @@ needed compared to the base class is an &#64;staticmethod otuput_dims, and the
 <dl class="py class">
 <dt id="FrEIA.modules.InvertibleModule">
 <em class="property">class </em><code class="sig-prename descclassname">FrEIA.modules.</code><code class="sig-name descname">InvertibleModule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dims_in</span><span class="p">:</span> <span class="n">Iterable<span class="p">[</span>Tuple<span class="p">[</span>int<span class="p">]</span><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">dims_c</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Iterable<span class="p">[</span>Tuple<span class="p">[</span>int<span class="p">]</span><span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/modules/base.html#InvertibleModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FrEIA.modules.InvertibleModule" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class for all invertible modules in FrEIA.</p>
+<dd><blockquote>
+<div><p>Base class for all invertible modules in FrEIA.</p>
 <p>Given <cite>module</cite>, an instance of some InvertibleOperator.
 This <cite>module</cite> shall be invertible in its input dimensions,
 so that the input can be recovered by applying the module
 in backwards mode (<cite>rev=True</cite>), not to be confused with
-<cite>pytorch.backward()</cite> which computes the gradient of an operation.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="n">DIM_COUNT</span><span class="p">)</span>
-<span class="n">c</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="n">CONDITION_DIM</span><span class="p">)</span>
-
-<span class="c1"># Forward mode</span>
-<span class="n">z</span><span class="p">,</span> <span class="n">jac</span> <span class="o">=</span> <span class="n">module</span><span class="p">([</span><span class="n">x</span><span class="p">],</span> <span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="c1"># Backward mode</span>
-<span class="n">x_rev</span><span class="p">,</span> <span class="n">jac_rev</span> <span class="o">=</span> <span class="n">module</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">rev</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>The <cite>module</cite> returns <span class="math notranslate nohighlight">\(\log \det J = \log \det \frac{\partial f}{\partial x}\)</span>
-of the operation in forward mode, and
-$-log det J = log det frac{partial f^{-1}}{partial z} = -log det frac{partial f}{partial x}$
-in backward mode (<cite>rev=True</cite>).</p>
+<cite>pytorch.backward()</cite> which computes the gradient of an operation.
+<a href="#id1"><span class="problematic" id="id2">``</span></a>`
+x = torch.randn(BATCH_SIZE, DIM_COUNT)
+c = torch.randn(BATCH_SIZE, CONDITION_DIM)</p>
+<p># Forward mode
+z, jac = module([x], [c], jac=True)</p>
+<p># Backward mode
+x_rev, jac_rev = module(z, [c], rev=True, jac=True)
+<a href="#id3"><span class="problematic" id="id4">``</span></a>`
+The <cite>module</cite> returns $log det J = log det</p>
+</div></blockquote>
+<dl class="simple">
+<dt>rac{partial f}{partial x}$</dt><dd><p>of the operation in forward mode, and
+$-log det J = log det</p>
+</dd>
+</dl>
+<p>rac{partial f^{-1}}{partial z} = -log det
+rac{partial f}{partial x}$</p>
+<blockquote>
+<div><p>in backward mode (<cite>rev=True</cite>).</p>
 <p>Then, <cite>torch.allclose(x, x_rev[0]) == True</cite> and <cite>jac == -jac_rev</cite>.</p>
+</div></blockquote>
 <dl class="py method">
 <dt id="FrEIA.modules.InvertibleModule.forward">
 <code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x_or_z</span><span class="p">:</span> <span class="n">Iterable<span class="p">[</span>torch.Tensor<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">c</span><span class="p">:</span> <span class="n">Iterable<span class="p">[</span>torch.Tensor<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">rev</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">jac</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em><span class="sig-paren">)</span> &#x2192; Tuple<span class="p">[</span>Tuple<span class="p">[</span>torch.Tensor<span class="p">]</span><span class="p">, </span>torch.Tensor<span class="p">]</span><a class="reference internal" href="_modules/FrEIA/modules/base.html#InvertibleModule.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FrEIA.modules.InvertibleModule.forward" title="Permalink to this definition">¶</a></dt>
@@ -282,30 +288,37 @@ jac    .. return Jacobian associated to the direction</p>
 <dl class="py class">
 <dt id="id0">
 <em class="property">class </em><code class="sig-prename descclassname">FrEIA.modules.</code><code class="sig-name descname">InvertibleModule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dims_in</span><span class="p">:</span> <span class="n">Iterable<span class="p">[</span>Tuple<span class="p">[</span>int<span class="p">]</span><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">dims_c</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Iterable<span class="p">[</span>Tuple<span class="p">[</span>int<span class="p">]</span><span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/modules/base.html#InvertibleModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class for all invertible modules in FrEIA.</p>
+<dd><blockquote>
+<div><p>Base class for all invertible modules in FrEIA.</p>
 <p>Given <cite>module</cite>, an instance of some InvertibleOperator.
 This <cite>module</cite> shall be invertible in its input dimensions,
 so that the input can be recovered by applying the module
 in backwards mode (<cite>rev=True</cite>), not to be confused with
-<cite>pytorch.backward()</cite> which computes the gradient of an operation.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="n">DIM_COUNT</span><span class="p">)</span>
-<span class="n">c</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="n">CONDITION_DIM</span><span class="p">)</span>
-
-<span class="c1"># Forward mode</span>
-<span class="n">z</span><span class="p">,</span> <span class="n">jac</span> <span class="o">=</span> <span class="n">module</span><span class="p">([</span><span class="n">x</span><span class="p">],</span> <span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="c1"># Backward mode</span>
-<span class="n">x_rev</span><span class="p">,</span> <span class="n">jac_rev</span> <span class="o">=</span> <span class="n">module</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">rev</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>The <cite>module</cite> returns <span class="math notranslate nohighlight">\(\log \det J = \log \det \frac{\partial f}{\partial x}\)</span>
-of the operation in forward mode, and
-$-log det J = log det frac{partial f^{-1}}{partial z} = -log det frac{partial f}{partial x}$
-in backward mode (<cite>rev=True</cite>).</p>
+<cite>pytorch.backward()</cite> which computes the gradient of an operation.
+<a href="#id5"><span class="problematic" id="id6">``</span></a>`
+x = torch.randn(BATCH_SIZE, DIM_COUNT)
+c = torch.randn(BATCH_SIZE, CONDITION_DIM)</p>
+<p># Forward mode
+z, jac = module([x], [c], jac=True)</p>
+<p># Backward mode
+x_rev, jac_rev = module(z, [c], rev=True, jac=True)
+<a href="#id7"><span class="problematic" id="id8">``</span></a>`
+The <cite>module</cite> returns $log det J = log det</p>
+</div></blockquote>
+<dl class="simple">
+<dt>rac{partial f}{partial x}$</dt><dd><p>of the operation in forward mode, and
+$-log det J = log det</p>
+</dd>
+</dl>
+<p>rac{partial f^{-1}}{partial z} = -log det
+rac{partial f}{partial x}$</p>
+<blockquote>
+<div><p>in backward mode (<cite>rev=True</cite>).</p>
 <p>Then, <cite>torch.allclose(x, x_rev[0]) == True</cite> and <cite>jac == -jac_rev</cite>.</p>
+</div></blockquote>
 <dl class="py method">
-<dt id="id1">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x_or_z</span><span class="p">:</span> <span class="n">Iterable<span class="p">[</span>torch.Tensor<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">c</span><span class="p">:</span> <span class="n">Iterable<span class="p">[</span>torch.Tensor<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">rev</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">jac</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em><span class="sig-paren">)</span> &#x2192; Tuple<span class="p">[</span>Tuple<span class="p">[</span>torch.Tensor<span class="p">]</span><span class="p">, </span>torch.Tensor<span class="p">]</span><a class="reference internal" href="_modules/FrEIA/modules/base.html#InvertibleModule.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
+<dt id="id9">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x_or_z</span><span class="p">:</span> <span class="n">Iterable<span class="p">[</span>torch.Tensor<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">c</span><span class="p">:</span> <span class="n">Iterable<span class="p">[</span>torch.Tensor<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">rev</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">jac</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em><span class="sig-paren">)</span> &#x2192; Tuple<span class="p">[</span>Tuple<span class="p">[</span>torch.Tensor<span class="p">]</span><span class="p">, </span>torch.Tensor<span class="p">]</span><a class="reference internal" href="_modules/FrEIA/modules/base.html#InvertibleModule.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#id9" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
 <div><p>Perform a forward (default, <cite>rev=False</cite>) or backward pass (<cite>rev=True</cite>)
 through this module/operator.</p>

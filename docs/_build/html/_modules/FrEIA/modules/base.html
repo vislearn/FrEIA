@@ -34,7 +34,6 @@
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -133,7 +132,7 @@
 
 
 <div class="viewcode-block" id="InvertibleModule"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.InvertibleModule">[docs]</a><span class="k">class</span> <span class="nc">InvertibleModule</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Base class for all invertible modules in FrEIA.</span>
 
 <span class="sd">    Given `module`, an instance of some InvertibleOperator.</span>
@@ -141,19 +140,17 @@
 <span class="sd">    so that the input can be recovered by applying the module</span>
 <span class="sd">    in backwards mode (`rev=True`), not to be confused with</span>
 <span class="sd">    `pytorch.backward()` which computes the gradient of an operation.</span>
+<span class="sd">    ```</span>
+<span class="sd">    x = torch.randn(BATCH_SIZE, DIM_COUNT)</span>
+<span class="sd">    c = torch.randn(BATCH_SIZE, CONDITION_DIM)</span>
 
-<span class="sd">    .. code-block:: python</span>
+<span class="sd">    # Forward mode</span>
+<span class="sd">    z, jac = module([x], [c], jac=True)</span>
 
-<span class="sd">        x = torch.randn(BATCH_SIZE, DIM_COUNT)</span>
-<span class="sd">        c = torch.randn(BATCH_SIZE, CONDITION_DIM)</span>
-
-<span class="sd">        # Forward mode</span>
-<span class="sd">        z, jac = module([x], [c], jac=True)</span>
-
-<span class="sd">        # Backward mode</span>
-<span class="sd">        x_rev, jac_rev = module(z, [c], rev=True, jac=True)</span>
-
-<span class="sd">    The `module` returns :math:`\log \det J = \log \det \frac{\partial f}{\partial x}`</span>
+<span class="sd">    # Backward mode</span>
+<span class="sd">    x_rev, jac_rev = module(z, [c], rev=True, jac=True)</span>
+<span class="sd">    ```</span>
+<span class="sd">    The `module` returns $\log \det J = \log \det \frac{\partial f}{\partial x}$</span>
 <span class="sd">    of the operation in forward mode, and</span>
 <span class="sd">    $-\log \det J = \log \det \frac{\partial f^{-1}}{\partial z} = -\log \det \frac{\partial f}{\partial x}$</span>
 <span class="sd">    in backward mode (`rev=True`).</span>
