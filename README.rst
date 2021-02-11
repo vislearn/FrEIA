@@ -124,7 +124,7 @@ To jump straight into the code, see this basic usage example, which learns and t
 				x = torch.Tensor(data)
 				# pass to INN and get transformed variable z and log Jacobian determinant
 				z, log_jac_det = inn(x)
-				# calculate the negative log-likelihood of a standard normal distribution
+				# calculate the negative log-likelihood of the model with a standard normal prior
 				loss = 0.5*torch.sum(z**2, 1) - log_jac_det
 				loss = loss.mean() / N_DIM
 				# backpropagate and update the weights
@@ -189,7 +189,7 @@ More specifically:
 
   .. code:: python
 
-   in1 = InputNode(3, 32, 32, name='Input x_1')
+   in1 = InputNode(3, 32, 32, name='Input 1')
 
   The ``name`` argument can be omitted in principle, but it is recommended in
   general, as it appears e.g. in error messages.
@@ -202,18 +202,18 @@ More specifically:
 * Each ``Node`` is initialized given a list of its inputs as the first
   constructor argument, along with other arguments covered later (omitted as
   '``...``' in the following, in particular defining what operation the node
-  should represent). For transform *T1* in the example above, this would look
+  should represent). For *Permutation* in the example above, this would look
   like the this:
 
   .. code:: python
 
-    transf1 = Node([in1.out0], ..., name='Transform T_1')
+    perm = Node([in1.out0], ..., name='Permutation')
 
-  Or for merge *m2*:
+  Or for *Merge 2*:
 
   .. code:: python
 
-    merge2 = Node([transf3.out0, split2.out1], ..., name='Merge m_2')
+    merge2 = Node([affine.out0, split2.out1], ..., name='Merge 2')
 
   Conditions are passed as a list through the ``conditions`` argument:
 
@@ -247,34 +247,40 @@ following way:
 
   .. code:: python
 
-   in1 = InputNode(3, 32, 32, name='Input x_1') # 3-channel image
-   in2 = InputNode(128, name='Input x_2') # 1D vector
-   cond = ConditionNode(42, name='Condition c')
+    in1 = Ff.InputNode(100, name='Input 1') # 1D vector
+    in2 = Ff.InputNode(20, name='Input 2') # 1D vector
+    cond = Ff.ConditionNode(42, name='Condition')
 
-   transf1 = Node([in1.out0], ..., name='Transform T_1')
-   split1 =  Node([transf1.out0], ..., name='Split s_1')
-   split2 =  Node([split1.out0], ..., name='Split s_2')
-   transf2 = Node([split2.out0], ..., name='Transform T_2')
-   merge1 =  Node([transf2.out0, in2.out0], ..., name='Merge m_1')
-   transf3 = Node([merge1.out0], ..., conditions=[cond], name='Transform T_3')
-   merge2 =  Node([transf2.out0, split2.out1], ..., name='Merge m_2')
+    def subnet(dims_in, dims_out): 
+        return nn.Sequential(nn.Linear(dims_in, 256), nn.ReLU(), 
+                             nn.Linear(256, dims_out))
 
-   output1 = Node([split1.out1], ..., name='Output z_1')
-   output2 = Node([merge2.out0], ..., name='Output z_2')
+    perm = Ff.Node(in1.out0, Fm.PermuteRandom, {}, name='Permutation')
+    split1 =  Ff.Node(perm.out0, Fm.Split, {}, name='Split 1')
+    split2 =  Ff.Node(split1.out1, Fm.Split, {}, name='Split 2')
+    actnorm = Ff.Node(split2.out1, Fm.ActNorm, {}, name='ActNorm')
+    concat1 =  Ff.Node([actnorm.out0, in2.out0], Fm.Concat, {}, name='Concat 1')
+    affine = Ff.Node(concat1.out0, Fm.AffineCouplingOneSided, {'subnet_constructor': subnet}, 
+                     conditions=cond, name='Affine Coupling')
+    concat2 =  Ff.Node([split2.out0, affine.out0], Fm.Concat, {}, name='Concat 2')
 
-   example_INN = ReversibleGraphNet([in1, in2, output1, output2, cond,
-                                     transf1, transf2, transf3,
-                                     merge1, merge2, split1, split2], verbose=False)
+    output1 = Ff.OutputNode(split1.out0, name='Output 1')
+    output2 = Ff.OutputNode(concat2.out0, name='Output 2')
 
-   # dummy inputs:
-   x1, x2, cond = torch.randn(1,3,32,32), torch.randn(1, 128), torch.randn(1, 42)
+    example_INN = Ff.ReversibleGraphNet([in1, in2, cond,
+                                         perm, split1, split2,
+                                         actnorm, concat1, affine, concat2, 
+                                         output1, output2], verbose=True)
 
-   # compute the outputs
-   z1, z2 = example_INN([x1, x2], c=cond)
+    # dummy inputs:
+    x1, x2, c = torch.randn(1, 100), torch.randn(1, 20), torch.randn(1, 42)
 
-   # invert the network and check if we get the original inputs back:
-   x1_inv, x2_infv = example_INN([z1, z2], c=cond, rev=True)
-   assert (torch.max(torch.abs(x1_inv - x1)) < 1e-5
+    # compute the outputs
+    z1, z2 = example_INN([x1, x2], c=c)
+
+    # invert the network and check if we get the original inputs back:
+    x1_inv, x2_inv = example_INN([z1, z2], c=c, rev=True)
+    assert (torch.max(torch.abs(x1_inv - x1)) < 1e-5
            and torch.max(torch.abs(x2_inv - x2)) < 1e-5)
 
 Node Construction
