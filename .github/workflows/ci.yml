@@ -3,7 +3,12 @@
 
 name: CI
 
-on: [push, pull_request]
+on:
+  pull_request: {}
+  push: 
+    branches: 
+      - master
+
 
 jobs:
   build-and-install:
@@ -19,7 +24,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-
+        fetch-depth: 0 #0 indicates all history for all branches and tags.
     
     - name: Install dependencies
       run: |
@@ -58,6 +63,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+        fetch-depth: 0 #0 indicates all history for all branches and tags.
 
     - name: Test with builtin unittests on CPUs
       #if this project, continues to stick with the python builtin unittest package, I suggest to consider pip-installing this oldie
