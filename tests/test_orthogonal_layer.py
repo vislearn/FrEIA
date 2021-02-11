@@ -12,8 +12,8 @@ from FrEIA.framework import *
 inp_size = 100
 
 inp = InputNode(inp_size, name='input')
-orthog_layer = Node([inp.out0], orthogonal_layer, {'correction_interval':100})
-permute_1 = Node([orthog_layer.out0], permute_layer, {'seed':0})
+orthog_layer = Node([inp.out0], OrthogonalTransform, {'correction_interval':100})
+permute_1 = Node([orthog_layer.out0], PermuteRandom, {'seed':0})
 permute_2 = Node([permute_1.out0], HouseholderPerm, {'n_reflections':10})
 outp= OutputNode([permute_2.out0], name='output')
 
