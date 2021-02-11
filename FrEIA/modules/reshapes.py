@@ -1,5 +1,7 @@
 from . import InvertibleModule
 
+from typing import Iterable
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -57,7 +59,7 @@ class IRevNetDownsampling(InvertibleModule):
             self.downsample_kernel = nn.Parameter(self.downsample_kernel)
             self.downsample_kernel.requires_grad = False
 
-    def forward(self, x, c=None, rev=False, jac=True):
+    def forward(self, x, c=None, jac=True, rev=False):
         '''See docstring of base class (FrEIA.modules.InvertibleModule).'''
         input = x[0]
         if not rev:
@@ -151,24 +153,24 @@ class IRevNetUpsampling(IRevNetDownsampling):
         inv_shape = self.output_dims(dims_in)
         super().__init__(inv_shape, dims_c, legacy_backend=legacy_backend)
 
-    def forward(self, x, c=None, rev=False):
+    def forward(self, x, c=None, jac=True, rev=False):
         '''See docstring of base class (FrEIA.modules.InvertibleModule).'''
         return super().forward(x, c=None, rev=not rev)
 
     def output_dims(self, input_dims):
-        '''See docstring of base class (FrEIA.modules.InvertibleModule).'''
+        '''see docstring of base class (freia.modules.invertiblemodule).'''
 
         if len(input_dims) != 1:
-            raise ValueError("i-RevNet downsampling must have exactly 1 input")
+            raise ValueError("i-revnet downsampling must have exactly 1 input")
         if len(input_dims[0]) != 3:
-            raise ValueError("i-RevNet downsampling can only tranform 2D images"
-                             "of the shape CxWxH (channels, width, height)")
+            raise ValueError("i-revnet downsampling can only tranform 2d images"
+                             "of the shape cxwxh (channels, width, height)")
 
         c, w, h = input_dims[0]
         c2, w2, h2 = c // 4, w * 2, h * 2
 
         if c * h * w != c2 * h2 * w2:
-            raise ValueError("Input cannot be cleanly reshaped, most likely because"
+            raise ValueError("input cannot be cleanly reshaped, most likely because"
                              "the input height or width are an odd number")
 
         return ((c2, w2, h2),)
@@ -178,14 +180,48 @@ class HaarDownsampling(InvertibleModule):
     '''Uses Haar wavelets to split each channel into 4 channels, with half the
     width and height dimensions.'''
 
-    def __init__(self, dims_in, dims_c=None,
+    def __init__(self, dims_in, dims_c = None,
                  order_by_wavelet: bool = False,
                  rebalance: float = 1.):
-        super().__init__()
+        '''See docstring of base class (FrEIA.modules.InvertibleModule) for more.
+        Args:
+          order_by_wavelet: Whether to group the output by original channels or
+            by wavelet. E.g. if the average, vertical, horizontal and diagonal
+            wavelets for channel 1 are a1, v1, h1, d1, those for channel 2 are
+            a2, v2, h2, d2, etc, then the output channels will be structured as
+            follows:
+            set to True: a1, a2, ..., v1, v2, ..., h1, h2, ..., d1, d2, ...
+            set to False: a1, v1, h1, d1, a2, v2, h2, d2, ...
+            The True option is slightly slower to compute than the False option.
+            The option is useful if e.g. the average channels should be split
+            off by a FrEIA.modules.Split. Then, setting order_by_wavelet=True
+            allows to split off the first quarter of channels to isolate the
+            average wavelets only.
+          rebalance: Must !=0. There exist different conventions how to define
+            the haar wavelets. The wavelet components in the forward direction
+            are multiplied with this factor, and those in the inverse direction
+            are adjusted accordingly, so that the module as a whole is
+            invertible.  Stability of the network may be increased for rebalance
+            < 1 (e.g. 0.5).
+        '''
+        super().__init__(dims_in, dims_c)
+
+        if rebalance == 0:
+            raise ValueError("'rebalance' argument must be != 0.")
 
         self.in_channels = dims_in[0][0]
+
+        # self.jac_{fwd,rev} is the jacobian determinant for a single pixel in
+        # a single channel computed explicitly from the matrix below.
+
         self.fac_fwd = 0.5 * rebalance
+        self.jac_fwd = (np.log(16.) + 4 * np.log(self.fac_fwd)) / 4.
+
         self.fac_rev = 0.5 / rebalance
+        self.jac_rev = (np.log(16.) + 4 * np.log(self.fac_rev)) / 4.
+
+        # See https://en.wikipedia.org/wiki/Haar_wavelet#Haar_matrix
+        # for an explanation of how this weight matrix comes about
         self.haar_weights = torch.ones(4,1,2,2)
 
         self.haar_weights[1, 0, 0, 1] = -1
@@ -197,158 +233,187 @@ class HaarDownsampling(InvertibleModule):
         self.haar_weights[3, 0, 1, 0] = -1
         self.haar_weights[3, 0, 0, 1] = -1
 
-        self.haar_weights = torch.cat([self.haar_weights]*self.in_channels, 0)
+        self.haar_weights = torch.cat([self.haar_weights] * self.in_channels, 0)
         self.haar_weights = nn.Parameter(self.haar_weights)
         self.haar_weights.requires_grad = False
 
+        # for 'order_by_wavelet', we just perform the channel-wise wavelet
+        # transform as usual, and then permute the channels into the correct
+        # order afterward (hece 'self.permute')
         self.permute = order_by_wavelet
-        self.last_jac = None
 
         if self.permute:
             permutation = []
             for i in range(4):
-                permutation += [i+4*j for j in range(self.in_channels)]
+                permutation += [i + 4 * j for j in range(self.in_channels)]
 
             self.perm = torch.LongTensor(permutation)
             self.perm_inv = torch.LongTensor(permutation)
 
+            # clever trick to invert a permutation
             for i, p in enumerate(self.perm):
                 self.perm_inv[p] = i
 
-    def forward(self, x, rev=False):
+    def forward(self, x, c=None, jac=True, rev=False):
+        '''See docstring of base class (FrEIA.modules.InvertibleModule).'''
+
+        inp = x[0]
+        #number total entries except for batch dimension:
+        ndims = inp[0].numel()
+
         if not rev:
-            self.last_jac = self.elements / 4 * (np.log(16.) + 4 * np.log(self.fac_fwd))
-            out = F.conv2d(x[0], self.haar_weights,
+            jac = ndims * self.jac_fwd
+            out = F.conv2d(inp, self.haar_weights,
                            bias=None, stride=2, groups=self.in_channels)
+
             if self.permute:
-                return [out[:, self.perm] * self.fac_fwd]
+                return (out[:, self.perm] * self.fac_fwd,), jac
             else:
-                return [out * self.fac_fwd]
+                return (out * self.fac_fwd,), jac
 
         else:
-            self.last_jac = self.elements / 4 * (np.log(16.) + 4 * np.log(self.fac_rev))
+            jac = ndims * self.jac_rev
             if self.permute:
-                x_perm = x[0][:, self.perm_inv]
+                x_perm = inp[:, self.perm_inv]
             else:
-                x_perm = x[0]
+                x_perm = inp
 
-            return [F.conv_transpose2d(x_perm * self.fac_rev, self.haar_weights,
-                                     bias=None, stride=2, groups=self.in_channels)]
+            x_perm *= self.fac_rev
+            out= F.conv_transpose2d(x_perm, self.haar_weights, stride=2, groups=self.in_channels)
 
-    def jacobian(self, x, rev=False):
-        # TODO respect batch dimension and .cuda()
-        return self.last_jac
+            return (out,), jac
 
     def output_dims(self, input_dims):
-        assert len(input_dims) == 1, "Can only use 1 input"
+        '''See docstring of base class (FrEIA.modules.InvertibleModule).'''
+
+        if len(input_dims) != 1:
+            raise ValueError("HaarDownsampling must have exactly 1 input")
+        if len(input_dims[0]) != 3:
+            raise ValueError("HaarDownsampling can only tranform 2D images"
+                             "of the shape CxWxH (channels, width, height)")
+
         c, w, h = input_dims[0]
-        c2, w2, h2 = c*4, w//2, h//2
-        self.elements = c*w*h
-        assert c*h*w == c2*h2*w2, "Uneven input dimensions"
-        return [(c2, w2, h2)]
+        c2, w2, h2 = c * 4, w // 2, h // 2
+
+        if c * h * w != c2 * h2 * w2:
+            raise ValueError("Input cannot be cleanly reshaped, most likely because"
+                             "the input height or width are an odd number")
+
+        return ((c2, w2, h2),)
 
 
-class HaarUpsampling(nn.Module):
-    '''Uses Haar wavelets to merge 4 channels into one, with double the
-    width and height.'''
+class HaarUpsampling(HaarDownsampling):
+    '''The inverted operation of HaarDownsampling (see that docstring for details).'''
 
-    def __init__(self, dims_in):
-        super().__init__()
+    def __init__(self, dims_in, dims_c = None,
+                 order_by_wavelet: bool = False,
+                 rebalance: float = 1.):
+        '''See docstring of base class (FrEIA.modules.InvertibleModule) for more.
+        Args:
+          order_by_wavelet: Whether to group the output by original channels or
+            by wavelet. E.g. if the average, vertical, horizontal and diagonal
+            wavelets for channel 1 are a1, v1, h1, d1, those for channel 2 are
+            a2, v2, h2, d2, etc, then the output channels will be structured as
+            follows:
+            set to True: a1, a2, ..., v1, v2, ..., h1, h2, ..., d1, d2, ...
+            set to False: a1, v1, h1, d1, a2, v2, h2, d2, ...
+            The True option is slightly slower to compute than the False option.
+            The option is useful if e.g. the average channels should be split
+            off by a FrEIA.modules.Split. Then, setting order_by_wavelet=True
+            allows to split off the first quarter of channels to isolate the
+            average wavelets only.
+          rebalance: Must !=0. There exist different conventions how to define
+            the haar wavelets. The wavelet components in the forward direction
+            are multiplied with this factor, and those in the inverse direction
+            are adjusted accordingly, so that the module as a whole is
+            invertible.  Stability of the network may be increased for rebalance
+            < 1 (e.g. 0.5).
+        '''
+        inv_shape = self.output_dims(dims_in)
+        super().__init__(inv_shape, dims_c, order_by_wavelet, rebalance)
 
-        self.in_channels = dims_in[0][0] // 4
-        self.haar_weights = torch.ones(4, 1, 2, 2)
-
-        self.haar_weights[1, 0, 0, 1] = -1
-        self.haar_weights[1, 0, 1, 1] = -1
-
-        self.haar_weights[2, 0, 1, 0] = -1
-        self.haar_weights[2, 0, 1, 1] = -1
-
-        self.haar_weights[3, 0, 1, 0] = -1
-        self.haar_weights[3, 0, 0, 1] = -1
-
-        self.haar_weights *= 0.5
-        self.haar_weights = torch.cat([self.haar_weights]*self.in_channels, 0)
-        self.haar_weights = nn.Parameter(self.haar_weights)
-        self.haar_weights.requires_grad = False
-
-    def forward(self, x, rev=False):
-        if rev:
-            return [F.conv2d(x[0], self.haar_weights,
-                             bias=None, stride=2, groups=self.in_channels)]
-        else:
-            return [F.conv_transpose2d(x[0], self.haar_weights,
-                                       bias=None, stride=2,
-                                       groups=self.in_channels)]
-
-    def jacobian(self, x, rev=False):
-        # TODO respect batch dimension and .cuda()
-        return 0
+    def forward(self, x, c=None, jac=True, rev=False):
+        '''See docstring of base class (FrEIA.modules.InvertibleModule).'''
+        return super().forward(x, c=None, rev=not rev)
 
     def output_dims(self, input_dims):
-        assert len(input_dims) == 1, "Can only use 1 input"
+        '''see docstring of base class (freia.modules.invertiblemodule).'''
+
+        if len(input_dims) != 1:
+            raise ValueError("i-revnet downsampling must have exactly 1 input")
+        if len(input_dims[0]) != 3:
+            raise ValueError("i-revnet downsampling can only tranform 2d images"
+                             "of the shape cxwxh (channels, width, height)")
+
         c, w, h = input_dims[0]
-        c2, w2, h2 = c//4, w*2, h*2
-        assert c*h*w == c2*h2*w2, "Uneven input dimensions"
-        return [(c2, w2, h2)]
+        c2, w2, h2 = c // 4, w * 2, h * 2
 
+        if c * h * w != c2 * h2 * w2:
+            raise ValueError("input cannot be cleanly reshaped, most likely because"
+                             "the input height or width are an odd number")
 
-class Flatten(nn.Module):
+        return ((c2, w2, h2),)
+
+class Flatten(InvertibleModule):
     '''Flattens N-D tensors into 1-D tensors.'''
-    def __init__(self, dims_in):
-        super().__init__()
-        self.size = dims_in[0]
 
-    def forward(self, x, rev=False):
+    def __init__(self, dims_in, dims_c=None):
+        '''See docstring of base class (FrEIA.modules.InvertibleModule).'''
+        super().__init__(dims_in, dims_c)
+
+        if len(dims_in) != 1:
+            raise ValueError("Flattening must have exactly 1 input")
+
+        self.input_shape = dims_in[0]
+        self.output_shape = (int(np.prod(dims_in[0])),)
+
+    def forward(self, x, c=None, jac=True, rev=False):
+        '''See docstring of base class (FrEIA.modules.InvertibleModule).'''
         if not rev:
-            return [x[0].view(x[0].shape[0], -1)]
+            return (x[0].view(x[0].shape[0], -1),), 0.
         else:
-            return [x[0].view(x[0].shape[0], *self.size)]
-
-    def jacobian(self, x, rev=False):
-        # TODO respect batch dimension and .cuda()
-        return 0
+            return (x[0].view(x[0].shape[0], *self.input_shape),), 0.
 
     def output_dims(self, input_dims):
-        return [(int(np.prod(input_dims[0])),)]
+        '''See docstring of base class (FrEIA.modules.InvertibleModule).'''
+        return (self.output_shape,)
 
 
-class Reshape(nn.Module):
-    '''reshapes N-D tensors into target dim tensors.'''
-    def __init__(self, dims_in, target_dim):
-        super().__init__()
+class Reshape(InvertibleModule):
+    '''Reshapes N-D tensors into target dim tensors. Note that the reshape resulting from
+    e.g. (3, 32, 32) -> (12, 16, 16) will not necessarily be spatially sensible.
+    See IRevNetDownsampling, IRevNetUpsampling, HaarDownsampling, HaarUpsampling
+    for spatially meaningful reshaping operations.'''
+
+    def __init__(self, dims_in, dims_c=None, output_dims: Iterable[int] = None):
+        '''See docstring of base class (FrEIA.modules.InvertibleModule) for more.
+        Args:
+          target_dims: The shape the reshaped output is supoosed to have (not
+            including batch dimension)
+        '''
+        super().__init__(dims_in, dims_c)
+
+        if output_dims is None:
+            raise ValueError("Please specify the desired output shape")
+
         self.size = dims_in[0]
-        self.target_dim = target_dim
-        assert int(np.prod(dims_in[0])) == int(np.prod(self.target_dim)), f"Incoming dimensions ({dims_in[0]}) and target_dim ({target_dim}) don't match."
+        self.target_dim = output_dims
 
-    def forward(self, x, rev=False):
+        if len(dims_in) != 1:
+            raise ValueError("Flattening must have exactly 1 input")
+        if int(np.prod(dims_in[0])) != int(np.prod(self.target_dim)):
+            raise ValueError(f"Incoming dimensions {dims_in[0]} and target_dim"
+                             f"{self.target_dim} don't match."
+                             "Must have same number of elements for invertibility")
+
+    def forward(self, x, c=None, jac=True, rev=False):
+        '''See docstring of base class (FrEIA.modules.InvertibleModule).'''
+
         if not rev:
-            return [x[0].reshape(x[0].shape[0], *self.target_dim)]
+            return (x[0].reshape(x[0].shape[0], *self.target_dim),), 0.
         else:
-            return [x[0].reshape(x[0].shape[0], *self.size)]
-
-    def jacobian(self, x, rev=False):
-        return 0.
+            return (x[0].reshape(x[0].shape[0], *self.size),), 0.
 
     def output_dims(self, dim):
-        return [self.target_dim]
-
-import warnings
-
-def _deprecated_by(orig_class):
-    class deprecated_class(orig_class):
-        def __init__(self, *args, **kwargs):
-
-            warnings.warn(F"{self.__class__.__name__} is deprecated and will be removed in the public release. "
-                          F"Use {orig_class.__name__} instead.",
-                          DeprecationWarning)
-            super().__init__(*args, **kwargs)
-
-    return deprecated_class
-
-i_revnet_downsampling = _deprecated_by(IRevNetDownsampling)
-i_revnet_upsampling = _deprecated_by(IRevNetUpsampling)
-haar_multiplex_layer = _deprecated_by(HaarDownsampling)
-haar_restore_layer = _deprecated_by(HaarUpsampling)
-flattening_layer = _deprecated_by(Flatten)
-reshape_layer = _deprecated_by(Reshape)
+        '''See docstring of base class (FrEIA.modules.InvertibleModule).'''
+        return (self.target_dim,)
