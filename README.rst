@@ -84,6 +84,61 @@ the ``./docs/`` directory, or at
 
 https://vll-hd.github.io/FrEIA
 
+
+Quick Start Guide
+-------------------
+To jump straight into the code, see this basic usage example, which learns and then samples from the moons dataset provided in ``sklearn``. For information on the structure of FrEIA, as well as more detailed examples of networks, including custom invertible operations, see the full tutorial below.
+
+.. code:: python
+		
+		# standard imports
+		import torch
+		import torch.nn as nn
+		from sklearn.datasets import make_moons
+
+		# FrEIA imports
+    import FrEIA.framework as Ff
+    import FrEIA.modules as Fm
+    
+    BATCHSIZE = 100
+    N_DIM = 2
+		
+		# we define a subnet for use inside an affine coupling block
+		# for more detailed information see the full tutorial
+    def subnet_fc(c_in, c_out):
+        return nn.Sequential(nn.Linear(c_in, 512), nn.ReLU(),
+                             nn.Linear(512,  c_out))
+		
+		# a simple chain of operations is collected by ReversibleSequential
+		inn = Ff.ReversibleSequential(N_DIM)
+		for k in range(8):
+				inn.append(Fm.AllInOneBlock, subnet_constructor=subnet_fc, permute_soft=True)
+		
+		optimizer = torch.optimizer.Adam(inn.parameters(), lr=0.01)
+		
+		# a very basic training loop
+		for i in range(1000):
+				optimizer.zero_grad()
+				# sample data from the moons distribution
+				data, label = make_moons(n_samples=BATCHSIZE, noise=0.05)
+				x = torch.Tensor(data)
+				# pass to INN and get transformed variable z and log Jacobian determinant
+				z, log_jac_det = inn(x)
+				# calculate the negative log-likelihood of a standard normal distribution
+				loss = 0.5*torch.sum(z**2, 1) - log_jac_det
+				loss = loss.mean() / N_DIM
+				# backpropagate and update the weights
+				loss.backward()
+				optimizer.step()
+		
+		# sample from the INN by sampling from a standard normal and transforming
+		# it in the reverse direction
+		z = torch.randn(BATCHSIZE, N_DIM)
+		samples, _ = inn(z, rev=True)
+
+
+
+
 Tutorial
 ----------------
 
@@ -315,53 +370,33 @@ The following only provides examples for constructing INNs by themselves.
        return nn.Sequential(nn.Conv2d(c_in, 256,   1), nn.ReLU(),
                             nn.Conv2d(256,  c_out, 1))
 
-Simple GLOW-based INN
-**************************
+Simple INN in 2 dimensions
+****************************
 
 The following INN only has 2 input dimensions.
 It should be able to learn to generate most 2D distributions (gaussian mixtures, different shapes, ...),
 and can be easily visualized.
-Because of the 2D, it does not require permutations or orthogonal transforms between coupling blocks.
+We will use a series of ``AllInOneBlock``s, which combine affine coupling, a permutation and ActNorm in a single structure.
+Since the computation graph is a simple chain of operations, we can define the network using the ``ReversibleSequential`` API.
 
 .. code:: python
 
-   nodes = [Ff.InputNode(2, name='input')]
-
-   # Use a loop to produce a chain of coupling blocks
+   inn = Ff.ReversibleSequential(2)
    for k in range(8):
-       nodes.append(Ff.Node(nodes[-1],
-                            Fm.GLOWCouplingBlock,
-                            {'subnet_constructor':subnet_fc, 'clamp':2.0},
-                            name=F'coupling_{k}'))
+   		inn.append(Fm.AllInOneBlock, subnet_constructor=subnet_fc, permute_soft=True)
 
-   nodes.append(Ff.OutputNode(nodes[-1], name='output'))
-   inn = Ff.ReversibleGraphNet(nodes)
+Conditional INN for MNIST
+***************************
 
-Conditional INN
-************************
-
-The following INN is able to perform conditional MNIST generation quite well.
-Note that is is not particularly efficient, with respect to the number of parameters.
-(See convolutional INN for that)
+The following cINN is able to perform conditional MNIST generation quite well.
+Note that is is not particularly efficient, with respect to the number of parameters (see convolutional INN for that).
+Again, we use a chain of ``AllInOneBlock``s, collected together by ``ReversibleSequential``.
 
 .. code:: python
 
-   cond = Ff.ConditionNode(10, name='condition')
-   nodes = [Ff.InputNode(28*28, name='input')]
-
+   cinn = Ff.ReversibleSequential(28*28)
    for k in range(12):
-       nodes.append(Ff.Node(nodes[-1],
-                            Fm.GLOWCouplingBlock,
-                            {'subnet_constructor':subnet_fc, 'clamp':2.0},
-                            conditions=cond,
-                            name=F'coupling_{k}'))
-       nodes.append(Ff.Node(nodes[-1],
-                            Fm.PermuteRandom,
-                            {'seed':k},
-                            name=F'permute_{k}'))
-
-   nodes.append(Ff.OutputNode(nodes[-1], name='output'))
-   cinn = Ff.ReversibleGraphNet(nodes + [cond])
+   		cinn.append(Fm.AllInOneBlock, cond=0, cond_shape=(10,), subnet_constructor=subnet_fc)
 
 
 Convolutional INN
@@ -373,6 +408,7 @@ and the rest are transformed further to encode semantic content.  This is
 important, because even for moderately sized images, it becomes infeasible to
 transform all dimenions through the full depth of the INN. Many dimensions will
 just enocde image noise, so we can split them off early.
+Because the computational graph contains multiple outputs, we have to use the full ``ReversibleGraphNet`` machinery.
 
 .. code:: python
 
