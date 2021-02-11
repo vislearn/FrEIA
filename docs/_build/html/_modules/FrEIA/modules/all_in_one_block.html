@@ -1,0 +1,403 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FrEIA.modules.all_in_one_block &#8212; FrEIA v0.2 documentation</title>
+    
+  <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
+    
+  <link rel="preload" as="script" href="../../../_static/js/index.d3f166471bb80abb5163.js">
+
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    <a class="navbar-brand" href="../../../index.html">
+    
+      <p class="title">FrEIA</p>
+    
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../../FrEIA.framework.html">FrEIA.framework package</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../../FrEIA.modules.html">FrEIA.modules package</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+    <div class="bd-toc-item active">
+    
+  
+    <ul class="nav bd-sidenav">
+        
+        
+        
+        
+        
+      </ul>
+  
+  </nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <h1>Source code for FrEIA.modules.all_in_one_block</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">InvertibleModule</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">special_ortho_group</span>
+
+
+<div class="viewcode-block" id="AllInOneBlock"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.AllInOneBlock">[docs]</a><span class="k">class</span> <span class="nc">AllInOneBlock</span><span class="p">(</span><span class="n">InvertibleModule</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Module combining the most common operations in a normalizing flow or similar model.</span>
+
+<span class="sd">    It combines affine coupling, permutation, and global affine transformation</span>
+<span class="sd">    (&#39;ActNorm&#39;). It can also be used as GIN coupling block, perform learned</span>
+<span class="sd">    householder permutations, and use an inverted pre-permutation (see</span>
+<span class="sd">    constructor docstring for details).&#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="p">[],</span>
+                 <span class="n">subnet_constructor</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">affine_clamping</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.</span><span class="p">,</span>
+                 <span class="n">gin_block</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">global_affine_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+                 <span class="n">global_affine_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;SOFTPLUS&#39;</span><span class="p">,</span>
+                 <span class="n">permute_soft</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">learned_householder_permutation</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                 <span class="n">reverse_permutation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">          subnet_constructor:</span>
+<span class="sd">            class or callable f, called as f(channels_in, channels_out) and</span>
+<span class="sd">            should return a torch.nn.Module</span>
+<span class="sd">          affine_clamping:</span>
+<span class="sd">            clamp the output of the multiplicative coefficients (before</span>
+<span class="sd">            exponentiation) to +/- affine_clamping.</span>
+<span class="sd">          gin_block:</span>
+<span class="sd">            Turn the block into a GIN block from Sorrenson et al, 2019</span>
+<span class="sd">          global_affine_init:</span>
+<span class="sd">            Initial value for the global affine scaling beta</span>
+<span class="sd">          global_affine_init:</span>
+<span class="sd">            &#39;SIGMOID&#39;, &#39;SOFTPLUS&#39;, or &#39;EXP&#39;. Defines the activation to be used</span>
+<span class="sd">            on the beta for the global affine scaling.</span>
+<span class="sd">          permute_soft:</span>
+<span class="sd">            bool, whether to sample the permutation matrices from SO(N), or to</span>
+<span class="sd">            use hard permutations in stead. Note, permute_soft=True is very slow</span>
+<span class="sd">            when working with &gt;512 dimensions.</span>
+<span class="sd">          learned_householder_permutation:</span>
+<span class="sd">            Int, if &gt;0,  use that many learned householder reflections. Slow if</span>
+<span class="sd">            large number. Dubious whether it actually helps.</span>
+<span class="sd">          reverse_permutation:</span>
+<span class="sd">            Reverse the permutation before the block, as introduced by Putzky</span>
+<span class="sd">            et al, 2019.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">)</span>
+
+        <span class="n">channels</span> <span class="o">=</span> <span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># rank of the tensors means 1d, 2d, 3d tensor etc.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_rank</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="c1"># tuple containing all dims except for batch-dim (used at various points)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sum_dims</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_rank</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims_c</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conditional</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">condition_channels</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">dims_c</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">:])</span> <span class="o">==</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">:]),</span> \
+                <span class="sa">F</span><span class="s2">&quot;Dimensions of input and condition don&#39;t agree: </span><span class="si">{</span><span class="n">dims_c</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">dims_in</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conditional</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">condition_channels</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">dc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">dc</span> <span class="ow">in</span> <span class="n">dims_c</span><span class="p">)</span>
+
+        <span class="n">split_len1</span> <span class="o">=</span> <span class="n">channels</span> <span class="o">-</span> <span class="n">channels</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">split_len2</span> <span class="o">=</span> <span class="n">channels</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">splits</span> <span class="o">=</span> <span class="p">[</span><span class="n">split_len1</span><span class="p">,</span> <span class="n">split_len2</span><span class="p">]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">permute_function</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="n">F</span><span class="o">.</span><span class="n">linear</span><span class="p">,</span>
+                                     <span class="mi">1</span><span class="p">:</span> <span class="n">F</span><span class="o">.</span><span class="n">conv1d</span><span class="p">,</span>
+                                     <span class="mi">2</span><span class="p">:</span> <span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">,</span>
+                                     <span class="mi">3</span><span class="p">:</span> <span class="n">F</span><span class="o">.</span><span class="n">conv3d</span><span class="p">}[</span><span class="bp">self</span><span class="o">.</span><span class="n">input_rank</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data is </span><span class="si">{</span><span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_rank</span><span class="si">}</span><span class="s2">D. Must be 1D-4D.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span>         <span class="o">=</span> <span class="n">channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clamp</span>               <span class="o">=</span> <span class="n">affine_clamping</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">GIN</span>                 <span class="o">=</span> <span class="n">gin_block</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reverse_pre_permute</span> <span class="o">=</span> <span class="n">reverse_permutation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">householder</span>         <span class="o">=</span> <span class="n">learned_householder_permutation</span>
+
+        <span class="k">if</span> <span class="n">permute_soft</span> <span class="ow">and</span> <span class="n">channels</span> <span class="o">&gt;</span> <span class="mi">512</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">((</span><span class="s2">&quot;Soft permutation will take a very long time to initialize &quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;with </span><span class="si">{</span><span class="n">channels</span><span class="si">}</span><span class="s2"> feature channels. Consider using hard permutation instead.&quot;</span><span class="p">))</span>
+
+        <span class="c1"># global_scale is used as the initial value for the global affine scale</span>
+        <span class="c1"># (pre-activation). It is computed such that</span>
+        <span class="c1"># global_scale_activation(global_scale) = global_affine_init</span>
+        <span class="c1"># the &#39;magic numbers&#39; (specifically for sigmoid) scale the activation to</span>
+        <span class="c1"># a sensible range.</span>
+        <span class="k">if</span> <span class="n">global_affine_type</span> <span class="o">==</span> <span class="s1">&#39;SIGMOID&#39;</span><span class="p">:</span>
+            <span class="n">global_scale</span> <span class="o">=</span> <span class="mf">2.</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">10.</span> <span class="o">/</span> <span class="n">global_affine_init</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">global_scale_activation</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="mf">2.</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">global_affine_type</span> <span class="o">==</span> <span class="s1">&#39;SOFTPLUS&#39;</span><span class="p">:</span>
+            <span class="n">global_scale</span> <span class="o">=</span> <span class="mf">2.</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="mf">10.</span> <span class="o">*</span> <span class="n">global_affine_init</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">softplus</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Softplus</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">global_scale_activation</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">softplus</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">global_affine_type</span> <span class="o">==</span> <span class="s1">&#39;EXP&#39;</span><span class="p">:</span>
+            <span class="n">global_scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">global_affine_init</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">global_scale_activation</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Global affine activation must be &quot;SIGMOID&quot;, &quot;SOFTPLUS&quot; or &quot;EXP&quot;&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_scale</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span><span class="p">,</span> <span class="o">*</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_rank</span><span class="p">))</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">global_scale</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_offset</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span><span class="p">,</span> <span class="o">*</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_rank</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="n">permute_soft</span><span class="p">:</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">special_ortho_group</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">channels</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">channels</span><span class="p">,</span> <span class="n">channels</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">channels</span><span class="p">)):</span>
+                <span class="n">w</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">householder</span><span class="p">:</span>
+            <span class="c1"># instead of just the permutation matrix w, the learned housholder</span>
+            <span class="c1"># permutation keeps track of reflection vectors vk, in addition to a</span>
+            <span class="c1"># random initial permutation w_0.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vk_householder</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="mf">0.2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">householder</span><span class="p">,</span> <span class="n">channels</span><span class="p">),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">w_perm</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">w_perm_inv</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">w_0</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">w</span><span class="p">),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">w_perm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="o">*</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_rank</span><span class="p">)),</span>
+                                       <span class="n">requires_grad</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">w_perm_inv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="o">*</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_rank</span><span class="p">)),</span>
+                                           <span class="n">requires_grad</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">subnet_constructor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Please supply a callable subnet_constructor&quot;</span>
+                             <span class="s2">&quot;function or object (see docstring)&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subnet</span> <span class="o">=</span> <span class="n">subnet_constructor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_channels</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_jac</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_construct_householder_permutation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Computes a permutation matrix from the reflection vectors that are</span>
+<span class="sd">        learned internally as nn.Parameters.&#39;&#39;&#39;</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_0</span>
+        <span class="k">for</span> <span class="n">vk</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vk_householder</span><span class="p">:</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mm</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">ger</span><span class="p">(</span><span class="n">vk</span><span class="p">,</span> <span class="n">vk</span><span class="p">)</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">vk</span><span class="p">,</span> <span class="n">vk</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_rank</span><span class="p">):</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">w</span>
+
+    <span class="k">def</span> <span class="nf">_permute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Performs the permutation and scaling after the coupling operation.</span>
+<span class="sd">        Returns transformed outputs and the LogJacDet of the scaling operation.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">GIN</span><span class="p">:</span>
+            <span class="n">scale</span> <span class="o">=</span> <span class="mf">1.</span>
+            <span class="n">perm_log_jac</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">scale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_scale_activation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">global_scale</span><span class="p">)</span>
+            <span class="n">perm_log_jac</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">scale</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">permute_function</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_perm_inv</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_offset</span><span class="p">)</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span>
+                    <span class="n">perm_log_jac</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">permute_function</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_offset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_perm</span><span class="p">),</span>
+                    <span class="n">perm_log_jac</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_pre_permute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Permutes before the coupling block, only used if</span>
+<span class="sd">        reverse_permutation is set&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">permute_function</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_perm</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">permute_function</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_perm_inv</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_affine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Given the passive half, and the pre-activation outputs of the</span>
+<span class="sd">        coupling subnetwork, perform the affine coupling operation.</span>
+<span class="sd">        Returns both the transformed inputs and the LogJacDet.&#39;&#39;&#39;</span>
+
+        <span class="c1"># the entire coupling coefficient tensor is scaled down by a</span>
+        <span class="c1"># factor of ten for stability and easier initialization.</span>
+        <span class="n">a</span> <span class="o">*=</span> <span class="mf">0.1</span>
+        <span class="n">ch</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">sub_jac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clamp</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">a</span><span class="p">[:,</span> <span class="p">:</span><span class="n">ch</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">GIN</span><span class="p">:</span>
+            <span class="n">sub_jac</span> <span class="o">-=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sub_jac</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sum_dims</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">sub_jac</span><span class="p">)</span> <span class="o">+</span> <span class="n">a</span><span class="p">[:,</span> <span class="n">ch</span><span class="p">:],</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sub_jac</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sum_dims</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">a</span><span class="p">[:,</span> <span class="n">ch</span><span class="p">:])</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">sub_jac</span><span class="p">),</span>
+                    <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sub_jac</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sum_dims</span><span class="p">))</span>
+
+<div class="viewcode-block" id="AllInOneBlock.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.AllInOneBlock.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="p">[],</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See base class docstring&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">householder</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">w_perm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_construct_householder_permutation</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">rev</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse_pre_permute</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">w_perm_inv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_perm</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">global_scaling_jac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_permute</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">rev</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">,)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse_pre_permute</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pre_permute</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">),)</span>
+
+        <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional</span><span class="p">:</span>
+            <span class="n">x1c</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x1</span><span class="p">,</span> <span class="o">*</span><span class="n">c</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x1c</span> <span class="o">=</span> <span class="n">x1</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="n">a1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subnet</span><span class="p">(</span><span class="n">x1c</span><span class="p">)</span>
+            <span class="n">x2</span><span class="p">,</span> <span class="n">j2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_affine</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">a1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">a1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subnet</span><span class="p">(</span><span class="n">x1c</span><span class="p">)</span>
+            <span class="n">x2</span><span class="p">,</span> <span class="n">j2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_affine</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">log_jac_det</span> <span class="o">=</span> <span class="n">j2</span>
+        <span class="n">x_out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="n">x_out</span><span class="p">,</span> <span class="n">global_scaling_jac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_permute</span><span class="p">(</span><span class="n">x_out</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse_pre_permute</span><span class="p">:</span>
+            <span class="n">x_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pre_permute</span><span class="p">(</span><span class="n">x_out</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># add the global scaling Jacobian to the total.</span>
+        <span class="c1"># trick to get the total number of non-channel dimensions:</span>
+        <span class="c1"># number of elements of the first channel of the first batch member</span>
+        <span class="n">n_pixels</span> <span class="o">=</span> <span class="n">x_out</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+        <span class="n">log_jac_det</span> <span class="o">+=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">**</span><span class="n">rev</span> <span class="o">*</span> <span class="n">n_pixels</span> <span class="o">*</span> <span class="n">global_scaling_jac</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">x_out</span><span class="p">,),</span> <span class="n">log_jac_det</span></div>
+
+    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">input_dims</span></div>
+</pre></div>
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    
+  <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
+
+
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2021, VLL-HD.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.4.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
