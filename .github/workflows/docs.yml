@@ -43,8 +43,6 @@ jobs:
         python -m pip install torch==1.7.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
         python -m pip install -e .
 
-    - name: Make docs
+    - name: Make and publish docs
       run: |
-          cd docs
-          make html
-          git diff _build/html/FrEIA.html
+          bash .github/scripts/publish-docs.sh
