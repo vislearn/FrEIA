@@ -15,6 +15,17 @@ c1_size = (1, 10, 10)
 c2_size = (50,)
 c3_size = (20,)
 
+def F_conv(cin, cout):
+    return nn.Sequential(nn.Conv2d(cin, 32, 3, padding=1),
+                         nn.ReLU(),
+                         nn.Conv2d(32, cout, 3, padding=1))
+
+def F_fully_connected(cin, cout):
+    return nn.Sequential(nn.Linear(cin, 128),
+                         nn.ReLU(),
+                         nn.Linear(128, cout))
+
+
 inp = InputNode(*inp_size, name='input')
 c1 = ConditionNode(*c1_size, name='c1')
 conv = Node(inp,

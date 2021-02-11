@@ -68,8 +68,6 @@ from .gaussian_mixture import *
 __all__ = [
             'InvertibleModule',
             'AllInOneBlock',
-            'AffineCoupling',
-            'ExternalAffineCoupling',
             'ActNorm',
             'HouseholderPerm',
             'IResNetLayer',
