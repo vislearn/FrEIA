@@ -10,7 +10,7 @@ import torch.nn.functional as F
 
 class IRevNetDownsampling(InvertibleModule):
     '''The invertible spatial downsampling used in i-RevNet.
-    Each group of four neighboring pixels is reorderd into one pixel with four times
+    Each group of four neighboring pixels is reordered into one pixel with four times
     the channels in a checkerboard-like pattern. See i-RevNet, Jacobsen 2018 et al.
     '''
 
@@ -23,7 +23,7 @@ class IRevNetDownsampling(InvertibleModule):
             for the use in FrEIA. Is usually slower on GPU.
             If False, uses a 2d strided convolution with a kernel representing
             the downsampling.  Note that the ordering of the output channels
-            will be different.  If pixels in each patch in channel 1 
+            will be different.  If pixels in each patch in channel 1
             are a1, b1, ..., and in channel 2 are a2, b2, ...
             Then the output channels will be the following:
             legacy_backend=True: a1, a2, ..., b1, b2, ..., c1, c2, ...
@@ -40,15 +40,15 @@ class IRevNetDownsampling(InvertibleModule):
 
         if not self.legacy_backend:
             # this kernel represents the reshape:
-            # it apllies to 2x2 patches (stride 2), and transforms each
+            # it applies to 2x2 patches (stride 2), and transforms each
             # input channel to 4 channels.
-            # The input value is tranferred whereever the kernel is 1.
+            # The input value is transferred wherever the kernel is 1.
             # (hence the indexing pattern 00, 01, 10, 11 represents the
-            # cherckerboard.
-            # For the upsampling, a transposed convolution is used for the 
+            # checkerboard.
+            # For the upsampling, a transposed convolution is used for the
             # opposite effect.
 
-            self.downsample_kernel = torch.zeros(4,1,2,2)
+            self.downsample_kernel = torch.zeros(4, 1, 2, 2)
 
             self.downsample_kernel[0, 0, 0, 0] = 1
             self.downsample_kernel[1, 0, 0, 1] = 1
@@ -107,14 +107,13 @@ class IRevNetDownsampling(InvertibleModule):
                                             stride=2, groups=self.channels)
                 return (output,), 0.
 
-
     def output_dims(self, input_dims):
         '''See docstring of base class (FrEIA.modules.InvertibleModule).'''
 
         if len(input_dims) != 1:
             raise ValueError("i-RevNet downsampling must have exactly 1 input")
         if len(input_dims[0]) != 3:
-            raise ValueError("i-RevNet downsampling can only tranform 2D images"
+            raise ValueError("i-RevNet downsampling can only transform 2D images"
                              "of the shape CxWxH (channels, width, height)")
 
         c, w, h = input_dims[0]
@@ -139,7 +138,7 @@ class IRevNetUpsampling(IRevNetDownsampling):
             for the use in FrEIA. Is usually slower on GPU.
             If False, uses a 2d strided convolution with a kernel representing
             the downsampling.  Note that the ordering of the output channels
-            will be different.  If pixels in each patch in channel 1 
+            will be different.  If pixels in each patch in channel 1
             are a1, b1, ..., and in channel 2 are a2, b2, ...
             Then the output channels will be the following:
             legacy_backend=True: a1, a2, ..., b1, b2, ..., c1, c2, ...
@@ -158,12 +157,12 @@ class IRevNetUpsampling(IRevNetDownsampling):
         return super().forward(x, c=None, rev=not rev)
 
     def output_dims(self, input_dims):
-        '''see docstring of base class (freia.modules.invertiblemodule).'''
+        '''See docstring of base class (FrEIA.modules.InvertibleModule).'''
 
         if len(input_dims) != 1:
-            raise ValueError("i-revnet downsampling must have exactly 1 input")
+            raise ValueError("i-RevNet downsampling must have exactly 1 input")
         if len(input_dims[0]) != 3:
-            raise ValueError("i-revnet downsampling can only tranform 2d images"
+            raise ValueError("i-RevNet downsampling can only transform 2D images"
                              "of the shape cxwxh (channels, width, height)")
 
         c, w, h = input_dims[0]
@@ -198,7 +197,7 @@ class HaarDownsampling(InvertibleModule):
             allows to split off the first quarter of channels to isolate the
             average wavelets only.
           rebalance: Must !=0. There exist different conventions how to define
-            the haar wavelets. The wavelet components in the forward direction
+            the Haar wavelets. The wavelet components in the forward direction
             are multiplied with this factor, and those in the inverse direction
             are adjusted accordingly, so that the module as a whole is
             invertible.  Stability of the network may be increased for rebalance
@@ -211,8 +210,8 @@ class HaarDownsampling(InvertibleModule):
 
         self.in_channels = dims_in[0][0]
 
-        # self.jac_{fwd,rev} is the jacobian determinant for a single pixel in
-        # a single channel computed explicitly from the matrix below.
+        # self.jac_{fwd,rev} is the log Jacobian determinant for a single pixel
+        # in a single channel computed explicitly from the matrix below.
 
         self.fac_fwd = 0.5 * rebalance
         self.jac_fwd = (np.log(16.) + 4 * np.log(self.fac_fwd)) / 4.
@@ -222,7 +221,7 @@ class HaarDownsampling(InvertibleModule):
 
         # See https://en.wikipedia.org/wiki/Haar_wavelet#Haar_matrix
         # for an explanation of how this weight matrix comes about
-        self.haar_weights = torch.ones(4,1,2,2)
+        self.haar_weights = torch.ones(4, 1, 2, 2)
 
         self.haar_weights[1, 0, 0, 1] = -1
         self.haar_weights[1, 0, 1, 1] = -1
@@ -239,7 +238,7 @@ class HaarDownsampling(InvertibleModule):
 
         # for 'order_by_wavelet', we just perform the channel-wise wavelet
         # transform as usual, and then permute the channels into the correct
-        # order afterward (hece 'self.permute')
+        # order afterward (hence 'self.permute')
         self.permute = order_by_wavelet
 
         if self.permute:
@@ -279,7 +278,7 @@ class HaarDownsampling(InvertibleModule):
                 x_perm = inp
 
             x_perm *= self.fac_rev
-            out= F.conv_transpose2d(x_perm, self.haar_weights, stride=2, groups=self.in_channels)
+            out = F.conv_transpose2d(x_perm, self.haar_weights, stride=2, groups=self.in_channels)
 
             return (out,), jac
 
@@ -289,7 +288,7 @@ class HaarDownsampling(InvertibleModule):
         if len(input_dims) != 1:
             raise ValueError("HaarDownsampling must have exactly 1 input")
         if len(input_dims[0]) != 3:
-            raise ValueError("HaarDownsampling can only tranform 2D images"
+            raise ValueError("HaarDownsampling can only transform 2D images"
                              "of the shape CxWxH (channels, width, height)")
 
         c, w, h = input_dims[0]
@@ -323,7 +322,7 @@ class HaarUpsampling(HaarDownsampling):
             allows to split off the first quarter of channels to isolate the
             average wavelets only.
           rebalance: Must !=0. There exist different conventions how to define
-            the haar wavelets. The wavelet components in the forward direction
+            the Haar wavelets. The wavelet components in the forward direction
             are multiplied with this factor, and those in the inverse direction
             are adjusted accordingly, so that the module as a whole is
             invertible.  Stability of the network may be increased for rebalance
@@ -337,7 +336,7 @@ class HaarUpsampling(HaarDownsampling):
         return super().forward(x, c=None, rev=not rev)
 
     def output_dims(self, input_dims):
-        '''see docstring of base class (freia.modules.invertiblemodule).'''
+        '''See docstring of base class (FrEIA.modules.InvertibleModule).'''
 
         if len(input_dims) != 1:
             raise ValueError("i-revnet downsampling must have exactly 1 input")
@@ -353,6 +352,7 @@ class HaarUpsampling(HaarDownsampling):
                              "the input height or width are an odd number")
 
         return ((c2, w2, h2),)
+
 
 class Flatten(InvertibleModule):
     '''Flattens N-D tensors into 1-D tensors.'''
@@ -388,7 +388,7 @@ class Reshape(InvertibleModule):
     def __init__(self, dims_in, dims_c=None, output_dims: Iterable[int] = None):
         '''See docstring of base class (FrEIA.modules.InvertibleModule) for more.
         Args:
-          target_dims: The shape the reshaped output is supoosed to have (not
+          target_dims: The shape the reshaped output is supposed to have (not
             including batch dimension)
         '''
         super().__init__(dims_in, dims_c)
