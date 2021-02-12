@@ -32,7 +32,6 @@ class InvertibleModule(nn.Module):
     """
 
     def __init__(self, dims_in: Iterable[Tuple[int]],
-                 dims_out: Iterable[Tuple[int]],
                  dims_c: Iterable[Tuple[int]] = None):
         """
         Parameters:
@@ -45,7 +44,6 @@ class InvertibleModule(nn.Module):
         if dims_c is None:
             dims_c = []
         self.dims_in = list(dims_in)
-        self.dims_out = list(dims_out)
         self.dims_c = list(dims_c)
 
     def forward(self, x_or_z: Iterable[Tensor], c: Iterable[Tensor] = None,
@@ -82,3 +80,7 @@ class InvertibleModule(nn.Module):
         raise DeprecationWarning("module.jacobian(...) is deprecated. "
                                  "module.forward(..., jac=True) returns a "
                                  "tuple (out, jacobian) now.")
+
+    def output_dims(self, input_dims: List[Tuple[int]]) -> List[Tuple[int]]:
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not provide output_dims(...)")
