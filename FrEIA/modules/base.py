@@ -46,7 +46,7 @@ class InvertibleModule(nn.Module):
         self.dims_in = dims_in
         self.dims_c = dims_c
 
-    def forward(self, x_or_z: Iterable[Tensor], c: Iterable[Tensor],
+    def forward(self, x_or_z: Iterable[Tensor], c: Iterable[Tensor] = None,
                 rev: bool = False, jac: bool = True) \
             -> Tuple[Tuple[Tensor], Tensor]:
         """
@@ -75,6 +75,11 @@ class InvertibleModule(nn.Module):
         """
         raise NotImplementedError(
             f"{self.__class__.__name__} does not provide forward(...) method")
+
+    def jacobian(self, *args, **kwargs):
+        raise DeprecationWarning("module.jacobian(...) is deprecated. "
+                                 "module.forward(..., jac=True) returns a "
+                                 "tuple (out, jacobian) now.")
 
     def output_dims(self, input_dims: List[Tuple[int]]) -> List[Tuple[int]]:
         raise NotImplementedError(

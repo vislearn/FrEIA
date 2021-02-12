@@ -30,7 +30,7 @@ gmm = Node(inp,
            conditions=[w, mu, U, i],
            name='gmm')
 out = OutputNode(gmm, name='output')
-test_net = ReversibleGraphNet([inp, w, mu, U, i, gmm, out], verbose=False)
+test_net = GraphINN([inp, w, mu, U, i, gmm, out], verbose=False)
 
 
 class GMMTest(unittest.TestCase):

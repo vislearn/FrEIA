@@ -1,4 +1,4 @@
-'''Dummy modules, used for testing the ReversibleGraphNet. Probably not useful
+'''Dummy modules, used for testing the GraphINN. Probably not useful
 for anything else.'''
 
 

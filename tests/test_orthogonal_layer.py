@@ -17,7 +17,7 @@ permute_1 = Node([orthog_layer.out0], PermuteRandom, {'seed':0})
 permute_2 = Node([permute_1.out0], HouseholderPerm, {'n_reflections':10})
 outp= OutputNode([permute_2.out0], name='output')
 
-test_net = ReversibleGraphNet([inp, orthog_layer, permute_1, permute_2, outp])
+test_net = GraphINN([inp, orthog_layer, permute_1, permute_2, outp])
 
 optim = torch.optim.SGD(test_net.parameters(), lr=5e-1)
 

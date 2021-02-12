@@ -1,6 +1,6 @@
 import warnings
 from collections import deque, defaultdict
-from typing import List, Dict, Tuple, Iterable, Union, Optional
+from typing import List, Tuple, Iterable, Union, Optional
 
 import numpy as np
 import torch
@@ -170,7 +170,7 @@ class OutputNode(Node):
         return None, []
 
 
-class ReversibleGraphNet(InvertibleModule):
+class GraphINN(InvertibleModule):
     """
     This class represents the invertible net itself. It is a subclass of
     InvertibleModule and supports the same methods.
@@ -181,37 +181,12 @@ class ReversibleGraphNet(InvertibleModule):
     (backward) pass.
     """
 
-    def __init__(self, node_list, ind_in=None, ind_out=None, verbose=True,
-                 force_tuple_output=False):
+    def __init__(self, node_list, force_tuple_output=False, verbose=False):
         # Gather lists of input, output and condition nodes
-        if ind_in is not None:
-            warnings.warn(
-                "Use of 'ind_in' and 'ind_out' for ReversibleGraphNet is "
-                "deprecated, input and output nodes are detected "
-                "automatically.")
-            if isinstance(ind_in, int):
-                ind_in = [ind_in]
-
-            in_nodes = [node_list[i] for i in ind_in]
-        else:
-            in_nodes = [node_list[i] for i in range(len(node_list))
-                        if isinstance(node_list[i], InputNode)]
-        assert len(in_nodes) > 0, "No input nodes specified."
-
-        if ind_out is not None:
-            warnings.warn(
-                "Use of 'ind_in' and 'ind_out' for ReversibleGraphNet is "
-                "deprecated, input and output nodes are detected "
-                "automatically.")
-            if isinstance(ind_out, int):
-                ind_out = [ind_out]
-
-            out_nodes = [node_list[i] for i in ind_out]
-        else:
-            out_nodes = [node_list[i] for i in range(len(node_list))
-                         if isinstance(node_list[i], OutputNode)]
-        assert len(out_nodes) > 0, "No output nodes specified."
-
+        in_nodes = [node_list[i] for i in range(len(node_list))
+                    if isinstance(node_list[i], InputNode)]
+        out_nodes = [node_list[i] for i in range(len(node_list))
+                     if isinstance(node_list[i], OutputNode)]
         condition_nodes = [node_list[i] for i in range(len(node_list)) if
                            isinstance(node_list[i], ConditionNode)]
 
@@ -248,21 +223,27 @@ class ReversibleGraphNet(InvertibleModule):
         self.module_list = nn.ModuleList([n.module for n in node_list
                                           if n.module is not None])
 
+        if verbose:
+            print(self)
+
     def output_dims(self, input_dims: List[Tuple[int]]) -> List[Tuple[int]]:
         if len(self.global_out_shapes) == 1 and not self.force_tuple_output:
             raise ValueError("You can only call output_dims on a "
-                             "ReversibleGraphNet with more than one output "
+                             "GraphINN with more than one output "
                              "or when setting force_tuple_output=True.")
         return self.global_out_shapes
 
     def forward(self, x_or_z: Union[Tensor, Iterable[Tensor]],
-                c: Iterable[Tensor], rev: bool = False, jac: bool = True,
-                intermediate_outputs: bool = False)\
+                c: Iterable[Tensor] = None, rev: bool = False, jac: bool = True,
+                intermediate_outputs: bool = False) \
             -> Tuple[Tuple[Tensor], Tensor]:
         """
         Forward or backward computation of the whole net.
         """
-        jacobian = None
+        if torch.is_tensor(x_or_z):
+            x_or_z = (x_or_z,)
+
+        jacobian = torch.zeros(x_or_z[0].shape[0]).to(x_or_z[0])
         outs = {}
 
         # Explicitly set conditions and starts
@@ -326,7 +307,7 @@ class ReversibleGraphNet(InvertibleModule):
                 f"The node {node}'s module returned a tensor only. This "
                 f"is deprecated without fallback. Please follow the "
                 f"signature of InvertibleOperator#forward in your module "
-                f"if you want to use it in a ReversibleGraphNet.")
+                f"if you want to use it in a GraphINN.")
 
         if len(mod_out) != 2:
             raise ValueError(
@@ -355,7 +336,6 @@ class ReversibleGraphNet(InvertibleModule):
                     f"The node {node}'s module returned neither None nor a "
                     f"Jacobian.")
         return out, mod_jac
-
 
     def log_jacobian_numerical(self, x, c=None, rev=False, h=1e-04):
         """
@@ -462,3 +442,33 @@ def topological_order(all_nodes: List[Node], in_nodes: List[InputNode],
         return sorted_nodes[::-1]
     else:
         raise ValueError("Graph is cyclic.")
+
+
+class ReversibleGraphNet(GraphINN):
+    def __init__(self, node_list, ind_in=None, ind_out=None, verbose=True,
+                 force_tuple_output=False):
+        warnings.warn("ReversibleGraphNet is deprecated in favour of GraphINN. "
+                      "It will be removed in the next version of FrEIA.",
+                      DeprecationWarning)
+        if ind_in is not None:
+            raise ValueError(
+                "ReversibleGraphNet's ind_in was removed in FrEIA v0.3.0. "
+                "Please use InputNodes and switch to GraphINN."
+            )
+        if ind_out is not None:
+            raise ValueError(
+                "ReversibleGraphNet's ind_out was removed in FrEIA v0.3.0. "
+                "Please use OutputNodes and switch to GraphINN."
+            )
+        super().__init__(node_list, verbose=verbose,
+                         force_tuple_output=force_tuple_output)
+
+    def forward(self, x_or_z: Union[Tensor, Iterable[Tensor]],
+                c: Iterable[Tensor] = None, rev: bool = False, jac: bool = True,
+                intermediate_outputs: bool = False)\
+            -> Tuple[Tuple[Tensor], Tensor]:
+        warnings.warn("ReversibleGraphNet's forward() now "
+                      "returns a tuple (output, jacobian). "
+                      "It will be removed in the next version of FrEIA.",
+                      DeprecationWarning)
+        return super().forward(x_or_z, c, rev, jac, intermediate_outputs)

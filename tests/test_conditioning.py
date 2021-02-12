@@ -48,7 +48,7 @@ linear = Node(flatten,
               name='linear::c2|c3')
 outp = OutputNode(linear, name='output')
 conv_outp = OutputNode(conv, name='output')
-test_net = ReversibleGraphNet([inp, c1, conv, flatten, c2, c3, linear, outp])
+test_net = GraphINN([inp, c1, conv, flatten, c2, c3, linear, outp])
 
 
 class ConditioningTest(unittest.TestCase):

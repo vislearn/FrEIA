@@ -53,10 +53,11 @@ class Split(InvertibleModule):
     def forward(self, x_or_z, c=None, rev=False, jac=True):
         """See super class InvertibleModule."""
         if rev:
-            return [torch.cat(x_or_z, dim=self.dim+1)], 0
+            return [torch.cat(x_or_z, dim=self.dim+1)], \
+                   torch.zeros(x_or_z[0].shape[0])
         else:
             return torch.split(x_or_z[0], self.split_size_or_sections,
-                               dim=self.dim+1), 0
+                               dim=self.dim+1), torch.zeros(x_or_z[0].shape[0])
 
     def output_dims(self, input_dims):
         """See super class InvertibleModule."""
@@ -118,13 +119,9 @@ class Concat(InvertibleModule):
         """See super class InvertibleModule."""
         if rev:
             return torch.split(x[0], self.split_size_or_sections,
-                               dim=self.dim+1)
+                               dim=self.dim+1), torch.zeros(x[0].shape[0])
         else:
-            return [torch.cat(x, dim=self.dim+1)]
-
-    def jacobian(self, x, rev=False):
-        """See super class InvertibleModule."""
-        return 0
+            return [torch.cat(x, dim=self.dim+1)], torch.zeros(x[0].shape[0])
 
     def output_dims(self, input_dims):
         """See super class InvertibleModule."""

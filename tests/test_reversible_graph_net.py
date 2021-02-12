@@ -30,7 +30,7 @@ class SimpleComputeGraph(unittest.TestCase):
         out_node = OutputNode(in_node)
         self.assertEqual(in_node.output_dims, out_node.input_dims)
         self.assertEqual(out_node.output_dims, [])
-        graph = ReversibleGraphNet([in_node, out_node])
+        graph = GraphINN([in_node, out_node])
         self.assertEqual(graph.dims_in, in_node.output_dims)
 
 
@@ -74,7 +74,7 @@ class ComplexComputeGraph(unittest.TestCase):
         haar = Node(concat, HaarDownsampling, {}, name='haar')
 
         out = OutputNode(haar, name='output')
-        self.test_net = ReversibleGraphNet([inp, cond, split, flatten1, perm, unflatten1, conv,
+        self.test_net = GraphINN([inp, cond, split, flatten1, perm, unflatten1, conv,
             flatten2, linear, unflatten2, concat, haar, out])
 
 

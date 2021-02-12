@@ -25,13 +25,13 @@ class ActNormTest(unittest.TestCase):
         nodes.append(Node(nodes[-1], ActNorm, {},
                           name=f'actnorm'))
         nodes.append(OutputNode(nodes[-1], name='output'))
-        self.net_linear = ReversibleGraphNet(nodes, verbose=False)
+        self.net_linear = GraphINN(nodes, verbose=False)
 
         nodes = [InputNode(*self.inp_size_conv, name='input')]
         nodes.append(Node(nodes[-1], ActNorm, {},
                           name=f'actnorm'))
         nodes.append(OutputNode(nodes[-1], name='output'))
-        self.net_conv = ReversibleGraphNet(nodes, verbose=False)
+        self.net_conv = GraphINN(nodes, verbose=False)
 
 
     def test_init(self):
@@ -79,7 +79,7 @@ class IResNetTest(unittest.TestCase):
                               conditions=[cond],
                               name=f'i_resnet_{i}'))
         nodes.append(OutputNode(nodes[-1], name='output'))
-        self.i_resnet_linear = ReversibleGraphNet(nodes + [cond,], verbose=False)
+        self.i_resnet_linear = GraphINN(nodes + [cond,], verbose=False)
 
         for node in self.i_resnet_linear.node_list:
             if isinstance(node.module, IResNetLayer):
@@ -93,7 +93,7 @@ class IResNetTest(unittest.TestCase):
             nodes.append(Node(nodes[-1], IResNetLayer, {'hutchinson_samples': 20},
                               name=f'i_resnet_{i}'))
         nodes.append(OutputNode(nodes[-1], name='output'))
-        self.i_resnet_conv = ReversibleGraphNet(nodes, verbose=False)
+        self.i_resnet_conv = GraphINN(nodes, verbose=False)
 
         for node in self.i_resnet_conv.node_list:
             if isinstance(node.module, IResNetLayer):
