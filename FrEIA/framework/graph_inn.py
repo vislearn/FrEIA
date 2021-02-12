@@ -1,4 +1,3 @@
-import warnings
 from collections import deque, defaultdict
 from typing import List, Tuple, Iterable, Union, Optional
 
@@ -328,14 +327,17 @@ class GraphINN(InvertibleModule):
                 f"{len(node.inputs if rev else node.outputs)}.")
 
         if not torch.is_tensor(mod_jac):
-            if jac:
+            if isinstance(mod_jac, (float, int)):
+                mod_jac = torch.zeros(out[0].shape[0]).to(out[0].device) \
+                          + mod_jac
+            elif jac:
                 raise ValueError(
                     f"The node {node}'s module returned a non-tensor as "
-                    f"Jacobian.")
+                    f"Jacobian: {mod_jac}")
             elif not jac and mod_jac is not None:
                 raise ValueError(
                     f"The node {node}'s module returned neither None nor a "
-                    f"Jacobian.")
+                    f"Jacobian: {mod_jac}")
         return out, mod_jac
 
     def log_jacobian_numerical(self, x, c=None, rev=False, h=1e-04):
@@ -443,4 +445,3 @@ def topological_order(all_nodes: List[Node], in_nodes: List[InputNode],
         return sorted_nodes[::-1]
     else:
         raise ValueError("Graph is cyclic.")
-

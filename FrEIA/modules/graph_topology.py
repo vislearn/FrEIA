@@ -1,4 +1,5 @@
 from copy import deepcopy
+from typing import Sequence, Union
 
 import torch
 import torch.nn as nn
