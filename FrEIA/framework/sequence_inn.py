@@ -1,4 +1,3 @@
-import warnings
 from typing import Iterable, Tuple, List
 
 import torch.nn as nn
@@ -100,10 +99,3 @@ class SequenceINN(InvertibleModule):
         return x_or_z if self.force_tuple_output else x_or_z[0], jac
 
 
-class ReversibleSequential(SequenceINN):
-    def __init__(self, *dims):
-        warnings.warn("ReversibleSequential is deprecated in favour of "
-                      "SequenceINN. It will be removed in a future version "
-                      "of FrEIA.",
-                      DeprecationWarning)
-        super().__init__(*dims)
