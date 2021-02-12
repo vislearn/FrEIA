@@ -1,10 +1,12 @@
+from . import InvertibleModule
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
-class GaussianMixtureModel(nn.Module):
+class GaussianMixtureModel(InvertibleModule):
     '''An invertible Gaussian mixture model. The weights, means, covariance
     parameterization and component index must be supplied as conditional inputs
     to the module and can come from an external feed-forward network, which may
@@ -21,7 +23,7 @@ class GaussianMixtureModel(nn.Module):
     Density Networks with full covariance matrices" on arXiv.'''
 
     def __init__(self, dims_in, dims_c):
-        super().__init__()
+        super().__init__(dims_in, dims_c)
 
         self.x_dims = dims_in[0][0]
         # Prepare masks for filling the (triangular) Cholesky factors of the precision matrices
@@ -146,35 +148,19 @@ class GaussianMixtureModel(nn.Module):
         if not rev:
             if fixed_components:
                 # Return latent codes of x according to chosen component distributions only
-                return [torch.stack([torch.matmul(U[b,i[b],:,:], x[0][b,:] - mu[b,i[b],:]) for b in range(batch_size)])]
+                return [torch.stack([torch.matmul(U[b,i[b],:,:], x[0][b,:] - mu[b,i[b],:]) for b in range(batch_size)])], self.jac
             else:
                 # Return latent codes of x according to all component distributions simultaneously
                 if len(x[0].shape) < 3:
                     x[0] = x[0][:,None,:]
-                return [torch.matmul(U, (x[0] - mu)[...,None])[...,0]]
+                return [torch.matmul(U, (x[0] - mu)[...,None])[...,0]], self.jac
         else:
             if fixed_components:
                 # Transform latent samples to samples from chosen mixture distributions
-                return [torch.stack([mu[b,i[b],:] + torch.matmul(torch.inverse(U[b,i[b],:,:]), x[0][b,:]) for b in range(batch_size)])]
+                return [torch.stack([mu[b,i[b],:] + torch.matmul(torch.inverse(U[b,i[b],:,:]), x[0][b,:]) for b in range(batch_size)])], -self.jac
             else:
                 # Transform latent samples to samples from all mixture distributions simultaneously
-                return [torch.matmul(torch.inverse(U), x[0][...,None])[...,0] + mu]
-
-
-    def jacobian(self, x, c, rev=False):
-        '''Logarithm of the determinant of the Jacobian matrices, either for the
-        specified mixture component or for all mixture components. Values are
-        computed and stored during the forward/inverse pass, this function only
-        returns those stored values.
-
-        x:  Irrelevant in this case.
-        c:  Irrelevant in this case.'''
-
-        if not rev:
-            return self.jac
-        else:
-            return -self.jac
-
+                return [torch.matmul(torch.inverse(U), x[0][...,None])[...,0] + mu], -self.jac
 
     def output_dims(self, input_dims):
         assert len(input_dims) == 1, "Can only use 1 input"
