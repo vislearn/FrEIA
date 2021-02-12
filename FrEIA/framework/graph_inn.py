@@ -245,6 +245,7 @@ class GraphINN(InvertibleModule):
 
         jacobian = torch.zeros(x_or_z[0].shape[0]).to(x_or_z[0])
         outs = {}
+        jacobian_dict = {} if jac else None
 
         # Explicitly set conditions and starts
         for tensor, start_node in zip(x_or_z,
@@ -285,14 +286,14 @@ class GraphINN(InvertibleModule):
 
             if jac:
                 jacobian = jacobian + mod_jac
+                jacobian_dict[node] = mod_jac
 
         for out_node in (self.in_nodes if rev else self.out_nodes):
             # This copies the one input of the out node
             outs[out_node, 0] = outs[out_node.inputs[0]]
 
         if intermediate_outputs:
-            # todo did we want per-node jacobian?
-            return outs, jacobian
+            return outs, jacobian_dict
         else:
             out_list = [outs[out_node, 0] for out_node
                         in (self.in_nodes if rev else self.out_nodes)]
