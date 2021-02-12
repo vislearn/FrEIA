@@ -1,5 +1,6 @@
 from . import InvertibleModule
 
+from warnings import warn
 from typing import Iterable
 
 import numpy as np
@@ -385,13 +386,19 @@ class Reshape(InvertibleModule):
     See IRevNetDownsampling, IRevNetUpsampling, HaarDownsampling, HaarUpsampling
     for spatially meaningful reshaping operations.'''
 
-    def __init__(self, dims_in, dims_c=None, output_dims: Iterable[int] = None):
+    def __init__(self, dims_in, dims_c=None, output_dims: Iterable[int] = None, target_dim = None):
         '''See docstring of base class (FrEIA.modules.InvertibleModule) for more.
         Args:
-          target_dims: The shape the reshaped output is supposed to have (not
+          output_dims: The shape the reshaped output is supposed to have (not
             including batch dimension)
+          target_dim: Deprecated name for output_dims
         '''
         super().__init__(dims_in, dims_c)
+
+        if target_dim is not None:
+            warn("Use the new name for the 'target_dim' argument: 'output_dims'"
+                 "the 'target_dim' argument will be removed in the next version")
+            output_dims = target_dim
 
         if output_dims is None:
             raise ValueError("Please specify the desired output shape")

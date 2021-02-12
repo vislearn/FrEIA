@@ -143,7 +143,7 @@ class HouseholderPerm(InvertibleModule):
             self.Vs = nn.Parameter(Vs)
 
             Vs.requires_grad = not self.fixed
-            self.register_parameter(f'Vs', self.Vs)
+            self.register_parameter('Vs', self.Vs)
 
         if self.fixed:
             self.W = _fast_h(self.Vs)

@@ -24,7 +24,7 @@ class InvAutoActTwoSided(InvertibleModule):
         return self.clamp * 0.636 * torch.atan(s/self.clamp)
 
     def forward(self, x, rev=False, jac=True):
-       j = (-1)**rev * torch.sum(self.log_e(self.alpha_pos + 0.5 * (self.alpha_neg - self.alpha_pos) * (1 - x[0].sign())), dim=1)
+        j = (-1)**rev * torch.sum(self.log_e(self.alpha_pos + 0.5 * (self.alpha_neg - self.alpha_pos) * (1 - x[0].sign())), dim=1)
         if not rev:
             return [x[0] * self.e(self.alpha_pos + 0.5 * (self.alpha_neg - self.alpha_pos) * (1 - x[0].sign()))], j
         else:
@@ -117,7 +117,7 @@ class InvAutoFC(InvertibleModule):
 
 class InvAutoConv2D(InvertibleModule):
 
-    def __init__(self, dims_in, dims_c=None, dims_out, kernel_size=3, padding=1):
+    def __init__(self, dims_in, dims_c=None, dims_out=None, kernel_size=3, padding=1):
         super().__init__(dims_in, dims_c)
         self.dims_in = dims_in
         self.dims_out = dims_out
