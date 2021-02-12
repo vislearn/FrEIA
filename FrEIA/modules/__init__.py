@@ -3,8 +3,13 @@ nodes of the ReversibleGraphNet class. The only additional things that are
 needed compared to the base class is an @staticmethod otuput_dims, and the
 'rev'-argument of the forward-method.
 
+Abstract template:
+
+* InvertibleModule
+
 Coupling blocks:
 
+* InvertibleModule
 * AllInOneBlock
 * NICECouplingBlock
 * RNVPCouplingBlock
@@ -50,24 +55,23 @@ Reshaping:
 
 '''
 
+# Import the base class first
+from .base import *
+
+# Then all inheriting modules
 from .all_in_one_block import *
 from .fixed_transforms import *
 from .reshapes import *
 from .coupling_layers import *
 from .graph_topology import *
-from .coeff_functs import *
 from .orthogonal import *
 from .inv_auto_layers import *
 from .invertible_resnet import *
 from .gaussian_mixture import *
 
 __all__ = [
+            'InvertibleModule',
             'AllInOneBlock',
-            'glow_coupling_layer',
-            'rev_layer',
-            'rev_multiplicative_layer',
-            'AffineCoupling',
-            'ExternalAffineCoupling',
             'ActNorm',
             'HouseholderPerm',
             'IResNetLayer',
@@ -76,24 +80,8 @@ __all__ = [
             'InvAutoActTwoSided',
             'InvAutoConv2D',
             'InvAutoFC',
+            'InvertibleModule',
             'LearnedElementwiseScaling',
-            'orthogonal_layer',
-            'conv_1x1',
-            'linear_transform',
-            'permute_layer',
-            'split_layer',
-            'cat_layer',
-            'channel_split_layer',
-            'channel_merge_layer',
-            'reshape_layer',
-            'flattening_layer',
-            'haar_multiplex_layer',
-            'haar_restore_layer',
-            'i_revnet_downsampling',
-            'i_revnet_upsampling',
-            'F_conv',
-            'F_fully_connected',
-            'F_fully_convolutional',
             'NICECouplingBlock',
             'RNVPCouplingBlock',
             'GLOWCouplingBlock',
@@ -105,8 +93,8 @@ __all__ = [
             'Fixed1x1Conv',
             'SplitChannel',
             'ConcatChannel',
-            'Split1D',
-            'Concat1d',
+            'Split',
+            'Concat',
             'OrthogonalTransform',
             'HouseholderPerm',
             'IRevNetDownsampling',
