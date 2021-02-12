@@ -93,7 +93,7 @@ class GaussianMixtureModel(InvertibleModule):
         return -(w.log() - 0.5 * (z**2).sum(dim=-1) + log_jacobian).sum(dim=-1)
 
 
-    def forward(self, x, c, rev=False):
+    def forward(self, x, c, rev=False, jac=True):
         '''Map between data distribution and standard normal latent distribution
         of mixture components or entire mixture, in an invertible way.
 

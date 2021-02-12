@@ -23,7 +23,7 @@ class InvAutoActTwoSided(InvertibleModule):
         '''log of the nonlinear function e'''
         return self.clamp * 0.636 * torch.atan(s/self.clamp)
 
-    def forward(self, x, rev=False):
+    def forward(self, x, rev=False, jac=True):
        j = (-1)**rev * torch.sum(self.log_e(self.alpha_pos + 0.5 * (self.alpha_neg - self.alpha_pos) * (1 - x[0].sign())), dim=1)
         if not rev:
             return [x[0] * self.e(self.alpha_pos + 0.5 * (self.alpha_neg - self.alpha_pos) * (1 - x[0].sign()))], j
@@ -41,7 +41,7 @@ class InvAutoAct(InvertibleModule):
         super().__init__(dims_in, dims_c)
         self.alpha = nn.Parameter(0.01 * torch.randn(dims_in[0][0]) + 0.7)
 
-    def forward(self, x, rev=False):
+    def forward(self, x, rev=False, jac=True):
         # TODO this one didn't even HAVE a jacobian implemented ?!?!
         if not rev:
             return [x[0] * torch.exp(self.alpha * x[0].sign())], None
@@ -62,7 +62,7 @@ class InvAutoActFixed(nn.Module):
 
         self.log_alpha = np.log(alpha)
 
-    def forward(self, x, rev=False):
+    def forward(self, x, rev=False, jac=True):
         j = (-1)**rev * torch.sum(self.log_alpha * x[0].sign(), dim=1)
         if not rev:
             return [self.alpha_inv * f.leaky_relu(x[0], self.alpha*self.alpha)], j
@@ -80,7 +80,7 @@ class LearnedElementwiseScaling(InvertibleModule):
         super().__init__(dims_in, dims_c)
         self.s = nn.Parameter(torch.zeros(*dims_in[0]))
 
-    def forward(self, x, rev=False):
+    def forward(self, x, rev=False, jac=True):
         if not rev:
             return [x[0] * self.s.exp()], None
         else:
@@ -104,7 +104,7 @@ class InvAutoFC(InvertibleModule):
         self.weights = nn.Parameter(0.01 * torch.randn(self.dims_out[0][0], self.dims_in[0][0]))
         self.bias = nn.Parameter(0.01 * torch.randn(1, self.dims_out[0][0]))
 
-    def forward(self, x, rev=False):
+    def forward(self, x, rev=False, jac=True):
         if not rev:
             return [f.linear(x[0], self.weights) + self.bias.expand(x[0].size()[0], *self.dims_out[0])], None
         else:
@@ -127,7 +127,7 @@ class InvAutoConv2D(InvertibleModule):
         self.conv2d = nn.Conv2d(dims_in[0][0], dims_out[0][0], kernel_size=kernel_size, padding=padding, bias=False)
         self.bias = nn.Parameter(0.01 * torch.randn(1, dims_out[0][0], 1, 1))
 
-    def forward(self, x, rev=False):
+    def forward(self, x, rev=False, jac=True):
         if not rev:
             out = self.conv2d(x[0])
             out += self.bias.expand(out.size())

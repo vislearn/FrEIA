@@ -39,7 +39,7 @@ class ActNorm(InvertibleModule):
             = -data.transpose(0,1).contiguous().view(self.dims_in[0], -1).mean(dim=-1)
         self.init_on_next_batch = False
 
-    def forward(self, x, rev=False):
+    def forward(self, x, rev=False, jac=True):
         if self.init_on_next_batch:
             self.initialize_with_data(x[0])
 
@@ -133,7 +133,7 @@ class IResNetLayer(InvertibleModule):
                     self.layers[i].weight.data *= self.spectral_norm_max / spectral_norm
 
 
-    def forward(self, x, c=[], rev=False):
+    def forward(self, x, c=[], rev=False, jac=True):
         jac = self._jacobian(x, c, rev=rev)
 
         if not rev:

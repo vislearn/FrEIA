@@ -106,7 +106,7 @@ class OrthogonalTransform(InvertibleModule):
         '''log of the nonlinear function e'''
         return self.clamp * 0.636 * torch.atan(s/self.clamp)
 
-    def forward(self, x, rev=False):
+    def forward(self, x, rev=False, jac=True):
         j = torch.sum(self.log_e(self.scaling)).view(1,).expand(x[0].shape[0])
         if rev:
             return [(x[0] / self.e(self.scaling) - self.bias).mm(self.weights.t())], -j
@@ -150,7 +150,7 @@ class HouseholderPerm(InvertibleModule):
             self.W = nn.Parameter(self.W, requires_grad=False)
             self.register_parameter('weight', self.W)
 
-    def forward(self, x, c=[], rev=False):
+    def forward(self, x, c=[], rev=False, jac=True):
 
         if self.conditional:
             Vs = c[0].reshape(-1, self.width, self.n_reflections).transpose(-1, -2)

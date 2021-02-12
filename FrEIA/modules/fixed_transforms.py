@@ -27,7 +27,7 @@ class PermuteRandom(InvertibleModule):
         self.perm = torch.LongTensor(self.perm)
         self.perm_inv = torch.LongTensor(self.perm_inv)
 
-    def forward(self, x, rev=False):
+    def forward(self, x, rev=False, jac=True):
         if not rev:
             return [x[0][:, self.perm]], 0.
         else:
@@ -51,7 +51,7 @@ class FixedLinearTransform(InvertibleModule):
 
         self.logDetM = nn.Parameter(torch.slogdet(M)[1], requires_grad=False)
 
-    def forward(self, x, rev=False):
+    def forward(self, x, rev=False, jac=True):
         if not rev:
             return [x[0].mm(self.M) + self.b], self.logDetM.expand(x[0].shape[0])
         else:
@@ -72,7 +72,7 @@ class Fixed1x1Conv(InvertibleModule):
         self.logDetM = nn.Parameter(torch.log(torch.det(M).abs()).sum(),
                                     requires_grad=False)
 
-    def forward(self, x, rev=False):
+    def forward(self, x, rev=False, jac=True):
         # TODO: is the jacobian wrong??
         if not rev:
             return [F.conv2d(x[0], self.M)], self.logDetM.expand(x[0].shape[0])
