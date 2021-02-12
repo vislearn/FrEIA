@@ -1,4 +1,4 @@
-from typing import Tuple, Iterable
+from typing import Tuple, Iterable, List
 
 import torch.nn as nn
 from torch import Tensor
@@ -31,21 +31,26 @@ class InvertibleModule(nn.Module):
     Then, `torch.allclose(x, x_rev[0]) == True` and `jac == -jac_rev`.
     """
 
-    def __init__(self, dims_in: Iterable[Tuple[int]], dims_c: Iterable[Tuple[int]] = None):
+    def __init__(self, dims_in: Iterable[Tuple[int]],
+                 dims_out: Iterable[Tuple[int]],
+                 dims_c: Iterable[Tuple[int]] = None):
         """
-        input parameters:
-
-        dims_in .. list of tuples specifying the shape of the inputs to this operator:
-                   dims_in = [shape_x_0, shape_x_1, ...]
-        dims_c  .. list of tuples specifying the shape of the conditions to this operator.
+        Parameters:
+            dims_in: list of tuples specifying the shape of the inputs to this
+                     operator: dims_in = [shape_x_0, shape_x_1, ...]
+            dims_c:  list of tuples specifying the shape of the conditions to
+                     this operator.
         """
         super().__init__()
         if dims_c is None:
             dims_c = []
-        self.dims_in = dims_in
-        self.dims_c = dims_c
+        self.dims_in = list(dims_in)
+        self.dims_out = list(dims_out)
+        self.dims_c = list(dims_c)
 
-    def forward(self, x_or_z: Iterable[Tensor], c: Iterable[Tensor], rev: bool = False, jac: bool = True) -> Tuple[Tuple[Tensor], Tensor]:
+    def forward(self, x_or_z: Iterable[Tensor], c: Iterable[Tensor] = None,
+                rev: bool = False, jac: bool = True) \
+            -> Tuple[Tuple[Tensor], Tensor]:
         """
         Perform a forward (default, `rev=False`) or backward pass (`rev=True`)
         through this module/operator.
@@ -64,10 +69,16 @@ class InvertibleModule(nn.Module):
           Any subclass MUST return $J$ for forward evaluation (`rev=False`),
           and $-J$ for backward evaluation (`rev=True`).
 
-        input parameters:
-        x_or_z .. input data (array-like of one or more tensors)
-        c      .. conditioning data (array-like of none or more tensors)
-        rev    .. perform backward pass
-        jac    .. return Jacobian associated to the direction
+        Parameters:
+            x_or_z: input data (array-like of one or more tensors)
+            c:      conditioning data (array-like of none or more tensors)
+            rev:    perform backward pass
+            jac:    return Jacobian associated to the direction
         """
-        raise NotImplementedError(f"{self.__class__.__name__} does not provide forward(...) method")
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not provide forward(...) method")
+
+    def jacobian(self, *args, **kwargs):
+        raise DeprecationWarning("module.jacobian(...) is deprecated. "
+                                 "module.forward(..., jac=True) returns a "
+                                 "tuple (out, jacobian) now.")
