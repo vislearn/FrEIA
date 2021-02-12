@@ -139,7 +139,7 @@
 <div class="viewcode-block" id="Node"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.Node">[docs]</a><span class="k">class</span> <span class="nc">Node</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;The Node class represents one transformation in the graph, with an</span>
 <span class="sd">    arbitrary number of in- and outputs.&#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">module_type</span><span class="p">,</span> <span class="n">module_args</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[],</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Node.__init__"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.Node.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">module_type</span><span class="p">,</span> <span class="n">module_args</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[],</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="k">else</span><span class="p">:</span>
@@ -161,7 +161,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">computed</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">computed_rev</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="Node.parse_inputs"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.Node.parse_inputs">[docs]</a>    <span class="k">def</span> <span class="nf">parse_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
@@ -270,7 +270,7 @@
     <span class="sd">&#39;&#39;&#39;Special type of node that represents the input data of the whole net (or</span>
 <span class="sd">    ouput when running reverse)&#39;&#39;&#39;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">dims</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;node&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="InputNode.__init__"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.InputNode.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">dims</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;node&#39;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">dummys</span><span class="o">.</span><span class="n">dummy_data</span><span class="p">(</span><span class="o">*</span><span class="n">dims</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
@@ -280,7 +280,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">computed_rev</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_outputs</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_vars</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">out0</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out0</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="InputNode.build_modules"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.InputNode.build_modules">[docs]</a>    <span class="k">def</span> <span class="nf">build_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">]</span></div>
@@ -293,7 +293,7 @@
     <span class="sd">&#39;&#39;&#39;Special type of node that represents contitional input to the internal</span>
 <span class="sd">    networks inside coupling layers&#39;&#39;&#39;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">dims</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;node&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="ConditionNode.__init__"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.ConditionNode.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">dims</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;node&#39;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">dummys</span><span class="o">.</span><span class="n">dummy_data</span><span class="p">(</span><span class="o">*</span><span class="n">dims</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
@@ -303,7 +303,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">computed_rev</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_outputs</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_vars</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">out0</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out0</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ConditionNode.build_modules"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.ConditionNode.build_modules">[docs]</a>    <span class="k">def</span> <span class="nf">build_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">]</span></div>
@@ -317,16 +317,16 @@
 <span class="sd">    input when running in reverse)&#39;&#39;&#39;</span>
 <div class="viewcode-block" id="OutputNode.dummy"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.OutputNode.dummy">[docs]</a>    <span class="k">class</span> <span class="nc">dummy</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 
-        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
-            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<div class="viewcode-block" id="OutputNode.dummy.__init__"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.OutputNode.dummy.__init__">[docs]</a>        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></div>
 
-        <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">args</span>
+<div class="viewcode-block" id="OutputNode.dummy.__call__"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.OutputNode.dummy.__call__">[docs]</a>        <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">args</span></div>
 
 <div class="viewcode-block" id="OutputNode.dummy.output_dims"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.OutputNode.dummy.output_dims">[docs]</a>        <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">args</span></div></div>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;node&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="OutputNode.__init__"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.OutputNode.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;node&#39;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">module_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dummy</span><span class="p">,</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output_dims</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_inputs</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
@@ -337,7 +337,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
 
         <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">inp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">):</span>
-            <span class="n">inp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
+            <span class="n">inp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="OutputNode.run_backward"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.OutputNode.run_backward">[docs]</a>    <span class="k">def</span> <span class="nf">run_backward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op_list</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span></div></div>
@@ -348,7 +348,7 @@
 <span class="sd">    torch.nn.Module and supports the same methods. The forward method has an</span>
 <span class="sd">    additional option &#39;rev&#39;, whith which the net can be computed in reverse.&#39;&#39;&#39;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_list</span><span class="p">,</span> <span class="n">ind_in</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ind_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="ReversibleGraphNet.__init__"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.ReversibleGraphNet.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_list</span><span class="p">,</span> <span class="n">ind_in</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ind_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;node_list should be a list of all nodes involved, and ind_in,</span>
 <span class="sd">        ind_out are the indexes of the special nodes InputNode and OutputNode</span>
 <span class="sd">        in this list.&#39;&#39;&#39;</span>
@@ -413,7 +413,7 @@
         <span class="n">ops_rev</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ind_in</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ind_cond</span><span class="p">:</span>
             <span class="n">node_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">run_backward</span><span class="p">(</span><span class="n">ops_rev</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">indexed_ops_rev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ops_to_indexed</span><span class="p">(</span><span class="n">ops_rev</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indexed_ops_rev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ops_to_indexed</span><span class="p">(</span><span class="n">ops_rev</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ReversibleGraphNet.ops_to_indexed"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.ReversibleGraphNet.ops_to_indexed">[docs]</a>    <span class="k">def</span> <span class="nf">ops_to_indexed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ops</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Helper function to translate the list of variables (origin ID, channel),</span>

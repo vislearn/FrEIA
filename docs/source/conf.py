@@ -60,4 +60,8 @@ html_theme = "pydata_sphinx_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-autodoc_default_flags = ['members']
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': True,
+    'special-members': True
+}

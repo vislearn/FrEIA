@@ -126,11 +126,14 @@
                 
   <h1>Source code for FrEIA.modules.graph_topology</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
 
 <span class="kn">from</span> <span class="nn">FrEIA.modules</span> <span class="kn">import</span> <span class="n">InvertibleModule</span>
+
 
 
 <div class="viewcode-block" id="Split"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Split">[docs]</a><span class="k">class</span> <span class="nc">Split</span><span class="p">(</span><span class="n">InvertibleModule</span><span class="p">):</span>
@@ -144,65 +147,74 @@
 <span class="sd">        A list of tuples containing the non-batch dimensionality of all</span>
 <span class="sd">        incoming tensors. Handled automatically during compute graph setup.</span>
 <span class="sd">        Split only takes one input tensor.</span>
-<span class="sd">      split_size_or_sections:</span>
-<span class="sd">        Same behavior as in `torch.split()`. Either an integer that is a valid</span>
-<span class="sd">        divisor of the size of `dim`, or a list of integers that add up to the</span>
-<span class="sd">        size of `dim`. Defaults to `2`, i.e. splitting the input in two halves</span>
-<span class="sd">        of equal size.</span>
+<span class="sd">      section_sizes:</span>
+<span class="sd">        If set, takes precedence over &#39;n_sections&#39; and behaves like the</span>
+<span class="sd">        argument in torch.split(), except when a list of section sizes is given</span>
+<span class="sd">        that doesn&#39;t add up to the size of &#39;dim&#39;, an additional split section is</span>
+<span class="sd">        created to take the slack. Defaults to None.</span>
+<span class="sd">      n_sections:</span>
+<span class="sd">        If &#39;section_sizes&#39; is None, the tensor is split into &#39;n_sections&#39;</span>
+<span class="sd">        parts of equal size or close to it. This mode behaves like</span>
+<span class="sd">        numpy.array_split(). Defaults to 2, i.e. splitting the data into two</span>
+<span class="sd">        equal halves.</span>
 <span class="sd">      dim:</span>
 <span class="sd">        Index of the dimension along which to split, not counting the batch</span>
 <span class="sd">        dimension. Defaults to 0, i.e. the channel dimension in structured data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">split_size_or_sections</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="viewcode-block" id="Split.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Split.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">dims_in</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+                 <span class="n">section_sizes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">n_sections</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+                 <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Inits the Split module with the attributes described above and</span>
 <span class="sd">        checks that split sizes and dimensionality are compatible.&quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">)</span>
+
+        <span class="c1"># Size and dimensionality checks</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims_in</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Split layer takes exactly one input tensor&quot;</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">dim</span><span class="p">,</span> <span class="s2">&quot;Split dimension index out of range&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">split_size_or_sections</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-            <span class="k">assert</span> <span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">dim</span><span class="p">]</span> <span class="o">%</span> <span class="n">split_size_or_sections</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span>
-                <span class="s2">&quot;Tensor size not divisible by split size&quot;</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">split_size_or_sections</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)),</span> <span class="p">(</span>
-                <span class="s2">&quot;&#39;split_size_or_sections&#39; must be either int or &quot;</span>
-                <span class="s2">&quot;list/tuple of int&quot;</span>
-            <span class="p">)</span>
-
-            <span class="k">assert</span> <span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">dim</span><span class="p">]</span> <span class="o">==</span> <span class="nb">sum</span><span class="p">(</span><span class="n">split_size_or_sections</span><span class="p">),</span> <span class="p">(</span>
-                <span class="s2">&quot;Tensor size doesn&#39;t match sum of split sections &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">dim</span><span class="p">]</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">split_size_or_sections</span><span class="si">}</span><span class="s2">)&quot;</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">split_size_or_sections</span> <span class="o">=</span> <span class="n">split_size_or_sections</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
+        <span class="n">l_dim</span> <span class="o">=</span> <span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">dim</span><span class="p">]</span>
 
-<div class="viewcode-block" id="Split.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Split.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;See super class InvertibleModule.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">section_sizes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="mi">2</span> <span class="o">&lt;</span> <span class="n">n_sections</span><span class="p">,</span> <span class="s2">&quot;&#39;n_sections&#39; must be a least 2&quot;</span>
+            <span class="k">if</span> <span class="n">l_dim</span> <span class="o">%</span> <span class="n">n_sections</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Split will create sections of unequal size&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">split_size_or_sections</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">[</span><span class="n">l_dim</span><span class="o">//</span><span class="n">n_sections</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">l_dim</span><span class="o">%</span><span class="n">n_sections</span><span class="p">)</span> <span class="o">+</span>
+                <span class="p">[</span><span class="n">l_dim</span><span class="o">//</span><span class="n">n_sections</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_sections</span> <span class="o">-</span> <span class="n">l_dim</span><span class="o">%</span><span class="n">n_sections</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">section_sizes</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="k">assert</span> <span class="n">section_sizes</span> <span class="o">&lt;</span> <span class="n">l_dim</span><span class="p">,</span> <span class="s2">&quot;&#39;section_sizes&#39; too large&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">section_sizes</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)),</span> \
+                    <span class="s2">&quot;&#39;section_sizes&#39; must be either int or list/tuple of int&quot;</span>
+                <span class="k">assert</span> <span class="nb">sum</span><span class="p">(</span><span class="n">section_sizes</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">l_dim</span><span class="p">,</span> <span class="s2">&quot;&#39;section_sizes&#39; too large&quot;</span>
+                <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">section_sizes</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">l_dim</span><span class="p">:</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;&#39;section_sizes&#39; too small, adding additional section&quot;</span><span class="p">)</span>
+                    <span class="n">section_sizes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">section_sizes</span><span class="p">)</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l_dim</span> <span class="o">-</span> <span class="nb">sum</span><span class="p">(</span><span class="n">section_sizes</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">split_size_or_sections</span> <span class="o">=</span> <span class="n">section_sizes</span>
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_size_or_sections</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Split.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Split.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;See super class InvertibleModule.</span>
+<span class="sd">        Jacobian log-det of splitting is always zero.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="o">+</span><span class="mi">1</span><span class="p">)],</span> <span class="mi">0</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_size_or_sections</span><span class="p">,</span>
-                               <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="Split.jacobian"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Split.jacobian">[docs]</a>    <span class="k">def</span> <span class="nf">jacobian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;See super class InvertibleModule.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="mi">0</span></div>
+                               <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="mi">0</span></div>
 
 <div class="viewcode-block" id="Split.output_dims"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Split.output_dims">[docs]</a>    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;See super class InvertibleModule.&quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;Split layer takes exactly one input &quot;</span>
-                                      <span class="s2">&quot;tensor&quot;</span><span class="p">)</span>
-        <span class="c1"># Turn number of sections into list of section sizes</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_size_or_sections</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">split_size_or_sections</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="p">[</span><span class="n">input_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">]</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_size_or_sections</span><span class="p">]</span>
-                <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_size_or_sections</span>
-            <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Split layer takes exactly one input tensor&quot;</span>
         <span class="c1"># Assemble dims of all resulting outputs</span>
-        <span class="k">return</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">input_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="k">if</span> <span class="p">(</span><span class="n">j</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span> <span class="k">else</span> <span class="n">split_size</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">input_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="k">if</span> <span class="p">(</span><span class="n">j</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span> <span class="k">else</span> <span class="n">section_size</span>
                       <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
-                <span class="k">for</span> <span class="n">split_size</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_size_or_sections</span><span class="p">]</span></div></div>
+                <span class="k">for</span> <span class="n">section_size</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_size_or_sections</span><span class="p">]</span></div></div>
+
 
 
 <div class="viewcode-block" id="Concat"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Concat">[docs]</a><span class="k">class</span> <span class="nc">Concat</span><span class="p">(</span><span class="n">InvertibleModule</span><span class="p">):</span>
@@ -224,7 +236,10 @@
 <span class="sd">        data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="viewcode-block" id="Concat.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Concat.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">dims_in</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+                 <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Inits the Concat module with the attributes described above and</span>
 <span class="sd">        checks that all dimensions are compatible.&quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">)</span>
@@ -243,19 +258,16 @@
                    <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">split_size_or_sections</span> <span class="o">=</span> <span class="p">[</span><span class="n">dims_in</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">dim</span><span class="p">]</span>
-                                       <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dims_in</span><span class="p">))]</span>
+                                       <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dims_in</span><span class="p">))]</span></div>
 
-<div class="viewcode-block" id="Concat.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Concat.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;See super class InvertibleModule.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Concat.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Concat.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;See super class InvertibleModule.</span>
+<span class="sd">        Jacobian log-det of concatenation is always zero.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_size_or_sections</span><span class="p">,</span>
-                               <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+                               <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="mi">0</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span></div>
-
-<div class="viewcode-block" id="Concat.jacobian"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Concat.jacobian">[docs]</a>    <span class="k">def</span> <span class="nf">jacobian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;See super class InvertibleModule.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="mi">0</span></div>
+            <span class="k">return</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="o">+</span><span class="mi">1</span><span class="p">)],</span> <span class="mi">0</span></div>
 
 <div class="viewcode-block" id="Concat.output_dims"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Concat.output_dims">[docs]</a>    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;See super class InvertibleModule.&quot;&quot;&quot;</span>
@@ -268,7 +280,6 @@
 
 
 
-<span class="kn">import</span> <span class="nn">warnings</span>
 
 <span class="k">def</span> <span class="nf">_deprecated_by</span><span class="p">(</span><span class="n">orig_class</span><span class="p">):</span>
     <span class="k">class</span> <span class="nc">deprecated_class</span><span class="p">(</span><span class="n">orig_class</span><span class="p">):</span>

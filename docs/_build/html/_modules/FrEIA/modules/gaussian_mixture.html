@@ -1,0 +1,338 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FrEIA.modules.gaussian_mixture &#8212; FrEIA v0.2 documentation</title>
+    
+  <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
+    
+  <link rel="preload" as="script" href="../../../_static/js/index.d3f166471bb80abb5163.js">
+
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    <a class="navbar-brand" href="../../../index.html">
+    
+      <p class="title">FrEIA</p>
+    
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../../FrEIA.framework.html">FrEIA.framework package</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../../FrEIA.modules.html">FrEIA.modules package</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+    <div class="bd-toc-item active">
+    
+  
+    <ul class="nav bd-sidenav">
+        
+        
+        
+        
+        
+      </ul>
+  
+  </nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <h1>Source code for FrEIA.modules.gaussian_mixture</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+
+
+<div class="viewcode-block" id="GaussianMixtureModel"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.GaussianMixtureModel">[docs]</a><span class="k">class</span> <span class="nc">GaussianMixtureModel</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;An invertible Gaussian mixture model. The weights, means, covariance</span>
+<span class="sd">    parameterization and component index must be supplied as conditional inputs</span>
+<span class="sd">    to the module and can come from an external feed-forward network, which may</span>
+<span class="sd">    be trained by backpropagating through the GMM. Weights should first be</span>
+<span class="sd">    normalized via GaussianMixtureModel.normalize_weights(w) and component</span>
+<span class="sd">    indices can be sampled via GaussianMixtureModel.pick_mixture_component(w).</span>
+<span class="sd">    If component indices are specified, the model reduces to that Gaussian</span>
+<span class="sd">    mixture component and maps between data x and standard normal latent</span>
+<span class="sd">    variable z. Components can also be chosen consistently at random, by</span>
+<span class="sd">    supplying an integer random seed instead of indices. If a None value is</span>
+<span class="sd">    supplied instead of indices, the model maps between K data points x and K</span>
+<span class="sd">    latent codes z simultaneously, where K is the number of mixture components.</span>
+<span class="sd">    Mathematical derivations are found in the technical report &quot;Training Mixture</span>
+<span class="sd">    Density Networks with full covariance matrices&quot; on arXiv.&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="GaussianMixtureModel.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.GaussianMixtureModel.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_dims</span> <span class="o">=</span> <span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># Prepare masks for filling the (triangular) Cholesky factors of the precision matrices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mask_upper</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">triu</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_dims</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_dims</span><span class="p">),</span> <span class="n">diagonal</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mask_diagonal</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_dims</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_dims</span><span class="p">)</span><span class="o">.</span><span class="n">bool</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GaussianMixtureModel.pick_mixture_component"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.GaussianMixtureModel.pick_mixture_component">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">pick_mixture_component</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Randomly choose mixture component indices with probability given by</span>
+<span class="sd">        the component weights w. Works on batches of component weights.</span>
+
+<span class="sd">        w:      Weights of the mixture components, must be positive and sum to one</span>
+<span class="sd">        seed:   Optional RNG seed for consistent decisions&#39;&#39;&#39;</span>
+
+        <span class="n">w_thresholds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># Prepare local random number generator</span>
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">rng</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rng</span><span class="o">.</span><span class="n">seed</span><span class="p">()</span>
+        <span class="c1"># Draw one uniform random number per batch row and compare against thresholds</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">u</span> <span class="o">&gt;</span> <span class="n">w_thresholds</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">int</span><span class="p">()</span>
+        <span class="c1"># Return mixture component indices</span>
+        <span class="k">return</span> <span class="n">indices</span></div>
+
+
+<div class="viewcode-block" id="GaussianMixtureModel.normalize_weights"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.GaussianMixtureModel.normalize_weights">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">normalize_weights</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Apply softmax to ensure component weights are positive and sum to</span>
+<span class="sd">        one. Works on batches of component weights.</span>
+
+<span class="sd">        w:  Unnormalized weights for Gaussian mixture components, must be of</span>
+<span class="sd">            size [batch_size, n_components]&#39;&#39;&#39;</span>
+
+        <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">w</span> <span class="o">-</span> <span class="n">w</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GaussianMixtureModel.nll_loss"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.GaussianMixtureModel.nll_loss">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">nll_loss</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">log_jacobian</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Negative log-likelihood loss for training a Mixture Density Network.</span>
+
+<span class="sd">        w:              Mixture component weights, must be positive and sum to</span>
+<span class="sd">                        one. Tensor must be of size [batch_size, n_components].</span>
+<span class="sd">        z:              Latent codes for all mixture components. Tensor must be</span>
+<span class="sd">                        of size [batch, n_components, n_dims].</span>
+<span class="sd">        log_jacobian:   Jacobian log-determinants for each precision matrix.</span>
+<span class="sd">                        Tensor size must be [batch_size, n_components].&#39;&#39;&#39;</span>
+
+        <span class="k">return</span> <span class="o">-</span><span class="p">((</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">z</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_jacobian</span><span class="p">)</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">log</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GaussianMixtureModel.nll_upper_bound"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.GaussianMixtureModel.nll_upper_bound">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">nll_upper_bound</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">log_jacobian</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Numerically more stable upper bound of the negative log-likelihood</span>
+<span class="sd">        loss for training a Mixture Density Network.</span>
+
+<span class="sd">        w:              Mixture component weights, must be positive and sum to</span>
+<span class="sd">                        one. Tensor must be of size [batch_size, n_components].</span>
+<span class="sd">        z:              Latent codes for all mixture components. Tensor must be</span>
+<span class="sd">                        of size [batch, n_components, n_dims].</span>
+<span class="sd">        log_jacobian:   Jacobian log-determinants for each precision matrix.</span>
+<span class="sd">                        Tensor size must be [batch_size, n_components].&#39;&#39;&#39;</span>
+
+        <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">log</span><span class="p">()</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">z</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_jacobian</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GaussianMixtureModel.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.GaussianMixtureModel.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Map between data distribution and standard normal latent distribution</span>
+<span class="sd">        of mixture components or entire mixture, in an invertible way.</span>
+
+<span class="sd">        x:  Data during forward pass or latent codes during backward pass. Size</span>
+<span class="sd">            must be [batch_size, n_dims] if component indices i are specified</span>
+<span class="sd">            and should be [batch_size, n_components, n_dims] if not.</span>
+
+<span class="sd">        The conditional input c must be a list [w, mu, U, i] of parameters for</span>
+<span class="sd">        the Gaussian mixture model with the following properties:</span>
+
+<span class="sd">        w:  Weights of the mixture components, must be positive and sum to one</span>
+<span class="sd">            and have size [batch_size, n_components].</span>
+<span class="sd">        mu: Means of the mixture components, must have size [batch_size,</span>
+<span class="sd">            n_components, n_dims].</span>
+<span class="sd">        U:  Entries for the (upper triangular) Cholesky factors for the</span>
+<span class="sd">            precision matrices of the mixture components. These are needed to</span>
+<span class="sd">            parameterize the covariance of the mixture components and must have</span>
+<span class="sd">            size [batch_size, n_components, n_dims * (n_dims + 1) / 2].</span>
+<span class="sd">        i:  Tensor of component indices (size [batch_size]), or a single integer</span>
+<span class="sd">            to be used as random number generator seed for component selection,</span>
+<span class="sd">            or None to indicate that all mixture components are modelled.&#39;&#39;&#39;</span>
+
+        <span class="c1"># Get GMM parameters</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">U_entries</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="n">c</span>
+        <span class="n">batch_size</span><span class="p">,</span> <span class="n">n_components</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="c1"># Construct upper triangular Cholesky factors U of all precision matrices</span>
+        <span class="n">U</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">n_components</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_dims</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_dims</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="c1"># Fill everything above the diagonal as is</span>
+        <span class="n">U</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">mask_upper</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span><span class="n">n_components</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">U_entries</span><span class="p">[:,:,</span><span class="bp">self</span><span class="o">.</span><span class="n">x_dims</span><span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># Diagonal entries must be positive</span>
+        <span class="n">U</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">mask_diagonal</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span><span class="n">n_components</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">U_entries</span><span class="p">[:,:,:</span><span class="bp">self</span><span class="o">.</span><span class="n">x_dims</span><span class="p">]</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Indices of chosen mixture components, if provided</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fixed_components</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fixed_components</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pick_mixture_component</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+
+        <span class="c1"># Compute and store Jacobian log-determinants</span>
+        <span class="c1"># Note: we avoid a log operation by taking diagonal entries directly from U_entries, where they are in log space</span>
+        <span class="k">if</span> <span class="n">fixed_components</span><span class="p">:</span>
+            <span class="c1"># Keep Jacobian log-determinants for chosen components only</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">jac</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">U_entries</span><span class="p">[</span><span class="n">b</span><span class="p">,</span><span class="n">i</span><span class="p">[</span><span class="n">b</span><span class="p">],:</span><span class="bp">self</span><span class="o">.</span><span class="n">x_dims</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Keep Jacobian log-determinants for all components simultaneously</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">jac</span> <span class="o">=</span> <span class="n">U_entries</span><span class="p">[:,:,:</span><span class="bp">self</span><span class="o">.</span><span class="n">x_dims</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Actual forward and inverse pass</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fixed_components</span><span class="p">:</span>
+                <span class="c1"># Return latent codes of x according to chosen component distributions only</span>
+                <span class="k">return</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">U</span><span class="p">[</span><span class="n">b</span><span class="p">,</span><span class="n">i</span><span class="p">[</span><span class="n">b</span><span class="p">],:,:],</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">b</span><span class="p">,:]</span> <span class="o">-</span> <span class="n">mu</span><span class="p">[</span><span class="n">b</span><span class="p">,</span><span class="n">i</span><span class="p">[</span><span class="n">b</span><span class="p">],:])</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)])]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Return latent codes of x according to all component distributions simultaneously</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+                    <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,</span><span class="kc">None</span><span class="p">,:]</span>
+                <span class="k">return</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span><span class="kc">None</span><span class="p">])[</span><span class="o">...</span><span class="p">,</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fixed_components</span><span class="p">:</span>
+                <span class="c1"># Transform latent samples to samples from chosen mixture distributions</span>
+                <span class="k">return</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">mu</span><span class="p">[</span><span class="n">b</span><span class="p">,</span><span class="n">i</span><span class="p">[</span><span class="n">b</span><span class="p">],:]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">U</span><span class="p">[</span><span class="n">b</span><span class="p">,</span><span class="n">i</span><span class="p">[</span><span class="n">b</span><span class="p">],:,:]),</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">b</span><span class="p">,:])</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)])]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Transform latent samples to samples from all mixture distributions simultaneously</span>
+                <span class="k">return</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">U</span><span class="p">),</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">...</span><span class="p">,</span><span class="kc">None</span><span class="p">])[</span><span class="o">...</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">mu</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="GaussianMixtureModel.jacobian"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.GaussianMixtureModel.jacobian">[docs]</a>    <span class="k">def</span> <span class="nf">jacobian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Logarithm of the determinant of the Jacobian matrices, either for the</span>
+<span class="sd">        specified mixture component or for all mixture components. Values are</span>
+<span class="sd">        computed and stored during the forward/inverse pass, this function only</span>
+<span class="sd">        returns those stored values.</span>
+
+<span class="sd">        x:  Irrelevant in this case.</span>
+<span class="sd">        c:  Irrelevant in this case.&#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">jac</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">jac</span></div>
+
+
+<div class="viewcode-block" id="GaussianMixtureModel.output_dims"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.GaussianMixtureModel.output_dims">[docs]</a>    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Can only use 1 input&quot;</span>
+        <span class="k">return</span> <span class="n">input_dims</span></div></div>
+</pre></div>
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    
+  <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
+
+
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2021, VLL-HD.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.4.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

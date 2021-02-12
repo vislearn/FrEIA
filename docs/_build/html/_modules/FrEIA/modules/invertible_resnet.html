@@ -135,7 +135,7 @@
 
 <div class="viewcode-block" id="ActNorm"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.ActNorm">[docs]</a><span class="k">class</span> <span class="nc">ActNorm</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">init_data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="ActNorm.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.ActNorm.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">init_data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dims_in</span> <span class="o">=</span> <span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">param_dims</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dims_in</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
@@ -152,9 +152,9 @@
             <span class="c1"># because that will reset the trained parameters. Registering a hook</span>
             <span class="c1"># that disable this initialisation.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">init_on_next_batch</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_register_load_state_dict_pre_hook</span><span class="p">(</span><span class="n">on_load_state_dict</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_register_load_state_dict_pre_hook</span><span class="p">(</span><span class="n">on_load_state_dict</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">initialize_with_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<div class="viewcode-block" id="ActNorm.initialize_with_data"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.ActNorm.initialize_with_data">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_with_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="c1"># Initialize to mean 0 and std 1 with sample batch</span>
         <span class="c1"># &#39;data&#39; expected to be of shape (batch, channels[, ...])</span>
         <span class="k">assert</span> <span class="nb">all</span><span class="p">([</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims_in</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dims_in</span><span class="p">))]),</span>\
@@ -164,7 +164,7 @@
         <span class="n">data</span> <span class="o">=</span> <span class="n">data</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)[:]</span> \
             <span class="o">=</span> <span class="o">-</span><span class="n">data</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">init_on_next_batch</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_on_next_batch</span> <span class="o">=</span> <span class="kc">False</span></div>
 
 <div class="viewcode-block" id="ActNorm.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.ActNorm.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_on_next_batch</span><span class="p">:</span>
@@ -175,15 +175,15 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="o">.</span><span class="n">exp</span><span class="p">()]</span></div>
 
-    <span class="k">def</span> <span class="nf">jacobian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="ActNorm.jacobian"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.ActNorm.jacobian">[docs]</a>    <span class="k">def</span> <span class="nf">jacobian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">rev</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dims_in</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">jacobian</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="k">return</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">jacobian</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
+<div class="viewcode-block" id="ActNorm.output_dims"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.ActNorm.output_dims">[docs]</a>    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Can only use 1 input&quot;</span>
-        <span class="k">return</span> <span class="n">input_dims</span></div>
+        <span class="k">return</span> <span class="n">input_dims</span></div></div>
 
 
 
@@ -193,7 +193,7 @@
 <span class="sd">    https://arxiv.org/pdf/1811.00995.pdf</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="p">[],</span>
+<div class="viewcode-block" id="IResNetLayer.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IResNetLayer.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="p">[],</span>
                  <span class="n">internal_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">n_internal_layers</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                  <span class="n">jacobian_iterations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
@@ -232,10 +232,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">internal_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
         <span class="n">elus</span> <span class="o">=</span> <span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">ELU</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">))]</span>
         <span class="n">module_list</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">,</span> <span class="n">elus</span><span class="p">),</span> <span class="p">())[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="c1"># interleaves the lists</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">residual</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">module_list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">residual</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">module_list</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">lipschitz_correction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="IResNetLayer.lipschitz_correction"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IResNetLayer.lipschitz_correction">[docs]</a>    <span class="k">def</span> <span class="nf">lipschitz_correction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
             <span class="c1"># Power method to approximate spectral norm</span>
             <span class="c1"># Following https://arxiv.org/pdf/1804.04368.pdf</span>
@@ -258,7 +258,7 @@
                                      <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lipschitz_batchsize</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
 
                 <span class="k">if</span> <span class="n">spectral_norm</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">spectral_norm_max</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spectral_norm_max</span> <span class="o">/</span> <span class="n">spectral_norm</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spectral_norm_max</span> <span class="o">/</span> <span class="n">spectral_norm</span></div>
 
 
 <div class="viewcode-block" id="IResNetLayer.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IResNetLayer.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="p">[],</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
@@ -274,7 +274,7 @@
             <span class="k">return</span> <span class="p">[</span><span class="n">y</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">residual</span><span class="p">(</span><span class="n">x_hat</span><span class="o">.</span><span class="n">detach</span><span class="p">())]</span></div>
 
 
-    <span class="k">def</span> <span class="nf">jacobian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="p">[],</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="IResNetLayer.jacobian"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IResNetLayer.jacobian">[docs]</a>    <span class="k">def</span> <span class="nf">jacobian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="p">[],</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
             <span class="k">return</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">jacobian</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">)</span>
 
@@ -321,12 +321,12 @@
         <span class="c1">#     trace_est = v_left.view(batch_size, 1, -1).matmul(v_right.view(batch_size, -1, 1)).squeeze(-1).squeeze(-1)</span>
         <span class="c1">#     logdet_J = logdet_J + (-1)**(k+1) * trace_est / k</span>
 
-        <span class="k">return</span> <span class="n">logdet_J</span>
+        <span class="k">return</span> <span class="n">logdet_J</span></div>
 
 
-    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
+<div class="viewcode-block" id="IResNetLayer.output_dims"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IResNetLayer.output_dims">[docs]</a>    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Can only use 1 input&quot;</span>
-        <span class="k">return</span> <span class="n">input_dims</span></div>
+        <span class="k">return</span> <span class="n">input_dims</span></div></div>
 </pre></div>
 
               </div>
