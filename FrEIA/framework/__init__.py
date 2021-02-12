@@ -10,9 +10,9 @@ from .reversible_graph_net import *
 from .reversible_sequential_net import *
 
 __all__ = [
-    'SequenceINN'
+    'SequenceINN',
     'ReversibleSequential',
-    'GraphINN'
+    'GraphINN',
     'ReversibleGraphNet',
     'Node',
     'InputNode',

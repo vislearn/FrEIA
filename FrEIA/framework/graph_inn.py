@@ -109,7 +109,8 @@ class Node:
                f"{module_hint} -> {self.output_dims}"
 
     def __repr__(self):
-        return str(self)
+        name_hint = f" {self.name!r}" if self.name is not None else ""
+        return f"{self.__class__.__name__}{name_hint}"
 
 
 class InputNode(Node):
@@ -281,7 +282,7 @@ class GraphINN(InvertibleModule):
             out, mod_jac = self._check_output(node, mod_out, jac, rev)
 
             for out_idx, out_value in enumerate(out):
-                outs[self, out_idx] = out_value
+                outs[node, out_idx] = out_value
 
             if jac:
                 jacobian = jacobian + mod_jac

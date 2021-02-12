@@ -1,7 +1,8 @@
 from copy import deepcopy
+from typing import Iterable
 
 import torch
-import torch.nn as nn
+from torch import Tensor
 
 from FrEIA.modules import InvertibleModule
 
@@ -115,13 +116,20 @@ class Concat(InvertibleModule):
         self.split_size_or_sections = [dims_in[i][dim]
                                        for i in range(len(dims_in))]
 
-    def forward(self, x, rev=False):
+    def forward(self, x_or_z: Iterable[Tensor], c=None, rev=False, jac=True):
         """See super class InvertibleModule."""
+        assert c is None or len(c) == 0, "Concat node got conditions."
         if rev:
-            return torch.split(x[0], self.split_size_or_sections,
-                               dim=self.dim+1), torch.zeros(x[0].shape[0])
+            return (
+                torch.split(x_or_z[0], self.split_size_or_sections,
+                            dim=self.dim + 1),
+                torch.zeros(x_or_z[0].shape[0])
+            )
         else:
-            return [torch.cat(x, dim=self.dim+1)], torch.zeros(x[0].shape[0])
+            return (
+                [torch.cat(x_or_z, dim=self.dim + 1)],
+                torch.zeros(x_or_z[0].shape[0])
+            )
 
     def output_dims(self, input_dims):
         """See super class InvertibleModule."""
