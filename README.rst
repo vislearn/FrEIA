@@ -405,7 +405,7 @@ Again, we use a chain of ``AllInOneBlock``s, collected together by ``ReversibleS
 
   cinn = Ff.ReversibleSequential(28*28)
   for k in range(12):
-	    cinn.append(Fm.AllInOneBlock, cond=0, cond_shape=(10,), subnet_constructor=subnet_fc)
+      cinn.append(Fm.AllInOneBlock, cond=0, cond_shape=(10,), subnet_constructor=subnet_fc)
 
 
 Convolutional INN
@@ -507,41 +507,41 @@ Definition:
 	        
       def forward(self, x, rev=False, jac=True):
           if not rev:
-	            # forward operation
-	            x = x * self.random_factor
-	            log_jac_det = self.random_factor.log().sum()
+              # forward operation
+              x = x * self.random_factor
+              log_jac_det = self.random_factor.log().sum()
           else:
-	            # backward operation
-	            x = x / self.random_factor
-	            log_jac_det = -self.random_factor.log().sum()
+              # backward operation
+              x = x / self.random_factor
+              log_jac_det = -self.random_factor.log().sum()
           
           if jac:
-	            return (x,), log_jac_det
+              return (x,), log_jac_det
           else:
-	            return (x,)
+              return (x,)
 		
 		
 		
   class ConditionalSwap(Fm.InvertibleModule):
 	
       def __init__(self, dims_in, dims_c):
-		      super().__init__(dims_in, dims_c=dims_c)
+          super().__init__(dims_in, dims_c=dims_c)
 		      
       def forward(self, x, c, rev=False, jac=True):
-		      # in this case, the forward and reverse operations are identical
-		      # so we don't use the rev argument
-		      x1, x2 = x
-		      log_jac_det = 0.
-		      
-		      if c > 0:
-				      out = (x2, x1)
-		      else:
-				      out = (x1, x2)
-		      
-		      if jac:
-				      return out, log_jac_det
-		      else:
-				      return out
+          # in this case, the forward and reverse operations are identical
+          # so we don't use the rev argument
+          x1, x2 = x
+          log_jac_det = 0.
+
+          if c > 0:
+              out = (x2, x1)
+          else:
+              out = (x1, x2)
+
+          if jac:
+              return out, log_jac_det
+          else:
+              return out
 
 
 Basic Usage Example:
