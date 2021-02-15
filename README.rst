@@ -93,51 +93,51 @@ Quick Start Guide
 To jump straight into the code, see this basic usage example, which learns and then samples from the moons dataset provided in ``sklearn``. For information on the structure of FrEIA, as well as more detailed examples of networks, including custom invertible operations, see the full tutorial below.
 
 .. code:: python
-		
-		# standard imports
-		import torch
-		import torch.nn as nn
-		from sklearn.datasets import make_moons
 
-		# FrEIA imports
-    import FrEIA.framework as Ff
-    import FrEIA.modules as Fm
-    
-    BATCHSIZE = 100
-    N_DIM = 2
-		
-		# we define a subnet for use inside an affine coupling block
-		# for more detailed information see the full tutorial
-    def subnet_fc(c_in, c_out):
-        return nn.Sequential(nn.Linear(c_in, 512), nn.ReLU(),
-                             nn.Linear(512,  c_out))
-		
-		# a simple chain of operations is collected by ReversibleSequential
-		inn = Ff.ReversibleSequential(N_DIM)
-		for k in range(8):
-				inn.append(Fm.AllInOneBlock, subnet_constructor=subnet_fc, permute_soft=True)
-		
-		optimizer = torch.optimizer.Adam(inn.parameters(), lr=0.01)
-		
-		# a very basic training loop
-		for i in range(1000):
-				optimizer.zero_grad()
-				# sample data from the moons distribution
-				data, label = make_moons(n_samples=BATCHSIZE, noise=0.05)
-				x = torch.Tensor(data)
-				# pass to INN and get transformed variable z and log Jacobian determinant
-				z, log_jac_det = inn(x)
-				# calculate the negative log-likelihood of the model with a standard normal prior
-				loss = 0.5*torch.sum(z**2, 1) - log_jac_det
-				loss = loss.mean() / N_DIM
-				# backpropagate and update the weights
-				loss.backward()
-				optimizer.step()
-		
-		# sample from the INN by sampling from a standard normal and transforming
-		# it in the reverse direction
-		z = torch.randn(BATCHSIZE, N_DIM)
-		samples, _ = inn(z, rev=True)
+	# standard imports
+	import torch
+	import torch.nn as nn
+	from sklearn.datasets import make_moons
+
+	# FrEIA imports
+	import FrEIA.framework as Ff
+	import FrEIA.modules as Fm
+
+	BATCHSIZE = 100
+	N_DIM = 2
+
+	# we define a subnet for use inside an affine coupling block
+	# for more detailed information see the full tutorial
+	def subnet_fc(c_in, c_out):
+		  return nn.Sequential(nn.Linear(c_in, 512), nn.ReLU(),
+		                       nn.Linear(512,  c_out))
+
+	# a simple chain of operations is collected by ReversibleSequential
+	inn = Ff.ReversibleSequential(N_DIM)
+	for k in range(8):
+			inn.append(Fm.AllInOneBlock, subnet_constructor=subnet_fc, permute_soft=True)
+
+	optimizer = torch.optimizer.Adam(inn.parameters(), lr=0.01)
+
+	# a very basic training loop
+	for i in range(1000):
+			optimizer.zero_grad()
+			# sample data from the moons distribution
+			data, label = make_moons(n_samples=BATCHSIZE, noise=0.05)
+			x = torch.Tensor(data)
+			# pass to INN and get transformed variable z and log Jacobian determinant
+			z, log_jac_det = inn(x)
+			# calculate the negative log-likelihood of the model with a standard normal prior
+			loss = 0.5*torch.sum(z**2, 1) - log_jac_det
+			loss = loss.mean() / N_DIM
+			# backpropagate and update the weights
+			loss.backward()
+			optimizer.step()
+
+	# sample from the INN by sampling from a standard normal and transforming
+	# it in the reverse direction
+	z = torch.randn(BATCHSIZE, N_DIM)
+	samples, _ = inn(z, rev=True)
 
 
 
@@ -248,43 +248,43 @@ More specifically:
 Using these rules, we would construct the INN from the above example in the
 following way:
 
-  .. code:: python
+.. code:: python
 
-    in1 = Ff.InputNode(100, name='Input 1') # 1D vector
-    in2 = Ff.InputNode(20, name='Input 2') # 1D vector
-    cond = Ff.ConditionNode(42, name='Condition')
+  in1 = Ff.InputNode(100, name='Input 1') # 1D vector
+  in2 = Ff.InputNode(20, name='Input 2') # 1D vector
+  cond = Ff.ConditionNode(42, name='Condition')
 
-    def subnet(dims_in, dims_out): 
-        return nn.Sequential(nn.Linear(dims_in, 256), nn.ReLU(), 
-                             nn.Linear(256, dims_out))
+  def subnet(dims_in, dims_out): 
+      return nn.Sequential(nn.Linear(dims_in, 256), nn.ReLU(), 
+                           nn.Linear(256, dims_out))
 
-    perm = Ff.Node(in1.out0, Fm.PermuteRandom, {}, name='Permutation')
-    split1 =  Ff.Node(perm.out0, Fm.Split, {}, name='Split 1')
-    split2 =  Ff.Node(split1.out1, Fm.Split, {}, name='Split 2')
-    actnorm = Ff.Node(split2.out1, Fm.ActNorm, {}, name='ActNorm')
-    concat1 =  Ff.Node([actnorm.out0, in2.out0], Fm.Concat, {}, name='Concat 1')
-    affine = Ff.Node(concat1.out0, Fm.AffineCouplingOneSided, {'subnet_constructor': subnet}, 
-                     conditions=cond, name='Affine Coupling')
-    concat2 =  Ff.Node([split2.out0, affine.out0], Fm.Concat, {}, name='Concat 2')
+  perm = Ff.Node(in1.out0, Fm.PermuteRandom, {}, name='Permutation')
+  split1 =  Ff.Node(perm.out0, Fm.Split, {}, name='Split 1')
+  split2 =  Ff.Node(split1.out1, Fm.Split, {}, name='Split 2')
+  actnorm = Ff.Node(split2.out1, Fm.ActNorm, {}, name='ActNorm')
+  concat1 =  Ff.Node([actnorm.out0, in2.out0], Fm.Concat, {}, name='Concat 1')
+  affine = Ff.Node(concat1.out0, Fm.AffineCouplingOneSided, {'subnet_constructor': subnet}, 
+                   conditions=cond, name='Affine Coupling')
+  concat2 =  Ff.Node([split2.out0, affine.out0], Fm.Concat, {}, name='Concat 2')
 
-    output1 = Ff.OutputNode(split1.out0, name='Output 1')
-    output2 = Ff.OutputNode(concat2.out0, name='Output 2')
+  output1 = Ff.OutputNode(split1.out0, name='Output 1')
+  output2 = Ff.OutputNode(concat2.out0, name='Output 2')
 
-    example_INN = Ff.ReversibleGraphNet([in1, in2, cond,
-                                         perm, split1, split2,
-                                         actnorm, concat1, affine, concat2, 
-                                         output1, output2], verbose=True)
+  example_INN = Ff.ReversibleGraphNet([in1, in2, cond,
+                                       perm, split1, split2,
+                                       actnorm, concat1, affine, concat2, 
+                                       output1, output2], verbose=True)
 
-    # dummy inputs:
-    x1, x2, c = torch.randn(1, 100), torch.randn(1, 20), torch.randn(1, 42)
+  # dummy inputs:
+  x1, x2, c = torch.randn(1, 100), torch.randn(1, 20), torch.randn(1, 42)
 
-    # compute the outputs
-    z1, z2 = example_INN([x1, x2], c=c)
+  # compute the outputs
+  z1, z2 = example_INN([x1, x2], c=c)
 
-    # invert the network and check if we get the original inputs back:
-    x1_inv, x2_inv = example_INN([z1, z2], c=c, rev=True)
-    assert (torch.max(torch.abs(x1_inv - x1)) < 1e-5
-           and torch.max(torch.abs(x2_inv - x2)) < 1e-5)
+  # invert the network and check if we get the original inputs back:
+  x1_inv, x2_inv = example_INN([z1, z2], c=c, rev=True)
+  assert (torch.max(torch.abs(x1_inv - x1)) < 1e-5
+         and torch.max(torch.abs(x2_inv - x2)) < 1e-5)
 
 Node Construction
 ^^^^^^^^^^^^^^^^^^^
