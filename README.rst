@@ -87,6 +87,61 @@ the ``./docs/`` directory, or at
 
 https://vll-hd.github.io/FrEIA
 
+
+Quick Start Guide
+-------------------
+To jump straight into the code, see this basic usage example, which learns and then samples from the moons dataset provided in ``sklearn``. For information on the structure of FrEIA, as well as more detailed examples of networks, including custom invertible operations, see the full tutorial below.
+
+.. code:: python
+		
+		# standard imports
+		import torch
+		import torch.nn as nn
+		from sklearn.datasets import make_moons
+
+		# FrEIA imports
+    import FrEIA.framework as Ff
+    import FrEIA.modules as Fm
+    
+    BATCHSIZE = 100
+    N_DIM = 2
+		
+		# we define a subnet for use inside an affine coupling block
+		# for more detailed information see the full tutorial
+    def subnet_fc(c_in, c_out):
+        return nn.Sequential(nn.Linear(c_in, 512), nn.ReLU(),
+                             nn.Linear(512,  c_out))
+		
+		# a simple chain of operations is collected by ReversibleSequential
+		inn = Ff.ReversibleSequential(N_DIM)
+		for k in range(8):
+				inn.append(Fm.AllInOneBlock, subnet_constructor=subnet_fc, permute_soft=True)
+		
+		optimizer = torch.optimizer.Adam(inn.parameters(), lr=0.01)
+		
+		# a very basic training loop
+		for i in range(1000):
+				optimizer.zero_grad()
+				# sample data from the moons distribution
+				data, label = make_moons(n_samples=BATCHSIZE, noise=0.05)
+				x = torch.Tensor(data)
+				# pass to INN and get transformed variable z and log Jacobian determinant
+				z, log_jac_det = inn(x)
+				# calculate the negative log-likelihood of the model with a standard normal prior
+				loss = 0.5*torch.sum(z**2, 1) - log_jac_det
+				loss = loss.mean() / N_DIM
+				# backpropagate and update the weights
+				loss.backward()
+				optimizer.step()
+		
+		# sample from the INN by sampling from a standard normal and transforming
+		# it in the reverse direction
+		z = torch.randn(BATCHSIZE, N_DIM)
+		samples, _ = inn(z, rev=True)
+
+
+
+
 Tutorial
 ----------------
 
@@ -137,7 +192,7 @@ More specifically:
 
   .. code:: python
 
-   in1 = InputNode(3, 32, 32, name='Input x_1')
+   in1 = InputNode(3, 32, 32, name='Input 1')
 
   The ``name`` argument can be omitted in principle, but it is recommended in
   general, as it appears e.g. in error messages.
@@ -150,18 +205,18 @@ More specifically:
 * Each ``Node`` is initialized given a list of its inputs as the first
   constructor argument, along with other arguments covered later (omitted as
   '``...``' in the following, in particular defining what operation the node
-  should represent). For transform *T1* in the example above, this would look
+  should represent). For *Permutation* in the example above, this would look
   like the this:
 
   .. code:: python
 
-    transf1 = Node([in1.out0], ..., name='Transform T_1')
+    perm = Node([in1.out0], ..., name='Permutation')
 
-  Or for merge *m2*:
+  Or for *Merge 2*:
 
   .. code:: python
 
-    merge2 = Node([transf3.out0, split2.out1], ..., name='Merge m_2')
+    merge2 = Node([affine.out0, split2.out1], ..., name='Merge 2')
 
   Conditions are passed as a list through the ``conditions`` argument:
 
@@ -195,34 +250,40 @@ following way:
 
   .. code:: python
 
-   in1 = InputNode(3, 32, 32, name='Input x_1') # 3-channel image
-   in2 = InputNode(128, name='Input x_2') # 1D vector
-   cond = ConditionNode(42, name='Condition c')
+    in1 = Ff.InputNode(100, name='Input 1') # 1D vector
+    in2 = Ff.InputNode(20, name='Input 2') # 1D vector
+    cond = Ff.ConditionNode(42, name='Condition')
 
-   transf1 = Node([in1.out0], ..., name='Transform T_1')
-   split1 =  Node([transf1.out0], ..., name='Split s_1')
-   split2 =  Node([split1.out0], ..., name='Split s_2')
-   transf2 = Node([split2.out0], ..., name='Transform T_2')
-   merge1 =  Node([transf2.out0, in2.out0], ..., name='Merge m_1')
-   transf3 = Node([merge1.out0], ..., conditions=[cond], name='Transform T_3')
-   merge2 =  Node([transf2.out0, split2.out1], ..., name='Merge m_2')
+    def subnet(dims_in, dims_out): 
+        return nn.Sequential(nn.Linear(dims_in, 256), nn.ReLU(), 
+                             nn.Linear(256, dims_out))
 
-   output1 = Node([split1.out1], ..., name='Output z_1')
-   output2 = Node([merge2.out0], ..., name='Output z_2')
+    perm = Ff.Node(in1.out0, Fm.PermuteRandom, {}, name='Permutation')
+    split1 =  Ff.Node(perm.out0, Fm.Split, {}, name='Split 1')
+    split2 =  Ff.Node(split1.out1, Fm.Split, {}, name='Split 2')
+    actnorm = Ff.Node(split2.out1, Fm.ActNorm, {}, name='ActNorm')
+    concat1 =  Ff.Node([actnorm.out0, in2.out0], Fm.Concat, {}, name='Concat 1')
+    affine = Ff.Node(concat1.out0, Fm.AffineCouplingOneSided, {'subnet_constructor': subnet}, 
+                     conditions=cond, name='Affine Coupling')
+    concat2 =  Ff.Node([split2.out0, affine.out0], Fm.Concat, {}, name='Concat 2')
 
-   example_INN = ReversibleGraphNet([in1, in2, output1, output2, cond,
-                                     transf1, transf2, transf3,
-                                     merge1, merge2, split1, split2], verbose=False)
+    output1 = Ff.OutputNode(split1.out0, name='Output 1')
+    output2 = Ff.OutputNode(concat2.out0, name='Output 2')
 
-   # dummy inputs:
-   x1, x2, cond = torch.randn(1,3,32,32), torch.randn(1, 128), torch.randn(1, 42)
+    example_INN = Ff.ReversibleGraphNet([in1, in2, cond,
+                                         perm, split1, split2,
+                                         actnorm, concat1, affine, concat2, 
+                                         output1, output2], verbose=True)
 
-   # compute the outputs
-   z1, z2 = example_INN([x1, x2], c=cond)
+    # dummy inputs:
+    x1, x2, c = torch.randn(1, 100), torch.randn(1, 20), torch.randn(1, 42)
 
-   # invert the network and check if we get the original inputs back:
-   x1_inv, x2_infv = example_INN([z1, z2], c=cond, rev=True)
-   assert (torch.max(torch.abs(x1_inv - x1)) < 1e-5
+    # compute the outputs
+    z1, z2 = example_INN([x1, x2], c=c)
+
+    # invert the network and check if we get the original inputs back:
+    x1_inv, x2_inv = example_INN([z1, z2], c=c, rev=True)
+    assert (torch.max(torch.abs(x1_inv - x1)) < 1e-5
            and torch.max(torch.abs(x2_inv - x2)) < 1e-5)
 
 Node Construction
@@ -318,53 +379,33 @@ The following only provides examples for constructing INNs by themselves.
        return nn.Sequential(nn.Conv2d(c_in, 256,   1), nn.ReLU(),
                             nn.Conv2d(256,  c_out, 1))
 
-Simple GLOW-based INN
-**************************
+Simple INN in 2 dimensions
+****************************
 
 The following INN only has 2 input dimensions.
 It should be able to learn to generate most 2D distributions (gaussian mixtures, different shapes, ...),
 and can be easily visualized.
-Because of the 2D, it does not require permutations or orthogonal transforms between coupling blocks.
+We will use a series of ``AllInOneBlock``s, which combine affine coupling, a permutation and ActNorm in a single structure.
+Since the computation graph is a simple chain of operations, we can define the network using the ``ReversibleSequential`` API.
 
 .. code:: python
 
-   nodes = [Ff.InputNode(2, name='input')]
-
-   # Use a loop to produce a chain of coupling blocks
+   inn = Ff.ReversibleSequential(2)
    for k in range(8):
-       nodes.append(Ff.Node(nodes[-1],
-                            Fm.GLOWCouplingBlock,
-                            {'subnet_constructor':subnet_fc, 'clamp':2.0},
-                            name=F'coupling_{k}'))
+   		inn.append(Fm.AllInOneBlock, subnet_constructor=subnet_fc, permute_soft=True)
 
-   nodes.append(Ff.OutputNode(nodes[-1], name='output'))
-   inn = Ff.ReversibleGraphNet(nodes)
+Conditional INN for MNIST
+***************************
 
-Conditional INN
-************************
-
-The following INN is able to perform conditional MNIST generation quite well.
-Note that is is not particularly efficient, with respect to the number of parameters.
-(See convolutional INN for that)
+The following cINN is able to perform conditional MNIST generation quite well.
+Note that is is not particularly efficient, with respect to the number of parameters (see convolutional INN for that).
+Again, we use a chain of ``AllInOneBlock``s, collected together by ``ReversibleSequential``.
 
 .. code:: python
 
-   cond = Ff.ConditionNode(10, name='condition')
-   nodes = [Ff.InputNode(28*28, name='input')]
-
+   cinn = Ff.ReversibleSequential(28*28)
    for k in range(12):
-       nodes.append(Ff.Node(nodes[-1],
-                            Fm.GLOWCouplingBlock,
-                            {'subnet_constructor':subnet_fc, 'clamp':2.0},
-                            conditions=cond,
-                            name=F'coupling_{k}'))
-       nodes.append(Ff.Node(nodes[-1],
-                            Fm.PermuteRandom,
-                            {'seed':k},
-                            name=F'permute_{k}'))
-
-   nodes.append(Ff.OutputNode(nodes[-1], name='output'))
-   cinn = Ff.ReversibleGraphNet(nodes + [cond])
+   		cinn.append(Fm.AllInOneBlock, cond=0, cond_shape=(10,), subnet_constructor=subnet_fc)
 
 
 Convolutional INN
@@ -376,6 +417,7 @@ and the rest are transformed further to encode semantic content.  This is
 important, because even for moderately sized images, it becomes infeasible to
 transform all dimenions through the full depth of the INN. Many dimensions will
 just enocde image noise, so we can split them off early.
+Because the computational graph contains multiple outputs, we have to use the full ``ReversibleGraphNet`` machinery.
 
 .. code:: python
 
@@ -437,6 +479,127 @@ just enocde image noise, so we can split them off early.
    nodes.append(Ff.OutputNode(nodes[-1], name='output'))
 
    conv_inn = Ff.ReversibleGraphNet(nodes)
+
+
+Writing Custom Invertible Operations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Custom invertible modules can be written as extensions of the ``Fm.InvertibleModule`` base class. Refer to the documentation of this class for detailed information on requirements. 
+
+Below are two simple examples which illustrate the definition and use of custom modules and can be used as basic templates.
+The first multiplies each dimension of an input tensor by either 1 or 2, chosen in a random but fixed way. 
+The second is a conditional operation which takes two inputs and swaps them if the condition is positive, doing nothing otherwise.
+
+Notes:
+
+* The ``Fm.InvertibleModule`` must be initialized with the ``dims_in`` argument and optionally ``dims_c`` if there is a conditioning input.
+* ``forward`` should return a tuple of outputs (even if there is only one), with additional ``log_jac_det`` term if ``jac==True``. 
+
+Definition:
+
+.. code:: python
+
+		class FixedRandomElementwiseMultiply(Fm.InvertibleModule):
+				
+				def __init__(self, dims_in):
+						super().__init__(dims_in)
+						self.random_factor = torch.randint(1, 3, size=(1, dims_in))
+						
+				def forward(self, x, rev=False, jac=True):
+						if not rev:
+								# forward operation
+								x = x * self.random_factor
+								log_jac_det = self.random_factor.log().sum()
+						else:
+								# backward operation
+								x = x / self.random_factor
+								log_jac_det = -self.random_factor.log().sum()
+						
+						if jac:
+								return (x,), log_jac_det
+						else:
+								return (x,)
+		
+		
+		
+		class ConditionalSwap(Fm.InvertibleModule):
+				
+				def __init__(self, dims_in, dims_c):
+						super().__init__(dims_in, dims_c=dims_c)
+						
+				def forward(self, x, c, rev=False, jac=True):
+						# in this case, the forward and reverse operations are identical
+						# so we don't use the rev argument
+						x1, x2 = x
+						log_jac_det = 0.
+						
+						if c > 0:
+								out = (x2, x1)
+						else:
+								out = (x1, x2)
+						
+						if jac:
+								return out, log_jac_det
+						else:
+								return out
+
+
+Basic Usage Example:
+
+.. code:: python
+
+		BATCHSIZE = 10
+		DIMS_IN = 2
+		
+		# build up basic net using ReversibleSequential
+		net = Ff.ReversibleSequential(DIMS_IN)
+		for i in range(2):
+				net.append(FixedRandomElementwiseMultiply)
+				
+		# define inputs
+		x = torch.randn(BATCHSIZE, DIMS_IN)
+		
+		# run forward
+		z, log_jac_det = net(x)
+		
+		# run in reverse
+		x_rev, log_jac_det_rev = net(z, rev=True)
+
+
+
+More Complicated Example:
+
+.. code:: python
+
+		BATCHSIZE = 10
+		DIMS_IN = 2
+		
+		# define a reversible graph net
+		
+		input_1 = Ff.InputNode(DIMS_IN, name='input_1')
+		input_2 = Ff.InputNode(DIMS_IN, name='input_2')
+		
+		cond = Ff.ConditionNode(1, name='condition')
+		
+		mult_1 = Ff.Node(input_1.out0, FixedRandomElementwiseMultiply, name='mult_1')
+		cond_swap = Ff.Node((mult.out0, input_2.out0), ConditionalSwap, conditions=cond, name='conditional_swap')
+		mult_2 = Ff.Node(cond_swap.out1, FixedRandomElementwiseMultiply, name='mult_2')
+		
+		output_1 = Ff.OutputNode(cond_swap.out0, name='output_1')
+		output_2 = Ff.OutputNode(mult_2.out0, name='output_2')
+		
+		net = Ff.ReversibleGraphNet([input_1, input_2, cond, mult_1, cond_swap, mult_2, output_1, output_2])
+		
+		# define inputs
+		x1 = torch.randn(BATCHSIZE, DIMS_IN)
+		x2 = torch.randn(BATCHSIZE, DIMS_IN)
+		c = torch.randn(BATCHSIZE)
+		
+		# run forward
+		(z1, z2), log_jac_det = net((x1, x2), c=c)
+		
+		# run in reverse without returning Jacobian term
+		x1_rev, x2_rev = net((z1, z2), c=c, rev=True, jac=False)
 
 
 
