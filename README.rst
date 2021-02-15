@@ -222,7 +222,7 @@ More specifically:
 
   .. code:: python
 
-    transf3 = Node([merge1.out0], ..., conditions=[cond], name='Transform T_3')
+    affine = Node([merge1.out0], ..., conditions=[cond], name='Affine Coupling')
 
 * The ``Node``-subclass ``OutputNode`` is used for the outputs. The INN as a whole
   will return the result at this node.
@@ -244,6 +244,69 @@ More specifically:
   For the computation, the inputs are given as a list of torch tensors, or just
   a single torch tensor if there is only one input. To perform the inverse pass,
   the ``rev`` argument has to be set to ``True`` (see examples).
+
+Node Construction
+^^^^^^^^^^^^^^^^^^^
+
+Above, we only covered the construction of the computation graph itself, but so
+far we have not shown how to define the operations represented by each node.
+Therefore, we will take a closer look at the ``Node`` constructor and its
+arguments:
+
+.. code:: python
+
+  Node(inputs, module_type, module_args, conditions=[], name=None)
+
+General API
+******************
+The arguments of the ``Node`` constructor are the following:
+
+* ``inputs``: A list of outputs of other nodes, that are used as inputs for
+  this node (discussed above)
+* ``module_type``: This argument gives the class of operation to be performed by this node,
+  for example ``GLOWCouplingBlock`` for a coupling block following the GLOW-design.
+  Many implemented classes can be found in the documentation under
+  https://vll-hd.github.io/FrEIA/modules/index.html
+* ``module_args``: This argument is a dictionary. It provides arguments for the
+  ``module_type``-constructor. For instance, a random invertible permutation
+  (``module_type=PermuteRandom``) can accept the argument ``seed``, so we could use
+  ``module_args={'seed': 111}``.
+  If no arguments are specified we must pass an empty dictionary ``{}``.
+
+Affine Coupling Blocks
+**************************
+
+All coupling blocks (GLOW, RNVP, NICE), merit special discussion, because
+they are the most used invertible transforms.
+
+* The coupling blocks contain smaller feed-forward subnetworks predicting the affine coefficients.
+  The in- and output shapes of the subnetworks depend on the in- output size of the coupling block itself.
+  These size are not known when coding the INN (or perhaps can be worked out by
+  hand, but would have to be worked out anew every time the architecture is modified slightly).
+  Therefore, the subnetworks can not be directly passed as ``nn.Modules``, but
+  rather in the form of a function or class, that constructs the subnetworks
+  given in- and output size. This is a lot simpler than it sounds, for a fully connected subnetwork we could use for example:
+
+  .. code:: python
+
+    def fc_constr(dims_in, dims_out):
+        return nn.Sequential(nn.Linear(dims_in, 128), nn.ReLU(),
+                            nn.Linear(128,  128), nn.ReLU(),
+                            nn.Linear(128,  dims_out))
+
+* The RNVP and GLOW coupling blocks have an additional hyperparameter ``clamp``.
+  This is becuase, instead of the exponential function ``exp(s)``, we use ``exp( 2*c/pi * atan(x))``
+  in the coupling blocks (``clamp``-parameter ``c``).
+  This leads to much more stable training and enables larger learning rates.
+  Effectively, the multiplication component of the coupling block is limited between ``exp(c)`` and ``1/exp(c)``.
+  The Jacobian determinant is thereby limited between ``±D*c`` (dimensionality of data ``D``).
+  In general, ``clamp = 2.0`` is a good place to start:
+
+  .. code:: python
+
+    glow = Node([in1.out0], GLOWCouplingBlock,
+                {'subnet_constructor': fc_constr, 'clamp': 2.0},
+                name='GLOW coupling block')
 
 Using these rules, we would construct the INN from the above example in the
 following way:
@@ -285,72 +348,6 @@ following way:
   x1_inv, x2_inv = example_INN([z1, z2], c=c, rev=True)
   assert (torch.max(torch.abs(x1_inv - x1)) < 1e-5
          and torch.max(torch.abs(x2_inv - x2)) < 1e-5)
-
-Node Construction
-^^^^^^^^^^^^^^^^^^^
-
-Above, we only covered the construction of the computation graph itself, but so
-far we have not shown how to define the operations represented by each node.
-Therefore, we will take a closer look at the ``Node`` constructor and its
-arguments:
-
-.. code:: python
-
-  Node(inputs, module_type, module_args, conditions=[], name=None)
-
-General API
-******************
-The arguments of the ``Node`` constructor are the following:
-
-* ``inputs``: A list of outputs of other nodes, that are used as inputs for
-  this node (discussed above)
-* ``module_type``: This argument gives the class of operation to be performed by this node,
-  for example ``GLOWCouplingBlock`` for a coupling block following the GLOW-design.
-  Many implemented classes can be found in the documentation under
-  https://vll-hd.github.io/FrEIA/modules/index.html
-* ``module_args``: This argument is a dictionary. It provides arguments for the
-  ``module_type``-constructor. For instance, a random invertible permutation
-  (``module_type=PermuteLayer``) only has one argument ``seed``, so we could use
-  ``module_args={'seed':111}``.
-
-Affine Coupling Blocks
-**************************
-
-All coupling blocks (GLOW, RNVP, NICE), merit special discussion, because
-they are the most used invertible transforms.
-
-* The coupling blocks contain smaller feed-forward subnetworks predicting the affine coefficients.
-  The in- and output shapes of the subnetworks depend on the in- output size of the coupling block itself.
-  These size are not known when coding the INN (or perhaps can be worked out by
-  hand, but would have to be worked out anew every time the architecture is modified slightly).
-  Therefore, the subnetworks can not be directly passed as ``nn.Modules``, but
-  rather in the form of a function or class, that constructs the subnetworks
-  given in- and output size. This is a lot simpler than it sounds, for a fully connected subnetwork we could use e.g.
-
-  .. code:: python
-
-    def fc_constr(c_in, c_out):
-        return nn.Sequential(nn.Linear(c_in, 128), nn.ReLU(),
-                            nn.Linear(128,  128), nn.ReLU(),
-                            nn.Linear(128,  c_out))
-
-    transf1 = Node([in1.out0], GLOWCouplingBlock,
-                  {'subnet_constructor':fc_constr},
-                  name='Transform T_1')
-
-* The RNVP and GLOW coupling blocks have an additional hyperparameter ``clamp``.
-  This is becuase, instead of the exponential function ``exp(s)``, we use ``exp( 2*c/pi * atan(x))``
-  in the coupling blocks (``clamp``-parameter ``c``).
-  This leads to much more stable training and enables larger learning rates.
-  Effecively, the mutliplication component of the coupling block is limited between ``exp(c)`` and ``1/exp(c)``.
-  The Jacobian determinant is thereby limited between ``±D*c`` (dimensionaltiy of data ``D``).
-  In general, ``clamp = 2.0`` is a good place to start:
-
-  .. code:: python
-
-    transf1 = Node([in1.out0], GLOWCouplingBlock,
-                  {'subnet_constructor':fc_constr, 'clamp':2.0},
-                  name='Transform T_1')
 
 Examples
 ^^^^^^^^^^^^
