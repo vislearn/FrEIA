@@ -48,8 +48,8 @@ class GMMTest(unittest.TestCase):
         U = torch.randn(batch_size, *U_size)
         i = torch.randint(0, n_components, (batch_size,))
 
-        z = test_net(x, c=[w, mu, U, i])
-        x_re = test_net(z, c=[w, mu, U, i], rev=True)
+        z = test_net(x, c=[w, mu, U, i], jac=False)[0]
+        x_re = test_net(z, c=[w, mu, U, i], rev=True, jac=False)[0]
 
         if torch.max(torch.abs(x - x_re)) > self.tol:
             print(torch.max(torch.abs(x - x_re)).item(), end='   ')
@@ -57,8 +57,8 @@ class GMMTest(unittest.TestCase):
         self.assertTrue(torch.max(torch.abs(x - x_re)) < self.tol)
 
 
-        z = test_net(x, c=[w, mu, U, 12345])
-        x_re = test_net(z, c=[w, mu, U, 12345], rev=True)
+        z = test_net(x, c=[w, mu, U, 12345], jac=False)[0]
+        x_re = test_net(z, c=[w, mu, U, 12345], rev=True, jac=False)[0]
 
         if torch.max(torch.abs(x - x_re)) > self.tol:
             print(torch.max(torch.abs(x - x_re)).item(), end='   ')
@@ -97,8 +97,7 @@ class GMMTest(unittest.TestCase):
         U = torch.randn(batch_size, *U_size)
 
         # Compute log det of Jacobian
-        z = test_net(x, c=[w, mu, U, 12345])
-        logdet = test_net.log_jacobian(x, c=[w, mu, U, 12345])
+        z, logdet = test_net(x, c=[w, mu, U, 12345])
         # Approximate log det of Jacobian numerically
         logdet_num = test_net.log_jacobian_numerical(x, c=[w, mu, U, 12345])
         # Check that they are the same (within tolerance)

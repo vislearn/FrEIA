@@ -194,12 +194,14 @@ class GraphINN(InvertibleModule):
         for node in node_list:
             for in_node, idx in node.inputs:
                 if in_node not in node_list:
-                    raise ValueError(f"{in_node} is not in node_list, but "
-                                     f"is the {idx + 1}th input to {node}.")
+                    raise ValueError(f"{node} gets input from {in_node}, "
+                                     f"but the latter is not in the node_list "
+                                     f"passed to GraphINN.")
             for out_node, idx in node.outputs:
                 if out_node not in node_list:
-                    raise ValueError(f"{out_node} is not in node_list, but "
-                                     f"consumes {node}'s {idx + 1}th output.")
+                    raise ValueError(f"{out_node} gets input from {node}, "
+                                     f"but the it's not in the node_list "
+                                     f"passed to GraphINN.")
 
         # Build the graph and tell nodes about their dimensions so that they can
         # build the modules
@@ -248,9 +250,18 @@ class GraphINN(InvertibleModule):
         jacobian_dict = {} if jac else None
 
         # Explicitly set conditions and starts
-        for tensor, start_node in zip(x_or_z,
-                                      self.out_nodes if rev else self.in_nodes):
+        start_nodes = self.out_nodes if rev else self.in_nodes
+        if len(x_or_z) != len(start_nodes):
+            raise ValueError(f"Got {len(x_or_z)} inputs, but expected "
+                             f"{len(start_nodes)}.")
+        for tensor, start_node in zip(x_or_z, start_nodes):
             outs[start_node, 0] = tensor
+
+        if c is None:
+            c = []
+        if len(c) != len(self.condition_nodes):
+            raise ValueError(f"Got {len(c)} conditions, but expected "
+                             f"{len(self.condition_nodes)}.")
         for tensor, condition_node in zip(c, self.condition_nodes):
             outs[condition_node, 0] = tensor
 
@@ -290,7 +301,8 @@ class GraphINN(InvertibleModule):
 
         for out_node in (self.in_nodes if rev else self.out_nodes):
             # This copies the one input of the out node
-            outs[out_node, 0] = outs[out_node.inputs[0]]
+            outs[out_node, 0] = outs[(out_node.outputs if rev
+                                      else out_node.inputs)[0]]
 
         if intermediate_outputs:
             return outs, jacobian_dict
@@ -367,8 +379,8 @@ class GraphINN(InvertibleModule):
             else:
                 x_upper = (x_flat + offset).view(*x.shape)
                 x_lower = (x_flat - offset).view(*x.shape)
-            y_upper = self.forward(x_upper, c=c, rev=rev, jac=False)
-            y_lower = self.forward(x_lower, c=c, rev=rev, jac=False)
+            y_upper, _ = self.forward(x_upper, c=c, rev=rev, jac=False)
+            y_lower, _ = self.forward(x_lower, c=c, rev=rev, jac=False)
             if isinstance(y_upper, (list, tuple)):
                 y_upper = torch.cat(
                     [y_i.view(batch_size, -1) for y_i in y_upper], dim=1)

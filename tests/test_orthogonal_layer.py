@@ -53,7 +53,7 @@ class OrthogonalTest(unittest.TestCase):
             optim.zero_grad()
 
             x = torch.randn(self.batch_size, inp_size)
-            y = test_net(x)
+            y = test_net(x, jac=False)[0]
 
             loss = torch.mean((y-x)**2)
             loss.backward()
@@ -82,8 +82,8 @@ class OrthogonalTest(unittest.TestCase):
         test_net.to('cuda')
         x = torch.randn(self.batch_size, inp_size).cuda()
 
-        y = test_net(x)
-        x_re = test_net(y, rev=True)
+        y = test_net(x, jac=False)[0]
+        x_re = test_net(y, rev=True, jac=False)[0]
 
         self.assertTrue(torch.max(torch.abs(x - x_re)) < self.tol)
         test_net.to('cpu')

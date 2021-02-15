@@ -37,7 +37,7 @@ class ActNormTest(unittest.TestCase):
     def test_init(self):
         x = torch.randn(self.batch_size, *self.inp_size_linear)
         x = x * torch.rand_like(x) + torch.randn_like(x)
-        y = self.net_linear(x)
+        y = self.net_linear(x, jac=False)[0]
         # Channel-wise mean should be zero
         self.assertTrue(torch.allclose(y.transpose(0,1).contiguous().view(self.inp_size_linear[0], -1).mean(dim=-1),
                                        torch.zeros(self.inp_size_linear[0]), atol=1e-06))
@@ -106,8 +106,8 @@ class IResNetTest(unittest.TestCase):
         x = x + torch.randn_like(x)
         c = torch.randn(self.batch_size, *self.inp_size_linear)
 
-        y = self.i_resnet_linear(x, c)
-        x_hat = self.i_resnet_linear(y, c, rev=True)
+        y = self.i_resnet_linear(x, c, jac=False)[0]
+        x_hat = self.i_resnet_linear(y, c, rev=True, jac=False)[0]
         # Check that inverse is close to input
         self.assertTrue(torch.allclose(x, x_hat, atol=self.tol))
 
@@ -115,8 +115,8 @@ class IResNetTest(unittest.TestCase):
         x = x * torch.randn_like(x)
         x = x + torch.randn_like(x)
 
-        y = self.i_resnet_conv(x)
-        x_hat = self.i_resnet_conv(y, rev=True)
+        y = self.i_resnet_conv(x, jac=False)[0]
+        x_hat = self.i_resnet_conv(y, rev=True, jac=False)[0]
         # Check that inverse is close to input
         self.assertTrue(torch.allclose(x, x_hat, atol=self.tol))
 
@@ -128,7 +128,7 @@ class IResNetTest(unittest.TestCase):
         c = torch.randn(self.batch_size, *self.inp_size_linear)
 
         # Estimate log det of Jacobian via power series
-        logdet = self.i_resnet_linear.log_jacobian(x, c=c)
+        z, logdet = self.i_resnet_linear(x, c=c)
         # Approximate log det of Jacobian numerically
         logdet_num = self.i_resnet_linear.log_jacobian_numerical(x, c=c)
         # Check that they are the same (with huge tolerance)

@@ -153,7 +153,7 @@ class IResNetLayer(InvertibleModule):
 
     def _jacobian(self, x, c=[], rev=False):
         if rev:
-            return -self.jacobian(x, c=c)
+            return -self._jacobian(x, c=c)
 
         # Initialize log determinant of Jacobian to zero
         batch_size = x[0].shape[0]

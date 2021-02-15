@@ -66,7 +66,6 @@ class Split(InvertibleModule):
                     warnings.warn("'section_sizes' too small, adding additional section")
                     section_sizes = list(section_sizes).append(l_dim - sum(section_sizes))
             self.split_size_or_sections = section_sizes
-        print(self.split_size_or_sections)
 
     def forward(self, x, rev=False, jac=True):
         """See super class InvertibleModule.
