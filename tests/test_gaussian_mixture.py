@@ -98,7 +98,7 @@ class GMMTest(unittest.TestCase):
         # Compute log det of Jacobian
         z, logdet = test_net(x, c=[w, mu, U, 12345])
         # Approximate log det of Jacobian numerically
-        logdet_num = test_net.log_jacobian_numerical(x, c=[w, mu, U, 12345])
+        logdet_num = test_net.log_jacobian_numerical(x, c=[w, mu, U, 12345], h=1e-3)
         # Check that they are the same (within tolerance)
         self.assertTrue(torch.allclose(logdet, logdet_num, atol=1, rtol=0.03),
                         f'Numerical jacobian {logdet, logdet_num}')

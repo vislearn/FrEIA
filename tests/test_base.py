@@ -3,10 +3,6 @@ import unittest
 import torch
 import torch.nn as nn
 import torch.optim
-DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
-import sys
-sys.path.append('../')
 
 from FrEIA.modules import InvertibleModule
 
@@ -24,8 +20,8 @@ class BaseLayerTest(unittest.TestCase):
 
         torch.manual_seed(self.batch_size)
 
-        self.x = torch.randn(self.batch_size, input_size).to(DEVICE)
-        self.c = torch.randn(self.batch_size, cond_size).to(DEVICE)
+        self.x = torch.randn(self.batch_size, input_size)
+        self.c = torch.randn(self.batch_size, cond_size)
 
     def test_constructs(self):
 
