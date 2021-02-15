@@ -397,7 +397,7 @@ class GraphINN(InvertibleModule):
             J_num[:, :, i] = (y_upper - y_lower).view(batch_size, -1) / (2 * h)
         logdet_num = x[0].new_zeros(batch_size)
         for i in range(batch_size):
-            logdet_num[i] = torch.det(J_num[i, :, :]).abs().log()
+            logdet_num[i] = torch.slogdet(J_num[i])[1]
 
         return logdet_num
 
