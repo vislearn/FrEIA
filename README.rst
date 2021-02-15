@@ -235,11 +235,9 @@ More specifically:
   directly use only that input in the constructor instead of a list, i.e.
   ``node.out0`` instead of ``[node.out0]``.
 * From the list of nodes, the INN is represented by the class
-  ``FrEIA.framework.ReversibleGraphNet``. The constructor takes a list of all
-  the nodes in the INN (order irrelevant), and an optional ``verbose`` argument
-  (``True`` by default. If ``verbose``, the results of the shape inference as
-  well as the in/outputs of each node are printed to stdout.)
-* The ``ReversibleGraphNet`` is a subclass of ``torch.nn.Module``, and can be
+  ``FrEIA.framework.GraphINN``. The constructor takes a list of all
+  the nodes in the INN (order irrelevant).
+* The ``GraphINN`` is a subclass of ``torch.nn.Module``, and can be
   used like any other torch ``Module``.
   For the computation, the inputs are given as a list of torch tensors, or just
   a single torch tensor if there is only one input. To perform the inverse pass,
@@ -383,7 +381,7 @@ Simple INN in 2 dimensions
 The following INN only has 2 input dimensions.
 It should be able to learn to generate most 2D distributions (gaussian mixtures, different shapes, ...),
 and can be easily visualized.
-We will use a series of ``AllInOneBlock``s, which combine affine coupling, a permutation and ActNorm in a single structure.
+We will use a series of ``AllInOneBlock`` operations, which combine affine coupling, a permutation and ActNorm in a single structure.
 Since the computation graph is a simple chain of operations, we can define the network using the ``SequenceINN`` API.
 
 .. code:: python
@@ -504,6 +502,10 @@ Definition:
           self.random_factor = torch.randint(1, 3, size=(1, dims_in[0][0]))
           
       def forward(self, x, rev=False, jac=True):
+          # the Jacobian term is trivial to calculate so we return it
+          # even if jac=False
+          
+          # x is passed to the function as a list (in this case of only on element)
           x = x[0]
           if not rev:
               # forward operation
@@ -544,8 +546,7 @@ Definition:
           return (x1_new, x2_new), log_jac_det
       
       def output_dims(self, input_dims):
-          dim1, dim2 = input_dims
-          return [dim2, dim1]
+          return input_dims
 
 
 Basic Usage Example:
