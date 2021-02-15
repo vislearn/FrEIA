@@ -109,30 +109,30 @@ To jump straight into the code, see this basic usage example, which learns and t
   # we define a subnet for use inside an affine coupling block
   # for more detailed information see the full tutorial
   def subnet_fc(c_in, c_out):
-    return nn.Sequential(nn.Linear(c_in, 512), nn.ReLU(),
-                         nn.Linear(512,  c_out))
+      return nn.Sequential(nn.Linear(c_in, 512), nn.ReLU(),
+                           nn.Linear(512,  c_out))
 
   # a simple chain of operations is collected by ReversibleSequential
   inn = Ff.ReversibleSequential(N_DIM)
   for k in range(8):
-    inn.append(Fm.AllInOneBlock, subnet_constructor=subnet_fc, permute_soft=True)
+      inn.append(Fm.AllInOneBlock, subnet_constructor=subnet_fc, permute_soft=True)
 
   optimizer = torch.optimizer.Adam(inn.parameters(), lr=0.01)
 
   # a very basic training loop
   for i in range(1000):
-    optimizer.zero_grad()
-    # sample data from the moons distribution
-    data, label = make_moons(n_samples=BATCHSIZE, noise=0.05)
-    x = torch.Tensor(data)
-    # pass to INN and get transformed variable z and log Jacobian determinant
-    z, log_jac_det = inn(x)
-    # calculate the negative log-likelihood of the model with a standard normal prior
-    loss = 0.5*torch.sum(z**2, 1) - log_jac_det
-    loss = loss.mean() / N_DIM
-    # backpropagate and update the weights
-    loss.backward()
-    optimizer.step()
+      optimizer.zero_grad()
+      # sample data from the moons distribution
+      data, label = make_moons(n_samples=BATCHSIZE, noise=0.05)
+      x = torch.Tensor(data)
+      # pass to INN and get transformed variable z and log Jacobian determinant
+      z, log_jac_det = inn(x)
+      # calculate the negative log-likelihood of the model with a standard normal prior
+      loss = 0.5*torch.sum(z**2, 1) - log_jac_det
+      loss = loss.mean() / N_DIM
+      # backpropagate and update the weights
+      loss.backward()
+      optimizer.step()
 
   # sample from the INN by sampling from a standard normal and transforming
   # it in the reverse direction
@@ -296,7 +296,7 @@ arguments:
 
 .. code:: python
 
-   Node(inputs, module_type, module_args, conditions=[], name=None)
+  Node(inputs, module_type, module_args, conditions=[], name=None)
 
 General API
 ******************
@@ -329,12 +329,12 @@ they are the most used invertible transforms.
 
   .. code:: python
 
-   def fc_constr(c_in, c_out):
-       return nn.Sequential(nn.Linear(c_in, 128), nn.ReLU(),
+    def fc_constr(c_in, c_out):
+        return nn.Sequential(nn.Linear(c_in, 128), nn.ReLU(),
                             nn.Linear(128,  128), nn.ReLU(),
                             nn.Linear(128,  c_out))
 
-   transf1 = Node([in1.out0], GLOWCouplingBlock,
+    transf1 = Node([in1.out0], GLOWCouplingBlock,
                   {'subnet_constructor':fc_constr},
                   name='Transform T_1')
 
@@ -348,7 +348,7 @@ they are the most used invertible transforms.
 
   .. code:: python
 
-   transf1 = Node([in1.out0], GLOWCouplingBlock,
+    transf1 = Node([in1.out0], GLOWCouplingBlock,
                   {'subnet_constructor':fc_constr, 'clamp':2.0},
                   name='Transform T_1')
 
@@ -361,23 +361,23 @@ The following only provides examples for constructing INNs by themselves.
 
 .. code:: python
 
-   # These imports and declarations apply to all examples
-   import torch.nn as nn
+  # These imports and declarations apply to all examples
+  import torch.nn as nn
 
-   import FrEIA.framework as Ff
-   import FrEIA.modules as Fm
+  import FrEIA.framework as Ff
+  import FrEIA.modules as Fm
 
-   def subnet_fc(c_in, c_out):
-       return nn.Sequential(nn.Linear(c_in, 512), nn.ReLU(),
-                            nn.Linear(512,  c_out))
+  def subnet_fc(c_in, c_out):
+      return nn.Sequential(nn.Linear(c_in, 512), nn.ReLU(),
+                          nn.Linear(512,  c_out))
 
-   def subnet_conv(c_in, c_out):
-       return nn.Sequential(nn.Conv2d(c_in, 256,   3, padding=1), nn.ReLU(),
-                            nn.Conv2d(256,  c_out, 3, padding=1))
+  def subnet_conv(c_in, c_out):
+      return nn.Sequential(nn.Conv2d(c_in, 256,   3, padding=1), nn.ReLU(),
+                          nn.Conv2d(256,  c_out, 3, padding=1))
 
-   def subnet_conv_1x1(c_in, c_out):
-       return nn.Sequential(nn.Conv2d(c_in, 256,   1), nn.ReLU(),
-                            nn.Conv2d(256,  c_out, 1))
+  def subnet_conv_1x1(c_in, c_out):
+      return nn.Sequential(nn.Conv2d(c_in, 256,   1), nn.ReLU(),
+                          nn.Conv2d(256,  c_out, 1))
 
 Simple INN in 2 dimensions
 ****************************
@@ -390,9 +390,9 @@ Since the computation graph is a simple chain of operations, we can define the n
 
 .. code:: python
 
-   inn = Ff.ReversibleSequential(2)
-   for k in range(8):
-   		inn.append(Fm.AllInOneBlock, subnet_constructor=subnet_fc, permute_soft=True)
+  inn = Ff.ReversibleSequential(2)
+  for k in range(8):
+      inn.append(Fm.AllInOneBlock, subnet_constructor=subnet_fc, permute_soft=True)
 
 Conditional INN for MNIST
 ***************************
@@ -403,9 +403,9 @@ Again, we use a chain of ``AllInOneBlock``s, collected together by ``ReversibleS
 
 .. code:: python
 
-   cinn = Ff.ReversibleSequential(28*28)
-   for k in range(12):
-   		cinn.append(Fm.AllInOneBlock, cond=0, cond_shape=(10,), subnet_constructor=subnet_fc)
+  cinn = Ff.ReversibleSequential(28*28)
+  for k in range(12):
+	    cinn.append(Fm.AllInOneBlock, cond=0, cond_shape=(10,), subnet_constructor=subnet_fc)
 
 
 Convolutional INN
@@ -421,11 +421,11 @@ Because the computational graph contains multiple outputs, we have to use the fu
 
 .. code:: python
 
-   nodes = [Ff.InputNode(3, 32, 32, name='input')]
-   ndim_x = 3 * 32 * 32
+  nodes = [Ff.InputNode(3, 32, 32, name='input')]
+  ndim_x = 3 * 32 * 32
 
-   # Higher resolution convolutional part
-   for k in range(4):
+  # Higher resolution convolutional part
+  for k in range(4):
       nodes.append(Ff.Node(nodes[-1],
                            Fm.GLOWCouplingBlock,
                            {'subnet_constructor':subnet_conv, 'clamp':1.2},
@@ -435,10 +435,10 @@ Because the computational graph contains multiple outputs, we have to use the fu
                            {'seed':k},
                            name=F'permute_high_res_{k}'))
 
-   nodes.append(Ff.Node(nodes[-1], Fm.IRevNetDownsampling, {}))
+  nodes.append(Ff.Node(nodes[-1], Fm.IRevNetDownsampling, {}))
 
-   # Lower resolution convolutional part
-   for k in range(12):
+  # Lower resolution convolutional part
+  for k in range(12):
       if k%2 == 0:
           subnet = subnet_conv_1x1
       else:
@@ -453,17 +453,17 @@ Because the computational graph contains multiple outputs, we have to use the fu
                            {'seed':k},
                            name=F'permute_low_res_{k}'))
 
-   # Make the outputs into a vector, then split off 1/4 of the outputs for the
-   # fully connected part
-   nodes.append(Ff.Node(nodes[-1], Fm.Flatten, {}, name='flatten'))
-   split_node = Ff.Node(nodes[-1],
-                        Fm.Split1D,
-                        {'split_size_or_sections':(ndim_x // 4, 3 * ndim_x // 4), 'dim':0},
-                        name='split')
-   nodes.append(split_node)
+  # Make the outputs into a vector, then split off 1/4 of the outputs for the
+  # fully connected part
+  nodes.append(Ff.Node(nodes[-1], Fm.Flatten, {}, name='flatten'))
+  split_node = Ff.Node(nodes[-1],
+                      Fm.Split1D,
+                      {'split_size_or_sections':(ndim_x // 4, 3 * ndim_x // 4), 'dim':0},
+                      name='split')
+  nodes.append(split_node)
 
-   # Fully connected part
-   for k in range(12):
+  # Fully connected part
+  for k in range(12):
       nodes.append(Ff.Node(nodes[-1],
                            Fm.GLOWCouplingBlock,
                            {'subnet_constructor':subnet_fc, 'clamp':2.0},
@@ -473,12 +473,12 @@ Because the computational graph contains multiple outputs, we have to use the fu
                            {'seed':k},
                            name=F'permute_{k}'))
 
-   # Concatenate the fully connected part and the skip connection to get a single output
-   nodes.append(Ff.Node([nodes[-1].out0, split_node.out1],
-                        Fm.Concat1d, {'dim':0}, name='concat'))
-   nodes.append(Ff.OutputNode(nodes[-1], name='output'))
+  # Concatenate the fully connected part and the skip connection to get a single output
+  nodes.append(Ff.Node([nodes[-1].out0, split_node.out1],
+                      Fm.Concat1d, {'dim':0}, name='concat'))
+  nodes.append(Ff.OutputNode(nodes[-1], name='output'))
 
-   conv_inn = Ff.ReversibleGraphNet(nodes)
+  conv_inn = Ff.ReversibleGraphNet(nodes)
 
 
 Writing Custom Invertible Operations
@@ -499,71 +499,71 @@ Definition:
 
 .. code:: python
 
-		class FixedRandomElementwiseMultiply(Fm.InvertibleModule):
-				
-				def __init__(self, dims_in):
-						super().__init__(dims_in)
-						self.random_factor = torch.randint(1, 3, size=(1, dims_in))
-						
-				def forward(self, x, rev=False, jac=True):
-						if not rev:
-								# forward operation
-								x = x * self.random_factor
-								log_jac_det = self.random_factor.log().sum()
-						else:
-								# backward operation
-								x = x / self.random_factor
-								log_jac_det = -self.random_factor.log().sum()
-						
-						if jac:
-								return (x,), log_jac_det
-						else:
-								return (x,)
+  class FixedRandomElementwiseMultiply(Fm.InvertibleModule):
+
+      def __init__(self, dims_in):
+          super().__init__(dims_in)
+          self.random_factor = torch.randint(1, 3, size=(1, dims_in))
+	        
+      def forward(self, x, rev=False, jac=True):
+          if not rev:
+	            # forward operation
+	            x = x * self.random_factor
+	            log_jac_det = self.random_factor.log().sum()
+          else:
+	            # backward operation
+	            x = x / self.random_factor
+	            log_jac_det = -self.random_factor.log().sum()
+          
+          if jac:
+	            return (x,), log_jac_det
+          else:
+	            return (x,)
 		
 		
 		
-		class ConditionalSwap(Fm.InvertibleModule):
-				
-				def __init__(self, dims_in, dims_c):
-						super().__init__(dims_in, dims_c=dims_c)
-						
-				def forward(self, x, c, rev=False, jac=True):
-						# in this case, the forward and reverse operations are identical
-						# so we don't use the rev argument
-						x1, x2 = x
-						log_jac_det = 0.
-						
-						if c > 0:
-								out = (x2, x1)
-						else:
-								out = (x1, x2)
-						
-						if jac:
-								return out, log_jac_det
-						else:
-								return out
+  class ConditionalSwap(Fm.InvertibleModule):
+	
+      def __init__(self, dims_in, dims_c):
+		      super().__init__(dims_in, dims_c=dims_c)
+		      
+      def forward(self, x, c, rev=False, jac=True):
+		      # in this case, the forward and reverse operations are identical
+		      # so we don't use the rev argument
+		      x1, x2 = x
+		      log_jac_det = 0.
+		      
+		      if c > 0:
+				      out = (x2, x1)
+		      else:
+				      out = (x1, x2)
+		      
+		      if jac:
+				      return out, log_jac_det
+		      else:
+				      return out
 
 
 Basic Usage Example:
 
 .. code:: python
 
-		BATCHSIZE = 10
-		DIMS_IN = 2
-		
-		# build up basic net using ReversibleSequential
-		net = Ff.ReversibleSequential(DIMS_IN)
-		for i in range(2):
-				net.append(FixedRandomElementwiseMultiply)
-				
-		# define inputs
-		x = torch.randn(BATCHSIZE, DIMS_IN)
-		
-		# run forward
-		z, log_jac_det = net(x)
-		
-		# run in reverse
-		x_rev, log_jac_det_rev = net(z, rev=True)
+  BATCHSIZE = 10
+  DIMS_IN = 2
+
+  # build up basic net using ReversibleSequential
+  net = Ff.ReversibleSequential(DIMS_IN)
+  for i in range(2):
+      net.append(FixedRandomElementwiseMultiply)
+		  
+  # define inputs
+  x = torch.randn(BATCHSIZE, DIMS_IN)
+
+  # run forward
+  z, log_jac_det = net(x)
+
+  # run in reverse
+  x_rev, log_jac_det_rev = net(z, rev=True)
 
 
 
@@ -571,35 +571,35 @@ More Complicated Example:
 
 .. code:: python
 
-		BATCHSIZE = 10
-		DIMS_IN = 2
-		
-		# define a reversible graph net
-		
-		input_1 = Ff.InputNode(DIMS_IN, name='input_1')
-		input_2 = Ff.InputNode(DIMS_IN, name='input_2')
-		
-		cond = Ff.ConditionNode(1, name='condition')
-		
-		mult_1 = Ff.Node(input_1.out0, FixedRandomElementwiseMultiply, name='mult_1')
-		cond_swap = Ff.Node((mult.out0, input_2.out0), ConditionalSwap, conditions=cond, name='conditional_swap')
-		mult_2 = Ff.Node(cond_swap.out1, FixedRandomElementwiseMultiply, name='mult_2')
-		
-		output_1 = Ff.OutputNode(cond_swap.out0, name='output_1')
-		output_2 = Ff.OutputNode(mult_2.out0, name='output_2')
-		
-		net = Ff.ReversibleGraphNet([input_1, input_2, cond, mult_1, cond_swap, mult_2, output_1, output_2])
-		
-		# define inputs
-		x1 = torch.randn(BATCHSIZE, DIMS_IN)
-		x2 = torch.randn(BATCHSIZE, DIMS_IN)
-		c = torch.randn(BATCHSIZE)
-		
-		# run forward
-		(z1, z2), log_jac_det = net((x1, x2), c=c)
-		
-		# run in reverse without returning Jacobian term
-		x1_rev, x2_rev = net((z1, z2), c=c, rev=True, jac=False)
+  BATCHSIZE = 10
+  DIMS_IN = 2
+
+  # define a reversible graph net
+
+  input_1 = Ff.InputNode(DIMS_IN, name='input_1')
+  input_2 = Ff.InputNode(DIMS_IN, name='input_2')
+
+  cond = Ff.ConditionNode(1, name='condition')
+
+  mult_1 = Ff.Node(input_1.out0, FixedRandomElementwiseMultiply, name='mult_1')
+  cond_swap = Ff.Node((mult.out0, input_2.out0), ConditionalSwap, conditions=cond, name='conditional_swap')
+  mult_2 = Ff.Node(cond_swap.out1, FixedRandomElementwiseMultiply, name='mult_2')
+
+  output_1 = Ff.OutputNode(cond_swap.out0, name='output_1')
+  output_2 = Ff.OutputNode(mult_2.out0, name='output_2')
+
+  net = Ff.ReversibleGraphNet([input_1, input_2, cond, mult_1, cond_swap, mult_2, output_1, output_2])
+
+  # define inputs
+  x1 = torch.randn(BATCHSIZE, DIMS_IN)
+  x2 = torch.randn(BATCHSIZE, DIMS_IN)
+  c = torch.randn(BATCHSIZE)
+
+  # run forward
+  (z1, z2), log_jac_det = net((x1, x2), c=c)
+
+  # run in reverse without returning Jacobian term
+  x1_rev, x2_rev = net((z1, z2), c=c, rev=True, jac=False)
 
 
 
