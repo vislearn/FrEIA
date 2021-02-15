@@ -2,10 +2,8 @@ from . import InvertibleModule
 
 from copy import deepcopy
 from typing import Sequence, Union
-import warnings
 
 import torch
-
 
 
 class Split(InvertibleModule):
@@ -68,7 +66,6 @@ class Split(InvertibleModule):
                     warnings.warn("'section_sizes' too small, adding additional section")
                     section_sizes = list(section_sizes).append(l_dim - sum(section_sizes))
             self.split_size_or_sections = section_sizes
-        print(self.split_size_or_sections)
 
     def forward(self, x, rev=False, jac=True):
         """See super class InvertibleModule.
@@ -152,6 +149,7 @@ class Concat(InvertibleModule):
 
 
 
+import warnings
 
 def _deprecated_by(orig_class):
     class deprecated_class(orig_class):

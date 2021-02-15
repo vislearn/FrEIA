@@ -47,8 +47,7 @@ linear = Node(flatten,
               conditions=[c2,c3],
               name='linear::c2|c3')
 outp = OutputNode(linear, name='output')
-conv_outp = OutputNode(conv, name='output')
-test_net = ReversibleGraphNet([inp, c1, conv, flatten, c2, c3, linear, outp])
+test_net = GraphINN([inp, c1, conv, flatten, c2, c3, linear, outp])
 
 
 class ConditioningTest(unittest.TestCase):
@@ -67,7 +66,7 @@ class ConditioningTest(unittest.TestCase):
 
     def test_constructs(self):
 
-        y = test_net(self.x, c=[self.c1,self.c2,self.c3]).to(DEVICE)
+        y = test_net(self.x, c=[self.c1,self.c2,self.c3], jac=False)[0].to(DEVICE)
         self.assertTrue(isinstance(y, type(self.x) ), f"{type(y)}")
 
         exp = torch.Size([self.batch_size, inp_size[0]*inp_size[1]*inp_size[2]])
@@ -75,8 +74,8 @@ class ConditioningTest(unittest.TestCase):
 
     def test_inverse(self):
 
-        y = test_net(self.x, c=[self.c1,self.c2,self.c3]).to(DEVICE)
-        x_re = test_net(y, c=[self.c1,self.c2,self.c3], rev=True).to(DEVICE)
+        y = test_net(self.x, c=[self.c1,self.c2,self.c3], jac=False)[0].to(DEVICE)
+        x_re = test_net(y, c=[self.c1,self.c2,self.c3], rev=True, jac=False)[0].to(DEVICE)
 
         # if torch.max(torch.abs(x - x_re)) > self.tol:
         #     print(torch.max(torch.abs(x - x_re)).item(), end='   ')
@@ -101,9 +100,7 @@ class ConditioningTest(unittest.TestCase):
     def test_jacobian(self):
         # Compute log det of Jacobian
         test_net.to(DEVICE)
-        y = test_net(self.x, c=[self.c1,self.c2,self.c3])
-        y.to(DEVICE)
-        logdet = test_net.log_jacobian( self.x, c=[self.c1,self.c2,self.c3] ).to(DEVICE)
+        logdet = test_net(self.x, c=[self.c1,self.c2,self.c3])[1].to(DEVICE)
         # Approximate log det of Jacobian numerically
         logdet_num = test_net.log_jacobian_numerical( self.x, c=[self.c1,self.c2,self.c3] ).to(DEVICE)
         # Check that they are the same (within tolerance)
@@ -134,8 +131,8 @@ class ConditioningTest(unittest.TestCase):
         c2 = torch.randn(self.batch_size, *c2_size).to(DEVICE)
         c3 = torch.randn(self.batch_size, *c3_size).to(DEVICE)
 
-        y = test_net(x, c=[c1,c2,c3])
-        x_re = test_net(y, c=[c1,c2,c3], rev=True)
+        y = test_net(x, c=[c1,c2,c3], jac=False)[0]
+        x_re = test_net(y, c=[c1,c2,c3], rev=True, jac=False)[0]
 
         obs = torch.max(torch.abs(x - x_re))
         self.assertTrue(obs < self.tol, f"{obs} !< {self.tol}")

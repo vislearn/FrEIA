@@ -113,13 +113,16 @@ class GaussianMixtureModel(InvertibleModule):
         i:  Tensor of component indices (size [batch_size]), or a single integer
             to be used as random number generator seed for component selection,
             or None to indicate that all mixture components are modelled.'''
+        assert len(x) == 1, f"GaussianMixtureModel got {len(x)} inputs, but " \
+                            f"only one is allowed."
+        x = x[0]
 
         # Get GMM parameters
         w, mu, U_entries, i = c
         batch_size, n_components = w.shape
 
         # Construct upper triangular Cholesky factors U of all precision matrices
-        U = torch.zeros(batch_size, n_components, self.x_dims, self.x_dims, device=x[0].device)
+        U = torch.zeros(batch_size, n_components, self.x_dims, self.x_dims, device=x.device)
         # Fill everything above the diagonal as is
         U[self.mask_upper.expand(batch_size,n_components,-1,-1)] = U_entries[:,:,self.x_dims:].reshape(-1)
         # Diagonal entries must be positive
@@ -146,19 +149,19 @@ class GaussianMixtureModel(InvertibleModule):
         if not rev:
             if fixed_components:
                 # Return latent codes of x according to chosen component distributions only
-                return [torch.stack([torch.matmul(U[b,i[b],:,:], x[0][b,:] - mu[b,i[b],:]) for b in range(batch_size)])], jac
+                return [torch.stack([torch.matmul(U[b,i[b],:,:], x[b,:] - mu[b,i[b],:]) for b in range(batch_size)])], jac
             else:
                 # Return latent codes of x according to all component distributions simultaneously
-                if len(x[0].shape) < 3:
-                    x[0] = x[0][:,None,:]
-                return [torch.matmul(U, (x[0] - mu)[...,None])[...,0]], jac
+                if len(x.shape) < 3:
+                    x = x[:,None,:]
+                return [torch.matmul(U, (x - mu)[...,None])[...,0]], jac
         else:
             if fixed_components:
                 # Transform latent samples to samples from chosen mixture distributions
-                return [torch.stack([mu[b,i[b],:] + torch.matmul(torch.inverse(U[b,i[b],:,:]), x[0][b,:]) for b in range(batch_size)])], -jac
+                return [torch.stack([mu[b,i[b],:] + torch.matmul(torch.inverse(U[b,i[b],:,:]), x[b,:]) for b in range(batch_size)])], -jac
             else:
                 # Transform latent samples to samples from all mixture distributions simultaneously
-                return [torch.matmul(torch.inverse(U), x[0][...,None])[...,0] + mu], -jac
+                return [torch.matmul(torch.inverse(U), x[...,None])[...,0] + mu], -jac
 
     def output_dims(self, input_dims):
         assert len(input_dims) == 1, "Can only use 1 input"

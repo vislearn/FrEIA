@@ -23,6 +23,17 @@ def F_fully_connected(cin, cout):
                          nn.Linear(128, cout))
 
 
+class SimpleComputeGraph(unittest.TestCase):
+    def test_build(self):
+        in_node = InputNode(3, 10, 10)
+        self.assertEqual(in_node.input_dims, [])
+        out_node = OutputNode(in_node)
+        self.assertEqual(in_node.output_dims, out_node.input_dims)
+        self.assertEqual(out_node.output_dims, [])
+        graph = GraphINN([in_node, out_node])
+        self.assertEqual(graph.dims_in, in_node.output_dims)
+
+
 class ComplexComputeGraph(unittest.TestCase):
 
 
@@ -42,7 +53,7 @@ class ComplexComputeGraph(unittest.TestCase):
 
         flatten1 = Node(split.out0, Flatten, {}, name='flatten1')
         perm = Node(flatten1, PermuteRandom, {'seed': 123}, name='perm')
-        unflatten1 = Node(perm, Reshape, {'target_dim': (1, 10, 10)}, name='unflatten1')
+        unflatten1 = Node(perm, Reshape, {'output_dims': (1, 10, 10)}, name='unflatten1')
 
         conv = Node(split.out1,
                     RNVPCouplingBlock,
@@ -54,7 +65,7 @@ class ComplexComputeGraph(unittest.TestCase):
                       RNVPCouplingBlock,
                       {'subnet_constructor': F_fully_connected, 'clamp': 2.0},
                       name='linear')
-        unflatten2 = Node(linear, Reshape, {'target_dim': (2, 10, 10)}, name='unflatten2')
+        unflatten2 = Node(linear, Reshape, {'output_dims': (2, 10, 10)}, name='unflatten2')
 
         concat = Node([unflatten1.out0, unflatten2.out0],
                       Concat,
@@ -63,7 +74,7 @@ class ComplexComputeGraph(unittest.TestCase):
         haar = Node(concat, HaarDownsampling, {}, name='haar')
 
         out = OutputNode(haar, name='output')
-        self.test_net = ReversibleGraphNet([inp, cond, split, flatten1, perm, unflatten1, conv,
+        self.test_net = GraphINN([inp, cond, split, flatten1, perm, unflatten1, conv,
             flatten2, linear, unflatten2, concat, haar, out])
 
 
@@ -77,7 +88,7 @@ class ComplexComputeGraph(unittest.TestCase):
     def test_constructs(self):
 
         self.test_net.to(DEVICE)
-        y = self.test_net(self.x, c=[self.cond]).to(DEVICE)
+        y = self.test_net(self.x, c=[self.cond])[0].to(DEVICE)
         self.assertTrue(isinstance(y, type(self.x) ), f"{type(y)}")
 
         exp = torch.Size([self.batch_size, self.inp_size[0]*4, self.inp_size[1]//2, self.inp_size[2]//2])
@@ -86,8 +97,8 @@ class ComplexComputeGraph(unittest.TestCase):
     def test_inverse(self):
 
         self.test_net.to(DEVICE)
-        y = self.test_net(self.x, c=[self.cond]).to(DEVICE)
-        x_re = self.test_net(y, c=[self.cond], rev=True).to(DEVICE)
+        y = self.test_net(self.x, c=[self.cond])[0].to(DEVICE)
+        x_re = self.test_net(y, c=[self.cond], rev=True)[0].to(DEVICE)
 
         obs = torch.max(torch.abs(self.x - x_re))
         self.assertTrue(obs < self.tol, f"{obs} !< {self.tol}")
@@ -96,9 +107,7 @@ class ComplexComputeGraph(unittest.TestCase):
 
         # Compute log det of Jacobian
         self.test_net.to(DEVICE)
-        y = self.test_net(self.x, c=[self.cond])
-        y.to(DEVICE)
-        logdet = self.test_net.log_jacobian( self.x, c=[self.cond] ).to(DEVICE)
+        logdet = self.test_net(self.x, c=[self.cond])[1].to(DEVICE)
         # Approximate log det of Jacobian numerically
         logdet_num = self.test_net.log_jacobian_numerical(self.x, c=[self.cond]).to(DEVICE)
         # Check that they are the same (within tolerance)
@@ -125,8 +134,8 @@ class ComplexComputeGraph(unittest.TestCase):
         x = torch.randn(self.batch_size, *self.inp_size).to(DEVICE)
         cond = torch.randn(self.batch_size, *self.cond_size).to(DEVICE)
 
-        y = self.test_net(x, c=[cond])
-        x_re = self.test_net(y, c=[cond], rev=True)
+        y = self.test_net(x, c=[cond], jac=False)[0]
+        x_re = self.test_net(y, c=[cond], rev=True, jac=False)[0]
 
         obs = torch.max(torch.abs(x - x_re))
         self.assertTrue(obs < self.tol, f"{obs} !< {self.tol}")

@@ -17,7 +17,7 @@ permute_1 = Node([orthog_layer.out0], PermuteRandom, {'seed':0})
 permute_2 = Node([permute_1.out0], HouseholderPerm, {'n_reflections':10})
 outp= OutputNode([permute_2.out0], name='output')
 
-test_net = ReversibleGraphNet([inp, orthog_layer, permute_1, permute_2, outp])
+test_net = GraphINN([inp, orthog_layer, permute_1, permute_2, outp])
 
 optim = torch.optim.SGD(test_net.parameters(), lr=5e-1)
 
@@ -53,7 +53,7 @@ class OrthogonalTest(unittest.TestCase):
             optim.zero_grad()
 
             x = torch.randn(self.batch_size, inp_size)
-            y = test_net(x)
+            y = test_net(x, jac=False)[0]
 
             loss = torch.mean((y-x)**2)
             loss.backward()
@@ -82,8 +82,8 @@ class OrthogonalTest(unittest.TestCase):
         test_net.to('cuda')
         x = torch.randn(self.batch_size, inp_size).cuda()
 
-        y = test_net(x)
-        x_re = test_net(y, rev=True)
+        y = test_net(x, jac=False)[0]
+        x_re = test_net(y, rev=True, jac=False)[0]
 
         self.assertTrue(torch.max(torch.abs(x - x_re)) < self.tol)
         test_net.to('cpu')
