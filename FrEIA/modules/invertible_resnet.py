@@ -134,7 +134,10 @@ class IResNetLayer(InvertibleModule):
 
 
     def forward(self, x, c=[], rev=False, jac=True):
-        jac = self._jacobian(x, c, rev=rev)
+        if jac:
+            jac = self._jacobian(x, c, rev=rev)
+        else:
+            jac = None
 
         if not rev:
             return [x[0] + self.residual(x[0])], jac

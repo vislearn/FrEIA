@@ -24,11 +24,12 @@ class InvAutoActTwoSided(InvertibleModule):
         return self.clamp * 0.636 * torch.atan(s/self.clamp)
 
     def forward(self, x, rev=False, jac=True):
-        j = (-1)**rev * torch.sum(self.log_e(self.alpha_pos + 0.5 * (self.alpha_neg - self.alpha_pos) * (1 - x[0].sign())), dim=1)
+        j = torch.sum(self.log_e(self.alpha_pos + 0.5 * (self.alpha_neg - self.alpha_pos) * (1 - x[0].sign())), dim=1)
+
         if not rev:
             return [x[0] * self.e(self.alpha_pos + 0.5 * (self.alpha_neg - self.alpha_pos) * (1 - x[0].sign()))], j
         else:
-            return [x[0] * self.e(-self.alpha_pos - 0.5 * (self.alpha_neg - self.alpha_pos) * (1 - x[0].sign()))], j
+            return [x[0] * self.e(-self.alpha_pos - 0.5 * (self.alpha_neg - self.alpha_pos) * (1 - x[0].sign()))], -j
 
     def output_dims(self, input_dims):
         assert len(input_dims) == 1, "Can only use 1 input"
@@ -42,7 +43,9 @@ class InvAutoAct(InvertibleModule):
         self.alpha = nn.Parameter(0.01 * torch.randn(dims_in[0][0]) + 0.7)
 
     def forward(self, x, rev=False, jac=True):
-        # TODO this one didn't even HAVE a jacobian implemented ?!?!
+        if jac:
+            raise NotImplementedError("TODO: Jacobian is not implemented for InvAutoAct")
+
         if not rev:
             return [x[0] * torch.exp(self.alpha * x[0].sign())], None
         else:
@@ -63,11 +66,11 @@ class InvAutoActFixed(nn.Module):
         self.log_alpha = np.log(alpha)
 
     def forward(self, x, rev=False, jac=True):
-        j = (-1)**rev * torch.sum(self.log_alpha * x[0].sign(), dim=1)
+        j = torch.sum(self.log_alpha * x[0].sign(), dim=1)
         if not rev:
             return [self.alpha_inv * f.leaky_relu(x[0], self.alpha*self.alpha)], j
         else:
-            return [self.alpha * f.leaky_relu(x[0], self.alpha_inv*self.alpha_inv)], j
+            return [self.alpha * f.leaky_relu(x[0], self.alpha_inv*self.alpha_inv)], -j
 
     def output_dims(self, input_dims):
         assert len(input_dims) == 1, "Can only use 1 input"
@@ -81,10 +84,17 @@ class LearnedElementwiseScaling(InvertibleModule):
         self.s = nn.Parameter(torch.zeros(*dims_in[0]))
 
     def forward(self, x, rev=False, jac=True):
-        if not rev:
-            return [x[0] * self.s.exp()], None
+        if jac:
+            jac = torch.sum(self.s).unsqueeze(0)
+            if rev:
+                jac *= -1
         else:
-            return [x[0] * self.s.neg().exp_()], None
+            jac = None
+
+        if not rev:
+            return [x[0] * self.s.exp()], jac
+        else:
+            return [x[0] * self.s.neg().exp_()], jac
 
     def output_dims(self, input_dims):
         assert len(input_dims) == 1, "Can only use 1 input"
@@ -105,6 +115,9 @@ class InvAutoFC(InvertibleModule):
         self.bias = nn.Parameter(0.01 * torch.randn(1, self.dims_out[0][0]))
 
     def forward(self, x, rev=False, jac=True):
+        if jac:
+            raise NotImplementedError("TODO: Jacobian is not implemented for InvAutoFC")
+
         if not rev:
             return [f.linear(x[0], self.weights) + self.bias.expand(x[0].size()[0], *self.dims_out[0])], None
         else:
@@ -128,6 +141,9 @@ class InvAutoConv2D(InvertibleModule):
         self.bias = nn.Parameter(0.01 * torch.randn(1, dims_out[0][0], 1, 1))
 
     def forward(self, x, rev=False, jac=True):
+        if jac:
+            raise NotImplementedError("TODO: Jacobian is not implemented for InvAutoConv2D")
+
         if not rev:
             out = self.conv2d(x[0])
             out += self.bias.expand(out.size())

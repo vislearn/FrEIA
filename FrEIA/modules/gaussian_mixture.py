@@ -137,28 +137,28 @@ class GaussianMixtureModel(InvertibleModule):
         # Note: we avoid a log operation by taking diagonal entries directly from U_entries, where they are in log space
         if fixed_components:
             # Keep Jacobian log-determinants for chosen components only
-            self.jac = torch.stack([U_entries[b,i[b],:self.x_dims].sum(dim=-1) for b in range(batch_size)])
+            jac = torch.stack([U_entries[b,i[b],:self.x_dims].sum(dim=-1) for b in range(batch_size)])
         else:
             # Keep Jacobian log-determinants for all components simultaneously
-            self.jac = U_entries[:,:,:self.x_dims].sum(dim=-1)
+            jac = U_entries[:,:,:self.x_dims].sum(dim=-1)
 
         # Actual forward and inverse pass
         if not rev:
             if fixed_components:
                 # Return latent codes of x according to chosen component distributions only
-                return [torch.stack([torch.matmul(U[b,i[b],:,:], x[0][b,:] - mu[b,i[b],:]) for b in range(batch_size)])], self.jac
+                return [torch.stack([torch.matmul(U[b,i[b],:,:], x[0][b,:] - mu[b,i[b],:]) for b in range(batch_size)])], jac
             else:
                 # Return latent codes of x according to all component distributions simultaneously
                 if len(x[0].shape) < 3:
                     x[0] = x[0][:,None,:]
-                return [torch.matmul(U, (x[0] - mu)[...,None])[...,0]], self.jac
+                return [torch.matmul(U, (x[0] - mu)[...,None])[...,0]], jac
         else:
             if fixed_components:
                 # Transform latent samples to samples from chosen mixture distributions
-                return [torch.stack([mu[b,i[b],:] + torch.matmul(torch.inverse(U[b,i[b],:,:]), x[0][b,:]) for b in range(batch_size)])], -self.jac
+                return [torch.stack([mu[b,i[b],:] + torch.matmul(torch.inverse(U[b,i[b],:,:]), x[0][b,:]) for b in range(batch_size)])], -jac
             else:
                 # Transform latent samples to samples from all mixture distributions simultaneously
-                return [torch.matmul(torch.inverse(U), x[0][...,None])[...,0] + mu], -self.jac
+                return [torch.matmul(torch.inverse(U), x[0][...,None])[...,0] + mu], -jac
 
     def output_dims(self, input_dims):
         assert len(input_dims) == 1, "Can only use 1 input"

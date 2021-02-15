@@ -37,7 +37,7 @@ class ComplexComputeGraph(unittest.TestCase):
 
         split = Node(inp,
                      Split,
-                     {'split_size_or_sections': [1,2], 'dim': 0},
+                     {'section_sizes': [1,2], 'dim': 0},
                      name='split1')
 
         flatten1 = Node(split.out0, Flatten, {}, name='flatten1')
