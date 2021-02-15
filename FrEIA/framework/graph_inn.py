@@ -1,3 +1,4 @@
+import warnings
 from collections import deque, defaultdict
 from typing import List, Tuple, Iterable, Union, Optional
 
@@ -237,13 +238,20 @@ class GraphINN(InvertibleModule):
 
     def forward(self, x_or_z: Union[Tensor, Iterable[Tensor]],
                 c: Iterable[Tensor] = None, rev: bool = False, jac: bool = True,
-                intermediate_outputs: bool = False) \
+                intermediate_outputs: bool = False, x: None = None) \
             -> Tuple[Tuple[Tensor], Tensor]:
         """
         Forward or backward computation of the whole net.
         """
+        if x is not None:
+            x_or_z = x
+            warnings.warn("You called GraphINN(x=...). x is now called x_or_z, "
+                          "please pass input as positional argument.")
+
         if torch.is_tensor(x_or_z):
-            x_or_z = (x_or_z,)
+            x_or_z = x_or_z,
+        if torch.is_tensor(c):
+            c = c,
 
         jacobian = torch.zeros(x_or_z[0].shape[0]).to(x_or_z[0])
         outs = {}

@@ -47,7 +47,7 @@ class ActNormTest(unittest.TestCase):
 
         x = torch.randn(self.batch_size, *self.inp_size_conv)
         x = x * torch.rand_like(x) + torch.randn_like(x)
-        y = self.net_conv(x)
+        y = self.net_conv(x, jac=False)[0]
         # Channel-wise mean should be zero
         self.assertTrue(torch.allclose(y.transpose(0,1).contiguous().view(self.inp_size_conv[0], -1).mean(dim=-1),
                                        torch.zeros(self.inp_size_conv[0]), atol=1e-06))
@@ -141,7 +141,7 @@ class IResNetTest(unittest.TestCase):
         x = x + torch.randn(self.batch_size, *[1 for i in range(len(self.inp_size_conv))])
 
         # Estimate log det of Jacobian via power series
-        logdet = self.i_resnet_conv.log_jacobian(x=x)
+        logdet = self.i_resnet_conv(x)[1]
         # Approximate log det of Jacobian numerically
         logdet_num = self.i_resnet_conv.log_jacobian_numerical(x)
         # Check that they are the same (with huge tolerance)
