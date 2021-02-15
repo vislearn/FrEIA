@@ -1,5 +1,8 @@
 |Logo|
 
+.. image:: https://github.com/VLL-HD/FrEIA/workflows/CI/badge.svg
+   :alt: Build Status
+
 This is the **Fr**\ amework for **E**\ asily **I**\ nvertible **A**\ rchitectures (**FrEIA**).
 
 * Construct Invertible Neural Networks (INNs) from simple invertible building blocks.
