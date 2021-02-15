@@ -404,7 +404,7 @@ class AffineCouplingOneSided(_BaseCouplingBlock):
         super().__init__(dims_in, dims_c, clamp, clamp_activation)
         self.subnet = subnet_constructor(self.split_len1 + self.condition_length, 2 * self.split_len2)
 
-    def forward(self, x, c=[], rev=False):
+    def forward(self, x, c=[], rev=False, jac=True):
         x1, x2 = torch.split(x[0], [self.split_len1, self.split_len2], dim=1)
         x1_c = torch.cat([x1, *c], 1) if self.conditional else x1
 
@@ -463,7 +463,7 @@ class ConditionalAffineTransform(_BaseCouplingBlock):
 
         self.subnet = subnet_constructor(self.condition_length, 2 * self.channels)
 
-    def forward(self, x, c=[], rev=False):
+    def forward(self, x, c=[], rev=False, jac=True):
         if len(c) > 1:
             cond = torch.cat(c, 1)
         else:

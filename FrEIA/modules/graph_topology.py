@@ -1,11 +1,10 @@
+from . import InvertibleModule
+
 from copy import deepcopy
 from typing import Sequence, Union
 import warnings
 
 import torch
-import torch.nn as nn
-
-from FrEIA.modules import InvertibleModule
 
 
 

@@ -1,3 +1,5 @@
+from . import InvertibleModule
+
 import torch
 import torch.nn as nn
 import numpy as np
@@ -75,11 +77,11 @@ def correct_weights(module, grad_in, grad_out):
         module.back_counter = np.random.randint(0, module.correction_interval) // 4
         orth_correction(module.weights.data)
 
-class OrthogonalTransform(nn.Module):
+class OrthogonalTransform(InvertibleModule):
     '''  '''
 
-    def __init__(self, dims_in, correction_interval=256, clamp=5.):
-        super().__init__()
+    def __init__(self, dims_in, dims_c=None, correction_interval=256, clamp=5.):
+        super().__init__(dims_in, dims_c)
         self.width = dims_in[0][0]
         self.clamp = clamp
 
@@ -104,23 +106,21 @@ class OrthogonalTransform(nn.Module):
         '''log of the nonlinear function e'''
         return self.clamp * 0.636 * torch.atan(s/self.clamp)
 
-    def forward(self, x, rev=False):
+    def forward(self, x, rev=False, jac=True):
+        j = torch.sum(self.log_e(self.scaling)).view(1,).expand(x[0].shape[0])
         if rev:
-            return [(x[0] / self.e(self.scaling) - self.bias).mm(self.weights.t())]
-        return [(x[0].mm(self.weights) + self.bias) * self.e(self.scaling)]
-
-    def jacobian(self, x, rev=False):
-        return torch.sum(self.log_e(self.scaling)).view(1,).expand(x[0].shape[0])
+            return [(x[0] / self.e(self.scaling) - self.bias).mm(self.weights.t())], -j
+        return [(x[0].mm(self.weights) + self.bias) * self.e(self.scaling)], j
 
     def output_dims(self, input_dims):
         assert len(input_dims) == 1, "Can only use 1 input"
         return input_dims
 
 
-class HouseholderPerm(nn.Module):
+class HouseholderPerm(InvertibleModule):
 
     def __init__(self, dims_in, dims_c=[], n_reflections=1, fixed=False):
-        super().__init__()
+        super().__init__(dims_in, dims_c)
         self.width = dims_in[0][0]
         self.n_reflections = n_reflections
         self.fixed = fixed
@@ -143,14 +143,14 @@ class HouseholderPerm(nn.Module):
             self.Vs = nn.Parameter(Vs)
 
             Vs.requires_grad = not self.fixed
-            self.register_parameter(f'Vs', self.Vs)
+            self.register_parameter('Vs', self.Vs)
 
         if self.fixed:
             self.W = _fast_h(self.Vs)
             self.W = nn.Parameter(self.W, requires_grad=False)
             self.register_parameter('weight', self.W)
 
-    def forward(self, x, c=[], rev=False):
+    def forward(self, x, c=[], rev=False, jac=True):
 
         if self.conditional:
             Vs = c[0].reshape(-1, self.width, self.n_reflections).transpose(-1, -2)
@@ -162,30 +162,10 @@ class HouseholderPerm(nn.Module):
                 W = _fast_h(self.Vs)
 
         if not rev:
-            return [x[0].mm(W)]
+            return [x[0].mm(W)], 0.
         else:
-            return [x[0].mm(W.transpose(-1, -2))]
-
-
-    def jacobian(self, x, rev=False):
-        return 0
+            return [x[0].mm(W.transpose(-1, -2))], 0.
 
     def output_dims(self, input_dims):
         assert len(input_dims) == 1, "Can only use 1 input"
         return input_dims
-
-
-import warnings
-
-def _deprecated_by(orig_class):
-    class deprecated_class(orig_class):
-        def __init__(self, *args, **kwargs):
-
-            warnings.warn(F"{self.__class__.__name__} is deprecated and will be removed in the public release. "
-                          F"Use {orig_class.__name__} instead.",
-                          DeprecationWarning)
-            super().__init__(*args, **kwargs)
-
-    return deprecated_class
-
-orthogonal_layer = _deprecated_by(OrthogonalTransform)
