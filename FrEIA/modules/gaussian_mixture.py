@@ -136,32 +136,38 @@ class GaussianMixtureModel(InvertibleModule):
             if not isinstance(i, torch.Tensor):
                 i = self.pick_mixture_component(w, seed=i)
 
-        # Compute and store Jacobian log-determinants
-        # Note: we avoid a log operation by taking diagonal entries directly from U_entries, where they are in log space
-        if fixed_components:
-            # Keep Jacobian log-determinants for chosen components only
-            jac = torch.stack([U_entries[b,i[b],:self.x_dims].sum(dim=-1) for b in range(batch_size)])
+        if jac: 
+            # Compute Jacobian log-determinants
+            # Note: we avoid a log operation by taking diagonal entries directly from U_entries, where they are in log space
+            if fixed_components:
+                # Keep Jacobian log-determinants for chosen components only
+                j = torch.stack([U_entries[b, i[b], :self.x_dims].sum(dim=-1) for b in range(batch_size)])
+            else:
+                # Keep Jacobian log-determinants for all components simultaneously
+                j = U_entries[:, :, :self.x_dims].sum(dim=-1)
+
+            if rev:
+                j *= -1
         else:
-            # Keep Jacobian log-determinants for all components simultaneously
-            jac = U_entries[:,:,:self.x_dims].sum(dim=-1)
+            j = None
 
         # Actual forward and inverse pass
         if not rev:
             if fixed_components:
                 # Return latent codes of x according to chosen component distributions only
-                return [torch.stack([torch.matmul(U[b,i[b],:,:], x[b,:] - mu[b,i[b],:]) for b in range(batch_size)])], jac
+                return [torch.stack([torch.matmul(U[b,i[b],:,:], x[b,:] - mu[b,i[b],:]) for b in range(batch_size)])], j
             else:
                 # Return latent codes of x according to all component distributions simultaneously
                 if len(x.shape) < 3:
                     x = x[:,None,:]
-                return [torch.matmul(U, (x - mu)[...,None])[...,0]], jac
+                return [torch.matmul(U, (x - mu)[...,None])[...,0]], j
         else:
             if fixed_components:
                 # Transform latent samples to samples from chosen mixture distributions
-                return [torch.stack([mu[b,i[b],:] + torch.matmul(torch.inverse(U[b,i[b],:,:]), x[b,:]) for b in range(batch_size)])], -jac
+                return [torch.stack([mu[b,i[b],:] + torch.matmul(torch.inverse(U[b,i[b],:,:]), x[b,:]) for b in range(batch_size)])], j
             else:
                 # Transform latent samples to samples from all mixture distributions simultaneously
-                return [torch.matmul(torch.inverse(U), x[...,None])[...,0] + mu], -jac
+                return [torch.matmul(torch.inverse(U), x[...,None])[...,0] + mu], j
 
     def output_dims(self, input_dims):
         assert len(input_dims) == 1, "Can only use 1 input"
