@@ -1,0 +1,626 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FrEIA.framework.graph_inn &#8212; FrEIA v0.2 documentation</title>
+    
+  <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
+    
+  <link rel="preload" as="script" href="../../../_static/js/index.d3f166471bb80abb5163.js">
+
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    <a class="navbar-brand" href="../../../index.html">
+    
+      <p class="title">FrEIA</p>
+    
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../../FrEIA.framework.html">FrEIA.framework package</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../../FrEIA.modules.html">FrEIA.modules package</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+    <div class="bd-toc-item active">
+    
+  
+    <ul class="nav bd-sidenav">
+        
+        
+        
+        
+        
+      </ul>
+  
+  </nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <h1>Source code for FrEIA.framework.graph_inn</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span><span class="p">,</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+
+<span class="kn">from</span> <span class="nn">..modules.base</span> <span class="kn">import</span> <span class="n">InvertibleModule</span>
+
+
+<div class="viewcode-block" id="Node"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.Node">[docs]</a><span class="k">class</span> <span class="nc">Node</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The Node class represents one transformation in the graph, with an</span>
+<span class="sd">    arbitrary number of in- and outputs.</span>
+
+<span class="sd">    The user specifies the input, and the underlying module computes the</span>
+<span class="sd">    number of outputs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Node.__init__"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.Node.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="s2">&quot;Node&quot;</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="s2">&quot;Node&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+                                     <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="s2">&quot;Node&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]],</span>
+                 <span class="n">module_type</span><span class="p">,</span> <span class="n">module_args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">conditions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">conditions</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="nb">hex</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))[</span><span class="o">-</span><span class="mi">6</span><span class="p">:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_inputs</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">conditions</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conditions</span> <span class="o">=</span> <span class="n">conditions</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conditions</span> <span class="o">=</span> <span class="p">[</span><span class="n">conditions</span><span class="p">,</span> <span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_type</span> <span class="o">=</span> <span class="n">module_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_args</span> <span class="o">=</span> <span class="n">module_args</span>
+
+        <span class="n">input_shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">input_node</span><span class="o">.</span><span class="n">output_dims</span><span class="p">[</span><span class="n">node_out_idx</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">input_node</span><span class="p">,</span> <span class="n">node_out_idx</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">]</span>
+        <span class="n">condition_shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">cond_node</span><span class="o">.</span><span class="n">output_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                            <span class="k">for</span> <span class="n">cond_node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditions</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_dims</span> <span class="o">=</span> <span class="n">input_shapes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">condition_dims</span> <span class="o">=</span> <span class="n">condition_shapes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_module</span><span class="p">(</span><span class="n">condition_shapes</span><span class="p">,</span>
+                                                          <span class="n">input_shapes</span><span class="p">)</span>
+
+        <span class="c1"># Notify preceding nodes that their output ends up here</span>
+        <span class="c1"># Entry at position co -&gt; (n, ci) means:</span>
+        <span class="c1"># My output co goes to input channel ci of n.</span>
+        <span class="k">for</span> <span class="n">in_idx</span><span class="p">,</span> <span class="p">(</span><span class="n">in_node</span><span class="p">,</span> <span class="n">out_idx</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">):</span>
+            <span class="n">in_node</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_idx</span><span class="p">))</span>
+
+        <span class="c1"># Enable .outX access</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dims</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;out</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">,</span> <span class="n">i</span></div>
+
+<div class="viewcode-block" id="Node.build_module"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.Node.build_module">[docs]</a>    <span class="k">def</span> <span class="nf">build_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition_shapes</span><span class="p">,</span> <span class="n">input_shapes</span><span class="p">)</span> \
+            <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">InvertibleModule</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Instantiates the module and determines the output dimension by</span>
+<span class="sd">        calling InvertibleModule#output_dims.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conditions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_type</span><span class="p">(</span><span class="n">input_shapes</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="n">condition_shapes</span><span class="p">,</span>
+                                      <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">module_args</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_type</span><span class="p">(</span><span class="n">input_shapes</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">module_args</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">module</span><span class="p">,</span> <span class="n">module</span><span class="o">.</span><span class="n">output_dims</span><span class="p">(</span><span class="n">input_shapes</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Node.parse_inputs"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.Node.parse_inputs">[docs]</a>    <span class="k">def</span> <span class="nf">parse_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="s2">&quot;Node&quot;</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="s2">&quot;Node&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+                                         <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="s2">&quot;Node&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]])</span> \
+            <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="s2">&quot;Node&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts specified inputs to a node to a canonical format.</span>
+<span class="sd">        Inputs can be specified in three forms:</span>
+
+<span class="sd">        - a single node, then this nodes first output is taken as input</span>
+<span class="sd">        - a single tuple (node, idx), specifying output idx of node</span>
+<span class="sd">        - a list of tuples [(node, idx)], each specifying output idx of node</span>
+
+<span class="sd">        All such formats are converted to the last format.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">inputs</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+                <span class="k">return</span> <span class="n">inputs</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">[</span><span class="n">inputs</span><span class="p">,</span> <span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Cannot parse inputs provided to node &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">Node</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Received object of invalid type &quot;</span>
+                                 <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span><span class="si">}</span><span class="s2">) as input for node &quot;</span>
+                                 <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[(</span><span class="n">inputs</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">]</span></div>
+
+<div class="viewcode-block" id="Node.__str__"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.Node.__str__">[docs]</a>    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">module_hint</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_type</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                       <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">name_hint</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}{</span><span class="n">name_hint</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">input_dims</span><span class="si">}</span><span class="s2"> -&gt; &quot;</span> \
+               <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">module_hint</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dims</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+<div class="viewcode-block" id="Node.__repr__"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.Node.__repr__">[docs]</a>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">name_hint</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}{</span><span class="n">name_hint</span><span class="si">}</span><span class="s2">&quot;</span></div></div>
+
+
+<div class="viewcode-block" id="InputNode"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.InputNode">[docs]</a><span class="k">class</span> <span class="nc">InputNode</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Special type of node that represents the input data of the whole net (or the</span>
+<span class="sd">    output when running reverse)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="InputNode.__init__"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.InputNode.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dims</span> <span class="o">=</span> <span class="n">dims</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">([],</span> <span class="kc">None</span><span class="p">,</span> <span class="p">{},</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InputNode.build_module"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.InputNode.build_module">[docs]</a>    <span class="k">def</span> <span class="nf">build_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition_shapes</span><span class="p">,</span> <span class="n">input_shapes</span><span class="p">)</span> \
+            <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">condition_shapes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not accept conditions&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_shapes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Forbidden by constructor&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="p">]</span></div></div>
+
+
+<div class="viewcode-block" id="ConditionNode"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.ConditionNode">[docs]</a><span class="k">class</span> <span class="nc">ConditionNode</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Special type of node that represents contitional input to the internal</span>
+<span class="sd">    networks inside coupling layers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ConditionNode.__init__"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.ConditionNode.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dims</span> <span class="o">=</span> <span class="n">dims</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">([],</span> <span class="kc">None</span><span class="p">,</span> <span class="p">{},</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ConditionNode.build_module"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.ConditionNode.build_module">[docs]</a>    <span class="k">def</span> <span class="nf">build_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition_shapes</span><span class="p">,</span> <span class="n">input_shapes</span><span class="p">)</span> \
+            <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">condition_shapes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not accept conditions&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_shapes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Forbidden by constructor&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="p">]</span></div></div>
+
+
+<div class="viewcode-block" id="OutputNode"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.OutputNode">[docs]</a><span class="k">class</span> <span class="nc">OutputNode</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Special type of node that represents the output of the whole net (or the</span>
+<span class="sd">    input when running in reverse).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="OutputNode.__init__"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.OutputNode.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_node</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Node</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">in_node</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">{},</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="OutputNode.build_module"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.OutputNode.build_module">[docs]</a>    <span class="k">def</span> <span class="nf">build_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition_shapes</span><span class="p">,</span> <span class="n">input_shapes</span><span class="p">)</span> \
+            <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">condition_shapes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not accept conditions&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_shapes</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Output node received </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">input_shapes</span><span class="p">)</span><span class="si">}</span><span class="s2"> inputs,&quot;</span>
+                             <span class="sa">f</span><span class="s2">&quot;but only single input is allowed.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="p">[]</span></div></div>
+
+
+<div class="viewcode-block" id="GraphINN"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.GraphINN">[docs]</a><span class="k">class</span> <span class="nc">GraphINN</span><span class="p">(</span><span class="n">InvertibleModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class represents the invertible net itself. It is a subclass of</span>
+<span class="sd">    InvertibleModule and supports the same methods.</span>
+
+<span class="sd">    The forward method has an additional option &#39;rev&#39;, with which the net can be</span>
+<span class="sd">    computed in reverse. Passing `jac` to the forward method additionally</span>
+<span class="sd">    computes the log determinant of the (inverse) Jacobian of the forward</span>
+<span class="sd">    (backward) pass.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GraphINN.__init__"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.GraphINN.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_list</span><span class="p">,</span> <span class="n">force_tuple_output</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># Gather lists of input, output and condition nodes</span>
+        <span class="n">in_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">node_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">node_list</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">InputNode</span><span class="p">)]</span>
+        <span class="n">out_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">node_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">node_list</span><span class="p">))</span>
+                     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">OutputNode</span><span class="p">)]</span>
+        <span class="n">condition_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">node_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">node_list</span><span class="p">))</span> <span class="k">if</span>
+                           <span class="nb">isinstance</span><span class="p">(</span><span class="n">node_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ConditionNode</span><span class="p">)]</span>
+
+        <span class="c1"># Check that all nodes are in the list</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">node_list</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">in_node</span><span class="p">,</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">inputs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">in_node</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node_list</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2"> gets input from </span><span class="si">{</span><span class="n">in_node</span><span class="si">}</span><span class="s2">, &quot;</span>
+                                     <span class="sa">f</span><span class="s2">&quot;but the latter is not in the node_list &quot;</span>
+                                     <span class="sa">f</span><span class="s2">&quot;passed to GraphINN.&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">out_node</span><span class="p">,</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">outputs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">out_node</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node_list</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">out_node</span><span class="si">}</span><span class="s2"> gets input from </span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">, &quot;</span>
+                                     <span class="sa">f</span><span class="s2">&quot;but the it&#39;s not in the node_list &quot;</span>
+                                     <span class="sa">f</span><span class="s2">&quot;passed to GraphINN.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Build the graph and tell nodes about their dimensions so that they can</span>
+        <span class="c1"># build the modules</span>
+        <span class="n">node_list</span> <span class="o">=</span> <span class="n">topological_order</span><span class="p">(</span><span class="n">node_list</span><span class="p">,</span> <span class="n">in_nodes</span><span class="p">,</span> <span class="n">out_nodes</span><span class="p">)</span>
+        <span class="n">global_in_shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">output_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">in_nodes</span><span class="p">]</span>
+        <span class="n">global_out_shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">input_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">out_nodes</span><span class="p">]</span>
+        <span class="n">global_cond_shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">output_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">condition_nodes</span><span class="p">]</span>
+
+        <span class="c1"># Only now we can set out shapes</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">global_in_shapes</span><span class="p">,</span> <span class="n">global_cond_shapes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_list</span> <span class="o">=</span> <span class="n">node_list</span>
+
+        <span class="c1"># Now we can store everything -- before calling super constructor,</span>
+        <span class="c1"># nn.Module doesn&#39;t allow assigning anything</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">in_nodes</span> <span class="o">=</span> <span class="n">in_nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">condition_nodes</span> <span class="o">=</span> <span class="n">condition_nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out_nodes</span> <span class="o">=</span> <span class="n">out_nodes</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_out_shapes</span> <span class="o">=</span> <span class="n">global_out_shapes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">force_tuple_output</span> <span class="o">=</span> <span class="n">force_tuple_output</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([</span><span class="n">n</span><span class="o">.</span><span class="n">module</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node_list</span>
+                                          <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">module</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GraphINN.output_dims"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.GraphINN.output_dims">[docs]</a>    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">global_out_shapes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">force_tuple_output</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;You can only call output_dims on a &quot;</span>
+                             <span class="s2">&quot;GraphINN with more than one output &quot;</span>
+                             <span class="s2">&quot;or when setting force_tuple_output=True.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_out_shapes</span></div>
+
+<div class="viewcode-block" id="GraphINN.forward"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.GraphINN.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_or_z</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span>
+                <span class="n">c</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">rev</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">jac</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="n">intermediate_outputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> \
+            <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward or backward computation of the whole net.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">x_or_z</span> <span class="o">=</span> <span class="n">x</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;You called GraphINN(x=...). x is now called x_or_z, &quot;</span>
+                          <span class="s2">&quot;please pass input as positional argument.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">x_or_z</span><span class="p">):</span>
+            <span class="n">x_or_z</span> <span class="o">=</span> <span class="n">x_or_z</span><span class="p">,</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="p">,</span>
+
+        <span class="n">jacobian</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">x_or_z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">x_or_z</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">outs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">jacobian_dict</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">jac</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="c1"># Explicitly set conditions and starts</span>
+        <span class="n">start_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_nodes</span> <span class="k">if</span> <span class="n">rev</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_nodes</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_or_z</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">start_nodes</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x_or_z</span><span class="p">)</span><span class="si">}</span><span class="s2"> inputs, but expected &quot;</span>
+                             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">start_nodes</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">start_node</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x_or_z</span><span class="p">,</span> <span class="n">start_nodes</span><span class="p">):</span>
+            <span class="n">outs</span><span class="p">[</span><span class="n">start_node</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">tensor</span>
+
+        <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">condition_nodes</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="si">}</span><span class="s2"> conditions, but expected &quot;</span>
+                             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">condition_nodes</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">condition_node</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_nodes</span><span class="p">):</span>
+            <span class="n">outs</span><span class="p">[</span><span class="n">condition_node</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">tensor</span>
+
+        <span class="c1"># Go backwards through nodes if rev=True</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_list</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="n">rev</span> <span class="k">else</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="c1"># Skip all special nodes</span>
+            <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_nodes</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_nodes</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_nodes</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">has_condition</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">conditions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+            <span class="n">mod_in</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">mod_c</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">prev_node</span><span class="p">,</span> <span class="n">channel</span> <span class="ow">in</span> <span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">outputs</span> <span class="k">if</span> <span class="n">rev</span> <span class="k">else</span> <span class="n">node</span><span class="o">.</span><span class="n">inputs</span><span class="p">):</span>
+                <span class="n">mod_in</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">outs</span><span class="p">[</span><span class="n">prev_node</span><span class="p">,</span> <span class="n">channel</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">cond_node</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">conditions</span><span class="p">:</span>
+                <span class="n">mod_c</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">outs</span><span class="p">[</span><span class="n">cond_node</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+            <span class="n">mod_in</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">mod_in</span><span class="p">)</span>
+            <span class="n">mod_c</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">mod_c</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">has_condition</span><span class="p">:</span>
+                    <span class="n">mod_out</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="n">mod_in</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">mod_c</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="n">rev</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="n">jac</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">mod_out</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="n">mod_in</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="n">rev</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="n">jac</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2"> encountered an error.&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+            <span class="n">out</span><span class="p">,</span> <span class="n">mod_jac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_output</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">mod_out</span><span class="p">,</span> <span class="n">jac</span><span class="p">,</span> <span class="n">rev</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">out_idx</span><span class="p">,</span> <span class="n">out_value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">out</span><span class="p">):</span>
+                <span class="n">outs</span><span class="p">[</span><span class="n">node</span><span class="p">,</span> <span class="n">out_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_value</span>
+
+            <span class="k">if</span> <span class="n">jac</span><span class="p">:</span>
+                <span class="n">jacobian</span> <span class="o">=</span> <span class="n">jacobian</span> <span class="o">+</span> <span class="n">mod_jac</span>
+                <span class="n">jacobian_dict</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">mod_jac</span>
+
+        <span class="k">for</span> <span class="n">out_node</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">in_nodes</span> <span class="k">if</span> <span class="n">rev</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_nodes</span><span class="p">):</span>
+            <span class="c1"># This copies the one input of the out node</span>
+            <span class="n">outs</span><span class="p">[</span><span class="n">out_node</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">outs</span><span class="p">[(</span><span class="n">out_node</span><span class="o">.</span><span class="n">outputs</span> <span class="k">if</span> <span class="n">rev</span>
+                                      <span class="k">else</span> <span class="n">out_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span>
+
+        <span class="k">if</span> <span class="n">intermediate_outputs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">outs</span><span class="p">,</span> <span class="n">jacobian_dict</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">outs</span><span class="p">[</span><span class="n">out_node</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">out_node</span>
+                        <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">in_nodes</span> <span class="k">if</span> <span class="n">rev</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_nodes</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">force_tuple_output</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">out_list</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">jacobian</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">out_list</span><span class="p">),</span> <span class="n">jacobian</span></div>
+
+    <span class="k">def</span> <span class="nf">_check_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">mod_out</span><span class="p">,</span> <span class="n">jac</span><span class="p">,</span> <span class="n">rev</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">mod_out</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The node </span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39;s module returned a tensor only. This &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;is deprecated without fallback. Please follow the &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;signature of InvertibleOperator#forward in your module &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;if you want to use it in a GraphINN.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mod_out</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The node </span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39;s module returned a tuple of length &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">mod_out</span><span class="p">)</span><span class="si">}</span><span class="s2">, but should return a tuple `z_or_x, jac`.&quot;</span><span class="p">)</span>
+
+        <span class="n">out</span><span class="p">,</span> <span class="n">mod_jac</span> <span class="o">=</span> <span class="n">mod_out</span>
+
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">out</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The node </span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39;s module returns a tensor. &quot;</span>
+                             <span class="sa">f</span><span class="s2">&quot;This is deprecated.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">inputs</span> <span class="k">if</span> <span class="n">rev</span> <span class="k">else</span> <span class="n">node</span><span class="o">.</span><span class="n">outputs</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The node </span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39;s module returned </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="si">}</span><span class="s2"> output &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;variables, but should return &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">inputs</span> <span class="k">if</span> <span class="n">rev</span> <span class="k">else</span> <span class="n">node</span><span class="o">.</span><span class="n">outputs</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">mod_jac</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mod_jac</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+                <span class="n">mod_jac</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> \
+                          <span class="o">+</span> <span class="n">mod_jac</span>
+            <span class="k">elif</span> <span class="n">jac</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;The node </span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39;s module returned a non-tensor as &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Jacobian: </span><span class="si">{</span><span class="n">mod_jac</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">jac</span> <span class="ow">and</span> <span class="n">mod_jac</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;The node </span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&#39;s module returned neither None nor a &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Jacobian: </span><span class="si">{</span><span class="n">mod_jac</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">mod_jac</span>
+
+<div class="viewcode-block" id="GraphINN.log_jacobian_numerical"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.GraphINN.log_jacobian_numerical">[docs]</a>    <span class="k">def</span> <span class="nf">log_jacobian_numerical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="mf">1e-04</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Approximate log Jacobian determinant via finite differences.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">ndim_x_separate</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">x_i</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="k">for</span> <span class="n">x_i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span>
+            <span class="n">ndim_x_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">ndim_x_separate</span><span class="p">)</span>
+            <span class="n">x_flat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x_i</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">x_i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">ndim_x_total</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="n">x_flat</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">J_num</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">ndim_x_total</span><span class="p">,</span> <span class="n">ndim_x_total</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndim_x_total</span><span class="p">):</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">ndim_x_total</span><span class="p">)</span>
+            <span class="n">offset</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+                <span class="n">x_upper</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">x_flat</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span> <span class="n">ndim_x_separate</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">x_upper</span> <span class="o">=</span> <span class="p">[</span><span class="n">x_upper</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))]</span>
+                <span class="n">x_lower</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">x_flat</span> <span class="o">-</span> <span class="n">offset</span><span class="p">,</span> <span class="n">ndim_x_separate</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">x_lower</span> <span class="o">=</span> <span class="p">[</span><span class="n">x_lower</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">x_upper</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_flat</span> <span class="o">+</span> <span class="n">offset</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                <span class="n">x_lower</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_flat</span> <span class="o">-</span> <span class="n">offset</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">y_upper</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">x_upper</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="n">rev</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">y_lower</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">x_lower</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="n">rev</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y_upper</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+                <span class="n">y_upper</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">y_i</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">y_i</span> <span class="ow">in</span> <span class="n">y_upper</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">y_lower</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">y_i</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">y_i</span> <span class="ow">in</span> <span class="n">y_lower</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">J_num</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">y_upper</span> <span class="o">-</span> <span class="n">y_lower</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+        <span class="n">logdet_num</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch_size</span><span class="p">):</span>
+            <span class="n">logdet_num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">slogdet</span><span class="p">(</span><span class="n">J_num</span><span class="p">[</span><span class="n">i</span><span class="p">])[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">logdet_num</span></div>
+
+<div class="viewcode-block" id="GraphINN.get_node_by_name"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.GraphINN.get_node_by_name">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Node</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the first node in the graph with the provided name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">node</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="GraphINN.get_module_by_name"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.GraphINN.get_module_by_name">[docs]</a>    <span class="k">def</span> <span class="nf">get_module_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return module of the first node in the graph with the provided name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_node_by_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">topological_order</span><span class="p">(</span><span class="n">all_nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="n">in_nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">InputNode</span><span class="p">],</span>
+                      <span class="n">out_nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">OutputNode</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the topological order of nodes.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        all_nodes: All nodes in the computation graph.</span>
+<span class="sd">        in_nodes: Input nodes (must also be present in `all_nodes`)</span>
+<span class="sd">        out_nodes: Output nodes (must also be present in `all_nodes`)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A sorted list of nodes, where the inputs to some node in the list</span>
+<span class="sd">        are available when all previous nodes in the list have been executed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Edge dicts in both directions</span>
+    <span class="n">edges_out_to_in</span> <span class="o">=</span> <span class="p">{</span><span class="n">node_b</span><span class="p">:</span> <span class="p">{</span><span class="n">node_a</span> <span class="k">for</span> <span class="n">node_a</span><span class="p">,</span> <span class="n">out_idx</span> <span class="ow">in</span> <span class="n">node_b</span><span class="o">.</span><span class="n">inputs</span><span class="p">}</span> <span class="k">for</span>
+                       <span class="n">node_b</span> <span class="ow">in</span> <span class="n">all_nodes</span> <span class="o">+</span> <span class="n">out_nodes</span><span class="p">}</span>
+    <span class="n">edges_in_to_out</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">node_out</span><span class="p">,</span> <span class="n">node_ins</span> <span class="ow">in</span> <span class="n">edges_out_to_in</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">node_in</span> <span class="ow">in</span> <span class="n">node_ins</span><span class="p">:</span>
+            <span class="n">edges_in_to_out</span><span class="p">[</span><span class="n">node_in</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node_out</span><span class="p">)</span>
+
+    <span class="c1"># Kahn&#39;s algorithm starting from the output nodes</span>
+    <span class="n">sorted_nodes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">no_pending_edges</span> <span class="o">=</span> <span class="n">deque</span><span class="p">(</span><span class="n">out_nodes</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">no_pending_edges</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">no_pending_edges</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+        <span class="n">sorted_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">in_node</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">edges_out_to_in</span><span class="p">[</span><span class="n">node</span><span class="p">]):</span>
+            <span class="n">edges_out_to_in</span><span class="p">[</span><span class="n">node</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">in_node</span><span class="p">)</span>
+            <span class="n">edges_in_to_out</span><span class="p">[</span><span class="n">in_node</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">edges_in_to_out</span><span class="p">[</span><span class="n">in_node</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">no_pending_edges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">in_node</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">in_node</span> <span class="ow">in</span> <span class="n">in_nodes</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">in_node</span> <span class="ow">in</span> <span class="n">sorted_nodes</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Error in graph: Input node &quot;</span> \
+                                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">in_node</span><span class="si">}</span><span class="s2"> is not connected &quot;</span> \
+                                        <span class="sa">f</span><span class="s2">&quot;to any output.&quot;</span>
+
+    <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">edges_in_to_out</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">sorted_nodes</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Graph is cyclic.&quot;</span><span class="p">)</span>
+</pre></div>
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    
+  <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
+
+
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2021, VLL-HD.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.4.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

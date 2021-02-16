@@ -125,172 +125,230 @@
               <div>
                 
   <h1>Source code for FrEIA.modules.reshapes</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span></span><span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">InvertibleModule</span>
+
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
 <span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
 
 
-<div class="viewcode-block" id="IRevNetDownsampling"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IRevNetDownsampling">[docs]</a><span class="k">class</span> <span class="nc">IRevNetDownsampling</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;The invertible spatial downsampling used in i-RevNet, adapted from</span>
-<span class="sd">    https://github.com/jhjacobsen/pytorch-i-revnet/blob/master/models/model_utils.py&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="IRevNetDownsampling"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IRevNetDownsampling">[docs]</a><span class="k">class</span> <span class="nc">IRevNetDownsampling</span><span class="p">(</span><span class="n">InvertibleModule</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;The invertible spatial downsampling used in i-RevNet.</span>
+<span class="sd">    Each group of four neighboring pixels is reordered into one pixel with four times</span>
+<span class="sd">    the channels in a checkerboard-like pattern. See i-RevNet, Jacobsen 2018 et al.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
 
-<div class="viewcode-block" id="IRevNetDownsampling.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IRevNetDownsampling.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<div class="viewcode-block" id="IRevNetDownsampling.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IRevNetDownsampling.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">legacy_backend</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule) for more.</span>
+<span class="sd">        Args:</span>
+<span class="sd">          legacy_backend: If True, uses the splitting and concatenating method,</span>
+<span class="sd">            adapted from</span>
+<span class="sd">            github.com/jhjacobsen/pytorch-i-revnet/blob/master/models/model_utils.py</span>
+<span class="sd">            for the use in FrEIA. Is usually slower on GPU.</span>
+<span class="sd">            If False, uses a 2d strided convolution with a kernel representing</span>
+<span class="sd">            the downsampling.  Note that the ordering of the output channels</span>
+<span class="sd">            will be different.  If pixels in each patch in channel 1</span>
+<span class="sd">            are a1, b1, ..., and in channel 2 are a2, b2, ...</span>
+<span class="sd">            Then the output channels will be the following:</span>
+<span class="sd">            legacy_backend=True: a1, a2, ..., b1, b2, ..., c1, c2, ...</span>
+<span class="sd">            legacy_backend=False: a1, b1, ..., a2, b2, ..., a3, b3, ...</span>
+<span class="sd">            (see also order_by_wavelet in module HaarDownsampling)</span>
+<span class="sd">            Usually this difference is completely irrelevant.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">block_size</span> <span class="o">=</span> <span class="mi">2</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">block_size_sq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_size</span><span class="o">**</span><span class="mi">2</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">block_size_sq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_size</span><span class="o">**</span><span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">legacy_backend</span> <span class="o">=</span> <span class="n">legacy_backend</span>
 
-<div class="viewcode-block" id="IRevNetDownsampling.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IRevNetDownsampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">legacy_backend</span><span class="p">:</span>
+            <span class="c1"># this kernel represents the reshape:</span>
+            <span class="c1"># it applies to 2x2 patches (stride 2), and transforms each</span>
+            <span class="c1"># input channel to 4 channels.</span>
+            <span class="c1"># The input value is transferred wherever the kernel is 1.</span>
+            <span class="c1"># (hence the indexing pattern 00, 01, 10, 11 represents the</span>
+            <span class="c1"># checkerboard.</span>
+            <span class="c1"># For the upsampling, a transposed convolution is used for the</span>
+            <span class="c1"># opposite effect.</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">downsample_kernel</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">downsample_kernel</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">downsample_kernel</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">downsample_kernel</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">downsample_kernel</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">downsample_kernel</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">downsample_kernel</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">downsample_kernel</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">downsample_kernel</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">downsample_kernel</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="IRevNetDownsampling.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IRevNetDownsampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule).&#39;&#39;&#39;</span>
         <span class="nb">input</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">rev</span><span class="p">:</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">s_height</span><span class="p">,</span> <span class="n">s_width</span><span class="p">,</span> <span class="n">s_depth</span><span class="p">)</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
-            <span class="n">d_depth</span> <span class="o">=</span> <span class="n">s_depth</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_size_sq</span>
-            <span class="n">d_height</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">s_height</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_size</span><span class="p">)</span>
-            <span class="n">t_1</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">block_size</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-            <span class="n">stack</span> <span class="o">=</span> <span class="p">[</span><span class="n">t_t</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">d_height</span><span class="p">,</span> <span class="n">d_depth</span><span class="p">)</span>
-                     <span class="k">for</span> <span class="n">t_t</span> <span class="ow">in</span> <span class="n">t_1</span><span class="p">]</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()]</span>
-            <span class="c1"># (own attempt)</span>
-            <span class="c1"># return torch.cat([</span>
-            <span class="c1">#         x[:, :,  ::2,  ::2],</span>
-            <span class="c1">#         x[:, :, 1::2,  ::2],</span>
-            <span class="c1">#         x[:, :,  ::2, 1::2],</span>
-            <span class="c1">#         x[:, :, 1::2, 1::2]</span>
-            <span class="c1">#     ], dim=1)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">d_height</span><span class="p">,</span> <span class="n">d_width</span><span class="p">,</span> <span class="n">d_depth</span><span class="p">)</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
-            <span class="n">s_depth</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">d_depth</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_size_sq</span><span class="p">)</span>
-            <span class="n">s_width</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">d_width</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_size</span><span class="p">)</span>
-            <span class="n">s_height</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">d_height</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_size</span><span class="p">)</span>
-            <span class="n">t_1</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">d_height</span><span class="p">,</span> <span class="n">d_width</span><span class="p">,</span>
-                                           <span class="bp">self</span><span class="o">.</span><span class="n">block_size_sq</span><span class="p">,</span> <span class="n">s_depth</span><span class="p">)</span>
-            <span class="n">spl</span> <span class="o">=</span> <span class="n">t_1</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">block_size</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-            <span class="n">stack</span> <span class="o">=</span> <span class="p">[</span><span class="n">t_t</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">d_height</span><span class="p">,</span> <span class="n">s_width</span><span class="p">,</span>
-                                           <span class="n">s_depth</span><span class="p">)</span> <span class="k">for</span> <span class="n">t_t</span> <span class="ow">in</span> <span class="n">spl</span><span class="p">]</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">s_height</span><span class="p">,</span> <span class="n">s_width</span><span class="p">,</span> <span class="n">s_depth</span><span class="p">)</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()]</span></div>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">legacy_backend</span><span class="p">:</span>
+                <span class="c1"># only j.h. jacobsen understands how this works,</span>
+                <span class="c1"># https://github.com/jhjacobsen/pytorch-i-revnet/blob/master/models/model_utils.py</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-<div class="viewcode-block" id="IRevNetDownsampling.jacobian"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IRevNetDownsampling.jacobian">[docs]</a>    <span class="k">def</span> <span class="nf">jacobian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="c1"># TODO respect batch dimension and .cuda()</span>
-        <span class="k">return</span> <span class="mi">0</span></div>
+                <span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">s_height</span><span class="p">,</span> <span class="n">s_width</span><span class="p">,</span> <span class="n">s_depth</span><span class="p">)</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+                <span class="n">d_depth</span> <span class="o">=</span> <span class="n">s_depth</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_size_sq</span>
+                <span class="n">d_height</span> <span class="o">=</span> <span class="n">s_height</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_size</span>
+
+                <span class="n">t_1</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">block_size</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">stack</span> <span class="o">=</span> <span class="p">[</span><span class="n">t_t</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">d_height</span><span class="p">,</span> <span class="n">d_depth</span><span class="p">)</span>
+                         <span class="k">for</span> <span class="n">t_t</span> <span class="ow">in</span> <span class="n">t_1</span><span class="p">]</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">contiguous</span><span class="p">(),),</span> <span class="mf">0.</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">downsample_kernel</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">)</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">output</span><span class="p">,),</span> <span class="mf">0.</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">legacy_backend</span><span class="p">:</span>
+                <span class="c1"># only j.h. jacobsen understands how this works,</span>
+                <span class="c1"># https://github.com/jhjacobsen/pytorch-i-revnet/blob/master/models/model_utils.py</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">d_height</span><span class="p">,</span> <span class="n">d_width</span><span class="p">,</span> <span class="n">d_depth</span><span class="p">)</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+                <span class="n">s_depth</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">d_depth</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_size_sq</span><span class="p">)</span>
+                <span class="n">s_width</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">d_width</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_size</span><span class="p">)</span>
+                <span class="n">s_height</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">d_height</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_size</span><span class="p">)</span>
+                <span class="n">t_1</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">d_height</span><span class="p">,</span> <span class="n">d_width</span><span class="p">,</span>
+                                               <span class="bp">self</span><span class="o">.</span><span class="n">block_size_sq</span><span class="p">,</span> <span class="n">s_depth</span><span class="p">)</span>
+                <span class="n">spl</span> <span class="o">=</span> <span class="n">t_1</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">block_size</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+                <span class="n">stack</span> <span class="o">=</span> <span class="p">[</span><span class="n">t_t</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">d_height</span><span class="p">,</span> <span class="n">s_width</span><span class="p">,</span>
+                                               <span class="n">s_depth</span><span class="p">)</span> <span class="k">for</span> <span class="n">t_t</span> <span class="ow">in</span> <span class="n">spl</span><span class="p">]</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">s_height</span><span class="p">,</span> <span class="n">s_width</span><span class="p">,</span> <span class="n">s_depth</span><span class="p">)</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">contiguous</span><span class="p">(),),</span> <span class="mf">0.</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">conv_transpose2d</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">downsample_kernel</span><span class="p">,</span>
+                                            <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">)</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">output</span><span class="p">,),</span> <span class="mf">0.</span></div>
 
 <div class="viewcode-block" id="IRevNetDownsampling.output_dims"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IRevNetDownsampling.output_dims">[docs]</a>    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Can only use 1 input&quot;</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule).&#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;i-RevNet downsampling must have exactly 1 input&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;i-RevNet downsampling can only transform 2D images&quot;</span>
+                             <span class="s2">&quot;of the shape CxWxH (channels, width, height)&quot;</span><span class="p">)</span>
+
         <span class="n">c</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">input_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span> <span class="o">=</span> <span class="n">c</span><span class="o">*</span><span class="mi">4</span><span class="p">,</span> <span class="n">w</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">h</span><span class="o">//</span><span class="mi">2</span>
-        <span class="k">assert</span> <span class="n">c</span><span class="o">*</span><span class="n">h</span><span class="o">*</span><span class="n">w</span> <span class="o">==</span> <span class="n">c2</span><span class="o">*</span><span class="n">h2</span><span class="o">*</span><span class="n">w2</span><span class="p">,</span> <span class="s2">&quot;Uneven input dimensions&quot;</span>
-        <span class="k">return</span> <span class="p">[(</span><span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span><span class="p">)]</span></div></div>
+        <span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span> <span class="o">=</span> <span class="n">c</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="n">w</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">h</span> <span class="o">//</span> <span class="mi">2</span>
+
+        <span class="k">if</span> <span class="n">c</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">w</span> <span class="o">!=</span> <span class="n">c2</span> <span class="o">*</span> <span class="n">h2</span> <span class="o">*</span> <span class="n">w2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Input cannot be cleanly reshaped, most likely because&quot;</span>
+                             <span class="s2">&quot;the input height or width are an odd number&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">((</span><span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span><span class="p">),)</span></div></div>
 
 
 <div class="viewcode-block" id="IRevNetUpsampling"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IRevNetUpsampling">[docs]</a><span class="k">class</span> <span class="nc">IRevNetUpsampling</span><span class="p">(</span><span class="n">IRevNetDownsampling</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Just the exact opposite of the i_revnet_downsampling layer.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;The inverted operation of IRevNetDownsampling (see that docstring for details).&#39;&#39;&#39;</span>
 
-<div class="viewcode-block" id="IRevNetUpsampling.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IRevNetUpsampling.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">)</span></div>
+<div class="viewcode-block" id="IRevNetUpsampling.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IRevNetUpsampling.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">legacy_backend</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule) for more.</span>
+<span class="sd">        Args:</span>
+<span class="sd">          legacy_backend: If True, uses the splitting and concatenating method,</span>
+<span class="sd">            adapted from</span>
+<span class="sd">            github.com/jhjacobsen/pytorch-i-revnet/blob/master/models/model_utils.py</span>
+<span class="sd">            for the use in FrEIA. Is usually slower on GPU.</span>
+<span class="sd">            If False, uses a 2d strided convolution with a kernel representing</span>
+<span class="sd">            the downsampling.  Note that the ordering of the output channels</span>
+<span class="sd">            will be different.  If pixels in each patch in channel 1</span>
+<span class="sd">            are a1, b1, ..., and in channel 2 are a2, b2, ...</span>
+<span class="sd">            Then the output channels will be the following:</span>
+<span class="sd">            legacy_backend=True: a1, a2, ..., b1, b2, ..., c1, c2, ...</span>
+<span class="sd">            legacy_backend=False: a1, b1, ..., a2, b2, ..., a3, b3, ...</span>
+<span class="sd">            (see also order_by_wavelet in module HaarDownsampling)</span>
+<span class="sd">            Usually this difference is completely irrelevant.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
 
-<div class="viewcode-block" id="IRevNetUpsampling.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IRevNetUpsampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="ow">not</span> <span class="n">rev</span><span class="p">)</span></div>
+        <span class="c1"># have to initialize with the OUTPUT shape, because everything is</span>
+        <span class="c1"># inherited from IRevNetDownsampling:</span>
+        <span class="n">inv_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dims</span><span class="p">(</span><span class="n">dims_in</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">inv_shape</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">,</span> <span class="n">legacy_backend</span><span class="o">=</span><span class="n">legacy_backend</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="IRevNetUpsampling.jacobian"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IRevNetUpsampling.jacobian">[docs]</a>    <span class="k">def</span> <span class="nf">jacobian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="c1"># TODO respect batch dimension and .cuda()</span>
-        <span class="k">return</span> <span class="mi">0</span></div>
+<div class="viewcode-block" id="IRevNetUpsampling.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IRevNetUpsampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule).&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="ow">not</span> <span class="n">rev</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="IRevNetUpsampling.output_dims"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.IRevNetUpsampling.output_dims">[docs]</a>    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Can only use 1 input&quot;</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule).&#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;i-RevNet downsampling must have exactly 1 input&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;i-RevNet downsampling can only transform 2D images&quot;</span>
+                             <span class="s2">&quot;of the shape cxwxh (channels, width, height)&quot;</span><span class="p">)</span>
+
         <span class="n">c</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">input_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span> <span class="o">=</span> <span class="n">c</span><span class="o">//</span><span class="mi">4</span><span class="p">,</span> <span class="n">w</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">h</span><span class="o">*</span><span class="mi">2</span>
-        <span class="k">assert</span> <span class="n">c</span><span class="o">*</span><span class="n">h</span><span class="o">*</span><span class="n">w</span> <span class="o">==</span> <span class="n">c2</span><span class="o">*</span><span class="n">h2</span><span class="o">*</span><span class="n">w2</span><span class="p">,</span> <span class="s2">&quot;Uneven input dimensions&quot;</span>
-        <span class="k">return</span> <span class="p">[(</span><span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span><span class="p">)]</span></div></div>
+        <span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span> <span class="o">=</span> <span class="n">c</span> <span class="o">//</span> <span class="mi">4</span><span class="p">,</span> <span class="n">w</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">h</span> <span class="o">*</span> <span class="mi">2</span>
+
+        <span class="k">if</span> <span class="n">c</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">w</span> <span class="o">!=</span> <span class="n">c2</span> <span class="o">*</span> <span class="n">h2</span> <span class="o">*</span> <span class="n">w2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;input cannot be cleanly reshaped, most likely because&quot;</span>
+                             <span class="s2">&quot;the input height or width are an odd number&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">((</span><span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span><span class="p">),)</span></div></div>
 
 
-<div class="viewcode-block" id="HaarDownsampling"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarDownsampling">[docs]</a><span class="k">class</span> <span class="nc">HaarDownsampling</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<div class="viewcode-block" id="HaarDownsampling"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarDownsampling">[docs]</a><span class="k">class</span> <span class="nc">HaarDownsampling</span><span class="p">(</span><span class="n">InvertibleModule</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Uses Haar wavelets to split each channel into 4 channels, with half the</span>
-<span class="sd">    width and height.&#39;&#39;&#39;</span>
+<span class="sd">    width and height dimensions.&#39;&#39;&#39;</span>
 
-<div class="viewcode-block" id="HaarDownsampling.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarDownsampling.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">order_by_wavelet</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">rebalance</span><span class="o">=</span><span class="mf">1.</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<div class="viewcode-block" id="HaarDownsampling.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarDownsampling.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">order_by_wavelet</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">rebalance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule) for more.</span>
+<span class="sd">        Args:</span>
+<span class="sd">          order_by_wavelet: Whether to group the output by original channels or</span>
+<span class="sd">            by wavelet. E.g. if the average, vertical, horizontal and diagonal</span>
+<span class="sd">            wavelets for channel 1 are a1, v1, h1, d1, those for channel 2 are</span>
+<span class="sd">            a2, v2, h2, d2, etc, then the output channels will be structured as</span>
+<span class="sd">            follows:</span>
+<span class="sd">            set to True: a1, a2, ..., v1, v2, ..., h1, h2, ..., d1, d2, ...</span>
+<span class="sd">            set to False: a1, v1, h1, d1, a2, v2, h2, d2, ...</span>
+<span class="sd">            The True option is slightly slower to compute than the False option.</span>
+<span class="sd">            The option is useful if e.g. the average channels should be split</span>
+<span class="sd">            off by a FrEIA.modules.Split. Then, setting order_by_wavelet=True</span>
+<span class="sd">            allows to split off the first quarter of channels to isolate the</span>
+<span class="sd">            average wavelets only.</span>
+<span class="sd">          rebalance: Must !=0. There exist different conventions how to define</span>
+<span class="sd">            the Haar wavelets. The wavelet components in the forward direction</span>
+<span class="sd">            are multiplied with this factor, and those in the inverse direction</span>
+<span class="sd">            are adjusted accordingly, so that the module as a whole is</span>
+<span class="sd">            invertible.  Stability of the network may be increased for rebalance</span>
+<span class="sd">            &lt; 1 (e.g. 0.5).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">rebalance</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;rebalance&#39; argument must be != 0.&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span> <span class="o">=</span> <span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># self.jac_{fwd,rev} is the log Jacobian determinant for a single pixel</span>
+        <span class="c1"># in a single channel computed explicitly from the matrix below.</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">fac_fwd</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">rebalance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jac_fwd</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">16.</span><span class="p">)</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fac_fwd</span><span class="p">))</span> <span class="o">/</span> <span class="mf">4.</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">fac_rev</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="n">rebalance</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jac_rev</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">16.</span><span class="p">)</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fac_rev</span><span class="p">))</span> <span class="o">/</span> <span class="mf">4.</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">permute</span> <span class="o">=</span> <span class="n">order_by_wavelet</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">last_jac</span> <span class="o">=</span> <span class="kc">None</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">permute</span><span class="p">:</span>
-            <span class="n">permutation</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
-                <span class="n">permutation</span> <span class="o">+=</span> <span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">4</span><span class="o">*</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span><span class="p">)]</span>
-
-            <span class="bp">self</span><span class="o">.</span><span class="n">perm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">permutation</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">perm_inv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">permutation</span><span class="p">)</span>
-
-            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">perm</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">perm_inv</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span></div>
-
-<div class="viewcode-block" id="HaarDownsampling.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarDownsampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">rev</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">last_jac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">elements</span> <span class="o">/</span> <span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">16.</span><span class="p">)</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fac_fwd</span><span class="p">))</span>
-            <span class="n">out</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">,</span>
-                           <span class="n">bias</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">permute</span><span class="p">:</span>
-                <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">perm</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fac_fwd</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="p">[</span><span class="n">out</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fac_fwd</span><span class="p">]</span>
-
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">last_jac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">elements</span> <span class="o">/</span> <span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">16.</span><span class="p">)</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fac_rev</span><span class="p">))</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">permute</span><span class="p">:</span>
-                <span class="n">x_perm</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">perm_inv</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">x_perm</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
-            <span class="k">return</span> <span class="p">[</span><span class="n">F</span><span class="o">.</span><span class="n">conv_transpose2d</span><span class="p">(</span><span class="n">x_perm</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fac_rev</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">,</span>
-                                     <span class="n">bias</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span><span class="p">)]</span></div>
-
-<div class="viewcode-block" id="HaarDownsampling.jacobian"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarDownsampling.jacobian">[docs]</a>    <span class="k">def</span> <span class="nf">jacobian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="c1"># TODO respect batch dimension and .cuda()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_jac</span></div>
-
-<div class="viewcode-block" id="HaarDownsampling.output_dims"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarDownsampling.output_dims">[docs]</a>    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Can only use 1 input&quot;</span>
-        <span class="n">c</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">input_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span> <span class="o">=</span> <span class="n">c</span><span class="o">*</span><span class="mi">4</span><span class="p">,</span> <span class="n">w</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">h</span><span class="o">//</span><span class="mi">2</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">elements</span> <span class="o">=</span> <span class="n">c</span><span class="o">*</span><span class="n">w</span><span class="o">*</span><span class="n">h</span>
-        <span class="k">assert</span> <span class="n">c</span><span class="o">*</span><span class="n">h</span><span class="o">*</span><span class="n">w</span> <span class="o">==</span> <span class="n">c2</span><span class="o">*</span><span class="n">h2</span><span class="o">*</span><span class="n">w2</span><span class="p">,</span> <span class="s2">&quot;Uneven input dimensions&quot;</span>
-        <span class="k">return</span> <span class="p">[(</span><span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span><span class="p">)]</span></div></div>
-
-
-<div class="viewcode-block" id="HaarUpsampling"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarUpsampling">[docs]</a><span class="k">class</span> <span class="nc">HaarUpsampling</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Uses Haar wavelets to merge 4 channels into one, with double the</span>
-<span class="sd">    width and height.&#39;&#39;&#39;</span>
-
-<div class="viewcode-block" id="HaarUpsampling.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarUpsampling.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span> <span class="o">=</span> <span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="mi">4</span>
+        <span class="c1"># See https://en.wikipedia.org/wiki/Haar_wavelet#Haar_matrix</span>
+        <span class="c1"># for an explanation of how this weight matrix comes about</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -302,91 +360,197 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span> <span class="o">*=</span> <span class="mf">0.5</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span>
 
-<div class="viewcode-block" id="HaarUpsampling.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarUpsampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">,</span>
-                             <span class="n">bias</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span><span class="p">)]</span>
+        <span class="c1"># for &#39;order_by_wavelet&#39;, we just perform the channel-wise wavelet</span>
+        <span class="c1"># transform as usual, and then permute the channels into the correct</span>
+        <span class="c1"># order afterward (hence &#39;self.permute&#39;)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">permute</span> <span class="o">=</span> <span class="n">order_by_wavelet</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">permute</span><span class="p">:</span>
+            <span class="n">permutation</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+                <span class="n">permutation</span> <span class="o">+=</span> <span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span><span class="p">)]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">perm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">permutation</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">perm_inv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">permutation</span><span class="p">)</span>
+
+            <span class="c1"># clever trick to invert a permutation</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">perm</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">perm_inv</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span></div>
+
+<div class="viewcode-block" id="HaarDownsampling.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarDownsampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule).&#39;&#39;&#39;</span>
+
+        <span class="n">inp</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1">#number total entries except for batch dimension:</span>
+        <span class="n">ndims</span> <span class="o">=</span> <span class="n">inp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="n">jac</span> <span class="o">=</span> <span class="n">ndims</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">jac_fwd</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">,</span>
+                           <span class="n">bias</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">permute</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">out</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">perm</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fac_fwd</span><span class="p">,),</span> <span class="n">jac</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">out</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fac_fwd</span><span class="p">,),</span> <span class="n">jac</span>
+
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">F</span><span class="o">.</span><span class="n">conv_transpose2d</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">,</span>
-                                       <span class="n">bias</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-                                       <span class="n">groups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span><span class="p">)]</span></div>
+            <span class="n">jac</span> <span class="o">=</span> <span class="n">ndims</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">jac_rev</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">permute</span><span class="p">:</span>
+                <span class="n">x_perm</span> <span class="o">=</span> <span class="n">inp</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">perm_inv</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">x_perm</span> <span class="o">=</span> <span class="n">inp</span>
 
-<div class="viewcode-block" id="HaarUpsampling.jacobian"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarUpsampling.jacobian">[docs]</a>    <span class="k">def</span> <span class="nf">jacobian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="c1"># TODO respect batch dimension and .cuda()</span>
-        <span class="k">return</span> <span class="mi">0</span></div>
+            <span class="n">x_perm</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fac_rev</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">conv_transpose2d</span><span class="p">(</span><span class="n">x_perm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">haar_weights</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="p">(</span><span class="n">out</span><span class="p">,),</span> <span class="n">jac</span></div>
+
+<div class="viewcode-block" id="HaarDownsampling.output_dims"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarDownsampling.output_dims">[docs]</a>    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule).&#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;HaarDownsampling must have exactly 1 input&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;HaarDownsampling can only transform 2D images&quot;</span>
+                             <span class="s2">&quot;of the shape CxWxH (channels, width, height)&quot;</span><span class="p">)</span>
+
+        <span class="n">c</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">input_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span> <span class="o">=</span> <span class="n">c</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="n">w</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">h</span> <span class="o">//</span> <span class="mi">2</span>
+
+        <span class="k">if</span> <span class="n">c</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">w</span> <span class="o">!=</span> <span class="n">c2</span> <span class="o">*</span> <span class="n">h2</span> <span class="o">*</span> <span class="n">w2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Input cannot be cleanly reshaped, most likely because&quot;</span>
+                             <span class="s2">&quot;the input height or width are an odd number&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">((</span><span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span><span class="p">),)</span></div></div>
+
+
+<div class="viewcode-block" id="HaarUpsampling"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarUpsampling">[docs]</a><span class="k">class</span> <span class="nc">HaarUpsampling</span><span class="p">(</span><span class="n">HaarDownsampling</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;The inverted operation of HaarDownsampling (see that docstring for details).&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="HaarUpsampling.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarUpsampling.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">order_by_wavelet</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">rebalance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule) for more.</span>
+<span class="sd">        Args:</span>
+<span class="sd">          order_by_wavelet: Whether to group the output by original channels or</span>
+<span class="sd">            by wavelet. E.g. if the average, vertical, horizontal and diagonal</span>
+<span class="sd">            wavelets for channel 1 are a1, v1, h1, d1, those for channel 2 are</span>
+<span class="sd">            a2, v2, h2, d2, etc, then the output channels will be structured as</span>
+<span class="sd">            follows:</span>
+<span class="sd">            set to True: a1, a2, ..., v1, v2, ..., h1, h2, ..., d1, d2, ...</span>
+<span class="sd">            set to False: a1, v1, h1, d1, a2, v2, h2, d2, ...</span>
+<span class="sd">            The True option is slightly slower to compute than the False option.</span>
+<span class="sd">            The option is useful if e.g. the average channels should be split</span>
+<span class="sd">            off by a FrEIA.modules.Split. Then, setting order_by_wavelet=True</span>
+<span class="sd">            allows to split off the first quarter of channels to isolate the</span>
+<span class="sd">            average wavelets only.</span>
+<span class="sd">          rebalance: Must !=0. There exist different conventions how to define</span>
+<span class="sd">            the Haar wavelets. The wavelet components in the forward direction</span>
+<span class="sd">            are multiplied with this factor, and those in the inverse direction</span>
+<span class="sd">            are adjusted accordingly, so that the module as a whole is</span>
+<span class="sd">            invertible.  Stability of the network may be increased for rebalance</span>
+<span class="sd">            &lt; 1 (e.g. 0.5).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">inv_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dims</span><span class="p">(</span><span class="n">dims_in</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">inv_shape</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">,</span> <span class="n">order_by_wavelet</span><span class="p">,</span> <span class="n">rebalance</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HaarUpsampling.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarUpsampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule).&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="ow">not</span> <span class="n">rev</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HaarUpsampling.output_dims"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.HaarUpsampling.output_dims">[docs]</a>    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Can only use 1 input&quot;</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule).&#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;i-revnet downsampling must have exactly 1 input&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;i-revnet downsampling can only tranform 2d images&quot;</span>
+                             <span class="s2">&quot;of the shape cxwxh (channels, width, height)&quot;</span><span class="p">)</span>
+
         <span class="n">c</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">input_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span> <span class="o">=</span> <span class="n">c</span><span class="o">//</span><span class="mi">4</span><span class="p">,</span> <span class="n">w</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">h</span><span class="o">*</span><span class="mi">2</span>
-        <span class="k">assert</span> <span class="n">c</span><span class="o">*</span><span class="n">h</span><span class="o">*</span><span class="n">w</span> <span class="o">==</span> <span class="n">c2</span><span class="o">*</span><span class="n">h2</span><span class="o">*</span><span class="n">w2</span><span class="p">,</span> <span class="s2">&quot;Uneven input dimensions&quot;</span>
-        <span class="k">return</span> <span class="p">[(</span><span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span><span class="p">)]</span></div></div>
+        <span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span> <span class="o">=</span> <span class="n">c</span> <span class="o">//</span> <span class="mi">4</span><span class="p">,</span> <span class="n">w</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">h</span> <span class="o">*</span> <span class="mi">2</span>
+
+        <span class="k">if</span> <span class="n">c</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">w</span> <span class="o">!=</span> <span class="n">c2</span> <span class="o">*</span> <span class="n">h2</span> <span class="o">*</span> <span class="n">w2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;input cannot be cleanly reshaped, most likely because&quot;</span>
+                             <span class="s2">&quot;the input height or width are an odd number&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">((</span><span class="n">c2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span><span class="p">),)</span></div></div>
 
 
-<div class="viewcode-block" id="Flatten"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Flatten">[docs]</a><span class="k">class</span> <span class="nc">Flatten</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<div class="viewcode-block" id="Flatten"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Flatten">[docs]</a><span class="k">class</span> <span class="nc">Flatten</span><span class="p">(</span><span class="n">InvertibleModule</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Flattens N-D tensors into 1-D tensors.&#39;&#39;&#39;</span>
-<div class="viewcode-block" id="Flatten.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Flatten.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="Flatten.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Flatten.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="Flatten.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Flatten.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule).&#39;&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims_in</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Flattening must have exactly 1 input&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_shape</span> <span class="o">=</span> <span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_shape</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">])),)</span></div>
+
+<div class="viewcode-block" id="Flatten.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Flatten.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule).&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">rev</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">),),</span> <span class="mf">0.</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)]</span></div>
-
-<div class="viewcode-block" id="Flatten.jacobian"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Flatten.jacobian">[docs]</a>    <span class="k">def</span> <span class="nf">jacobian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="c1"># TODO respect batch dimension and .cuda()</span>
-        <span class="k">return</span> <span class="mi">0</span></div>
+            <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">input_shape</span><span class="p">),),</span> <span class="mf">0.</span></div>
 
 <div class="viewcode-block" id="Flatten.output_dims"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Flatten.output_dims">[docs]</a>    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">input_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">])),)]</span></div></div>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule).&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_shape</span><span class="p">,)</span></div></div>
 
 
-<div class="viewcode-block" id="Reshape"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Reshape">[docs]</a><span class="k">class</span> <span class="nc">Reshape</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;reshapes N-D tensors into target dim tensors.&#39;&#39;&#39;</span>
-<div class="viewcode-block" id="Reshape.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Reshape.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">target_dim</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<div class="viewcode-block" id="Reshape"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Reshape">[docs]</a><span class="k">class</span> <span class="nc">Reshape</span><span class="p">(</span><span class="n">InvertibleModule</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Reshapes N-D tensors into target dim tensors. Note that the reshape resulting from</span>
+<span class="sd">    e.g. (3, 32, 32) -&gt; (12, 16, 16) will not necessarily be spatially sensible.</span>
+<span class="sd">    See IRevNetDownsampling, IRevNetUpsampling, HaarDownsampling, HaarUpsampling</span>
+<span class="sd">    for spatially meaningful reshaping operations.&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="Reshape.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Reshape.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_dims</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">target_dim</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule) for more.</span>
+<span class="sd">        Args:</span>
+<span class="sd">          output_dims: The shape the reshaped output is supposed to have (not</span>
+<span class="sd">            including batch dimension)</span>
+<span class="sd">          target_dim: Deprecated name for output_dims</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">target_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Use the new name for the &#39;target_dim&#39; argument: &#39;output_dims&#39;&quot;</span>
+                 <span class="s2">&quot;the &#39;target_dim&#39; argument will be removed in the next version&quot;</span><span class="p">)</span>
+            <span class="n">output_dims</span> <span class="o">=</span> <span class="n">target_dim</span>
+
+        <span class="k">if</span> <span class="n">output_dims</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Please specify the desired output shape&quot;</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">target_dim</span> <span class="o">=</span> <span class="n">target_dim</span>
-        <span class="k">assert</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_dim</span><span class="p">)),</span> <span class="sa">f</span><span class="s2">&quot;Incoming dimensions (</span><span class="si">{</span><span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">) and target_dim (</span><span class="si">{</span><span class="n">target_dim</span><span class="si">}</span><span class="s2">) don&#39;t match.&quot;</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_dim</span> <span class="o">=</span> <span class="n">output_dims</span>
 
-<div class="viewcode-block" id="Reshape.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Reshape.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims_in</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Flattening must have exactly 1 input&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">!=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_dim</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Incoming dimensions </span><span class="si">{</span><span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> and target_dim&quot;</span>
+                             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">target_dim</span><span class="si">}</span><span class="s2"> don&#39;t match.&quot;</span>
+                             <span class="s2">&quot;Must have same number of elements for invertibility&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Reshape.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Reshape.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule).&#39;&#39;&#39;</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="n">rev</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">target_dim</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">target_dim</span><span class="p">),),</span> <span class="mf">0.</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)]</span></div>
-
-<div class="viewcode-block" id="Reshape.jacobian"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Reshape.jacobian">[docs]</a>    <span class="k">def</span> <span class="nf">jacobian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="k">return</span> <span class="mf">0.</span></div>
+            <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">),),</span> <span class="mf">0.</span></div>
 
 <div class="viewcode-block" id="Reshape.output_dims"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.Reshape.output_dims">[docs]</a>    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">target_dim</span><span class="p">]</span></div></div>
-
-<span class="kn">import</span> <span class="nn">warnings</span>
-
-<span class="k">def</span> <span class="nf">_deprecated_by</span><span class="p">(</span><span class="n">orig_class</span><span class="p">):</span>
-    <span class="k">class</span> <span class="nc">deprecated_class</span><span class="p">(</span><span class="n">orig_class</span><span class="p">):</span>
-        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">F</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> is deprecated and will be removed in the public release. &quot;</span>
-                          <span class="sa">F</span><span class="s2">&quot;Use </span><span class="si">{</span><span class="n">orig_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> instead.&quot;</span><span class="p">,</span>
-                          <span class="ne">DeprecationWarning</span><span class="p">)</span>
-            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">deprecated_class</span>
-
-<span class="n">i_revnet_downsampling</span> <span class="o">=</span> <span class="n">_deprecated_by</span><span class="p">(</span><span class="n">IRevNetDownsampling</span><span class="p">)</span>
-<span class="n">i_revnet_upsampling</span> <span class="o">=</span> <span class="n">_deprecated_by</span><span class="p">(</span><span class="n">IRevNetUpsampling</span><span class="p">)</span>
-<span class="n">haar_multiplex_layer</span> <span class="o">=</span> <span class="n">_deprecated_by</span><span class="p">(</span><span class="n">HaarDownsampling</span><span class="p">)</span>
-<span class="n">haar_restore_layer</span> <span class="o">=</span> <span class="n">_deprecated_by</span><span class="p">(</span><span class="n">HaarUpsampling</span><span class="p">)</span>
-<span class="n">flattening_layer</span> <span class="o">=</span> <span class="n">_deprecated_by</span><span class="p">(</span><span class="n">Flatten</span><span class="p">)</span>
-<span class="n">reshape_layer</span> <span class="o">=</span> <span class="n">_deprecated_by</span><span class="p">(</span><span class="n">Reshape</span><span class="p">)</span>
+        <span class="sd">&#39;&#39;&#39;See docstring of base class (FrEIA.modules.InvertibleModule).&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_dim</span><span class="p">,)</span></div></div>
 </pre></div>
 
               </div>
