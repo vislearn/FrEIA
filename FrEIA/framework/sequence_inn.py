@@ -92,7 +92,7 @@ class SequenceINN(InvertibleModule):
             if self.conditions[i] is None:
                 x_or_z, j = self.module_list[i](x_or_z, jac=jac, rev=rev)
             else:
-                x_or_z, j = self.module_list[i](x_or_z, c=c[self.conditions[i]],
+                x_or_z, j = self.module_list[i](x_or_z, c=[c[self.conditions[i]]],
                                            jac=jac, rev=rev)
             jac = j + jac
 
