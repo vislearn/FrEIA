@@ -4,12 +4,11 @@ import torch
 import torch.nn as nn
 import torch.optim
 
-import sys
-sys.path.append('../')
 from FrEIA.modules import *
 from FrEIA.framework import *
 
 inp_size = 100
+VERBOSE = False
 
 inp = InputNode(inp_size, name='input')
 orthog_layer = Node([inp.out0], OrthogonalTransform, {'correction_interval':100})
@@ -21,8 +20,8 @@ test_net = GraphINN([inp, orthog_layer, permute_1, permute_2, outp])
 
 optim = torch.optim.SGD(test_net.parameters(), lr=5e-1)
 
-for name, p in test_net.named_parameters():
-    print(name, p.shape, p.requires_grad)
+#for name, p in test_net.named_parameters():
+    #print(name, p.shape, p.requires_grad)
 
 
 class OrthogonalTest(unittest.TestCase):
@@ -48,6 +47,7 @@ class OrthogonalTest(unittest.TestCase):
         self.assertTrue(torch.max(torch.abs(x - x_re)) < self.tol)
 
     def test_param_update(self):
+        # TODO: there should be some quantifyable test condition at least...
 
         for i in range(2500):
             optim.zero_grad()
@@ -68,13 +68,13 @@ class OrthogonalTest(unittest.TestCase):
             optim.step()
 
             if i%25 == 0:
-                print(loss.item(), end='\t')
                 WWt = torch.mm(weights, weights.t())
                 WWt -= torch.eye(weights.shape[0])
-                print(torch.max(torch.abs(WWt)).item(), end='\t')
-                print(torch.mean(WWt**2).item(), end='\t')
-                print()
-
+                if VERBOSE:
+                    print(loss.item(), end='\t')
+                    print(torch.max(torch.abs(WWt)).item(), end='\t')
+                    print(torch.mean(WWt**2).item(), end='\t')
+                    print()
 
     def test_cuda(self):
         return
@@ -87,7 +87,6 @@ class OrthogonalTest(unittest.TestCase):
 
         self.assertTrue(torch.max(torch.abs(x - x_re)) < self.tol)
         test_net.to('cpu')
-
 
 
 if __name__ == '__main__':

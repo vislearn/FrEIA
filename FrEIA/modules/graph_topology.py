@@ -49,7 +49,7 @@ class Split(InvertibleModule):
         l_dim = dims_in[0][dim]
 
         if section_sizes is None:
-            assert 2 < n_sections, "'n_sections' must be a least 2"
+            assert 2 <= n_sections, "'n_sections' must be a least 2"
             if l_dim % n_sections != 0:
                 warnings.warn('Split will create sections of unequal size')
             self.split_size_or_sections = (
