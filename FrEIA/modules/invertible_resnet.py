@@ -1,15 +1,15 @@
+from . import InvertibleModule
+
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.nn.functional import conv2d, conv_transpose2d
 
-import numpy as np
 
+class ActNorm(InvertibleModule):
 
-
-class ActNorm(nn.Module):
-
-    def __init__(self, dims_in, init_data=None):
-        super().__init__()
+    def __init__(self, dims_in, dims_c=None, init_data=None):
+        super().__init__(dims_in, dims_c)
         self.dims_in = dims_in[0]
         param_dims = [1, self.dims_in[0]] + [1 for i in range(len(self.dims_in) - 1)]
         self.scale = nn.Parameter(torch.zeros(*param_dims))
@@ -39,20 +39,18 @@ class ActNorm(nn.Module):
             = -data.transpose(0,1).contiguous().view(self.dims_in[0], -1).mean(dim=-1)
         self.init_on_next_batch = False
 
-    def forward(self, x, rev=False):
+    def forward(self, x, rev=False, jac=True):
         if self.init_on_next_batch:
             self.initialize_with_data(x[0])
 
-        if not rev:
-            return [x[0] * self.scale.exp() + self.bias]
-        else:
-            return [(x[0] - self.bias) / self.scale.exp()]
+        jac = (self.scale.sum() * np.prod(self.dims_in[1:])).repeat(x[0].shape[0])
+        if rev:
+            jac = -jac
 
-    def jacobian(self, x, rev=False):
         if not rev:
-            return (self.scale.sum() * np.prod(self.dims_in[1:])).repeat(x[0].shape[0])
+            return [x[0] * self.scale.exp() + self.bias], jac
         else:
-            return -self.jacobian(x)
+            return [(x[0] - self.bias) / self.scale.exp()], jac
 
     def output_dims(self, input_dims):
         assert len(input_dims) == 1, "Can only use 1 input"
@@ -60,7 +58,7 @@ class ActNorm(nn.Module):
 
 
 
-class IResNetLayer(nn.Module):
+class IResNetLayer(InvertibleModule):
     """
     Implementation of the i-ResNet architecture as proposed in
     https://arxiv.org/pdf/1811.00995.pdf
@@ -75,7 +73,8 @@ class IResNetLayer(nn.Module):
                  lipschitz_iterations=10,
                  lipschitz_batchsize=10,
                  spectral_norm_max=0.8):
-        super().__init__()
+
+        super().__init__(dims_in, dims_c)
 
         if internal_size:
             self.internal_size = internal_size
@@ -134,9 +133,14 @@ class IResNetLayer(nn.Module):
                     self.layers[i].weight.data *= self.spectral_norm_max / spectral_norm
 
 
-    def forward(self, x, c=[], rev=False):
+    def forward(self, x, c=[], rev=False, jac=True):
+        if jac:
+            jac = self._jacobian(x, c, rev=rev)
+        else:
+            jac = None
+
         if not rev:
-            return [x[0] + self.residual(x[0])]
+            return [x[0] + self.residual(x[0])], jac
         else:
             # Fixed-point iteration (works if residual has Lipschitz constant < 1)
             y = x[0]
@@ -144,12 +148,12 @@ class IResNetLayer(nn.Module):
                 x_hat = x[0]
                 for i in range(self.fixed_point_iterations):
                     x_hat = y - self.residual(x_hat)
-            return [y - self.residual(x_hat.detach())]
+            return [y - self.residual(x_hat.detach())], jac
 
 
-    def jacobian(self, x, c=[], rev=False):
+    def _jacobian(self, x, c=[], rev=False):
         if rev:
-            return -self.jacobian(x, c=c)
+            return -self._jacobian(x, c=c)
 
         # Initialize log determinant of Jacobian to zero
         batch_size = x[0].shape[0]
