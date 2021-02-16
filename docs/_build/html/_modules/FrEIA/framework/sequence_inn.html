@@ -1,0 +1,258 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FrEIA.framework.sequence_inn &#8212; FrEIA v0.2 documentation</title>
+    
+  <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
+    
+  <link rel="preload" as="script" href="../../../_static/js/index.d3f166471bb80abb5163.js">
+
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    <a class="navbar-brand" href="../../../index.html">
+    
+      <p class="title">FrEIA</p>
+    
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../../FrEIA.framework.html">FrEIA.framework package</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../../FrEIA.modules.html">FrEIA.modules package</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+    <div class="bd-toc-item active">
+    
+  
+    <ul class="nav bd-sidenav">
+        
+        
+        
+        
+        
+      </ul>
+  
+  </nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <h1>Source code for FrEIA.framework.sequence_inn</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span>
+
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+
+<span class="kn">from</span> <span class="nn">FrEIA.modules</span> <span class="kn">import</span> <span class="n">InvertibleModule</span>
+
+
+<div class="viewcode-block" id="SequenceINN"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.SequenceINN">[docs]</a><span class="k">class</span> <span class="nc">SequenceINN</span><span class="p">(</span><span class="n">InvertibleModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simpler than FrEIA.framework.GraphINN:</span>
+<span class="sd">    Only supports a sequential series of modules (no splitting, merging,</span>
+<span class="sd">    branching off).</span>
+<span class="sd">    Has an append() method, to add new blocks in a more simple way than the</span>
+<span class="sd">    computation-graph based approach of GraphINN. For example:</span>
+
+<span class="sd">    ```</span>
+<span class="sd">    inn = SequenceINN(channels, dims_H, dims_W)</span>
+
+<span class="sd">    for i in range(n_blocks):</span>
+<span class="sd">        inn.append(FrEIA.modules.AllInOneBlock, clamp=2.0, permute_soft=True)</span>
+<span class="sd">    inn.append(FrEIA.modules.HaarDownsampling)</span>
+<span class="sd">    # and so on</span>
+<span class="sd">    ```</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SequenceINN.__init__"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.SequenceINN.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">force_tuple_output</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">([</span><span class="n">dims</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">shapes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">dims</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conditions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">force_tuple_output</span> <span class="o">=</span> <span class="n">force_tuple_output</span></div>
+
+<div class="viewcode-block" id="SequenceINN.append"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.SequenceINN.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module_class</span><span class="p">,</span> <span class="n">cond</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cond_shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Append a reversible block from FrEIA.modules to the network.</span>
+<span class="sd">        module_class: Class from FrEIA.modules.</span>
+<span class="sd">        cond (int): index of which condition to use (conditions will be passed as list to forward()).</span>
+<span class="sd">                    Conditioning nodes are not needed for SequenceINN.</span>
+<span class="sd">        cond_shape (tuple[int]): the shape of the condition tensor.</span>
+<span class="sd">        **kwargs: Further keyword arguments that are passed to the constructor of module_class (see example).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">dims_in</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">shapes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cond</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">cond</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;dims_c&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">cond_shape</span><span class="p">]</span>
+
+        <span class="n">module</span> <span class="o">=</span> <span class="n">module_class</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+        <span class="n">ouput_dims</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">output_dims</span><span class="p">(</span><span class="n">dims_in</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">ouput_dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Module has more than one output&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shapes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ouput_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="SequenceINN.output_dims"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.SequenceINN.output_dims">[docs]</a>    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">force_tuple_output</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;You can only call output_dims on a SequentialINN &quot;</span>
+                             <span class="s2">&quot;when setting force_tuple_output=True.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">input_dims</span></div>
+
+<div class="viewcode-block" id="SequenceINN.forward"><a class="viewcode-back" href="../../../FrEIA.framework.html#FrEIA.framework.SequenceINN.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_or_z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">rev</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">jac</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Executes the sequential INN in forward or inverse (rev=True) direction.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            x_or_z: input tensor (in contrast to GraphINN, a list of</span>
+<span class="sd">                    tensors is not supported, as SequenceINN only has</span>
+<span class="sd">                    one input).</span>
+<span class="sd">            c: list of conditions.</span>
+<span class="sd">            rev: whether to compute the network forward or reversed.</span>
+<span class="sd">            jac: whether to compute the log jacobian</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            z_or_x (Tensor): network output.</span>
+<span class="sd">            jac (Tensor): log-jacobian-determinant.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">iterator</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">))</span>
+        <span class="n">jac</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="n">iterator</span> <span class="o">=</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">iterator</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">x_or_z</span><span class="p">):</span>
+            <span class="n">x_or_z</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_or_z</span><span class="p">,)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">iterator</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">x_or_z</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">x_or_z</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="n">jac</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="n">rev</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">x_or_z</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">x_or_z</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">conditions</span><span class="p">[</span><span class="n">i</span><span class="p">]],</span>
+                                           <span class="n">jac</span><span class="o">=</span><span class="n">jac</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="n">rev</span><span class="p">)</span>
+            <span class="n">jac</span> <span class="o">=</span> <span class="n">j</span> <span class="o">+</span> <span class="n">jac</span>
+
+        <span class="k">return</span> <span class="n">x_or_z</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">force_tuple_output</span> <span class="k">else</span> <span class="n">x_or_z</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">jac</span></div></div>
+
+
+</pre></div>
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    
+  <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
+
+
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2021, VLL-HD.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.4.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

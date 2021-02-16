@@ -70,7 +70,7 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/_build/
+docs/_build/doctrees
 
 # PyBuilder
 target/
@@ -129,7 +129,7 @@ dmypy.json
 [Ll]ib
 [Ll]ib64
 [Ll]ocal
-[Ss]cripts
+[S]cripts
 pyvenv.cfg
 pip-selfcheck.json
 

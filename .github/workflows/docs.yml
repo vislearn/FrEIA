@@ -1,0 +1,41 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Docs
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-install:
+    
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: check git log
+      run: |
+        git --no-pager log -2
+        
+
+    - name: Install dependencies and package
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install sphinx pydata-sphinx-theme
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        python -m pip install torch==1.7.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
+        python -m pip install -e .
+
+    - name: Make and publish docs
+      run: |
+          bash .github/scripts/publish-docs.sh
