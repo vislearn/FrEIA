@@ -459,9 +459,9 @@ def topological_order(all_nodes: List[Node], in_nodes: List[InputNode],
                 no_pending_edges.append(in_node)
 
     for in_node in in_nodes:
-        assert in_node in sorted_nodes, f"Error in graph: Input node " \
-                                        f"{in_node} is not connected " \
-                                        f"to any output."
+        if in_node not in sorted_nodes:
+            raise ValueError(f"Error in graph: {in_node} is not connected "
+                             f"to any output.")
 
     if sum(map(len, edges_in_to_out.values())) == 0:
         return sorted_nodes[::-1]
