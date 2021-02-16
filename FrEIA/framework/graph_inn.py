@@ -96,9 +96,10 @@ class Node:
                 raise RuntimeError(
                     f"Cannot parse inputs provided to node '{self.name}'.")
         else:
-            assert isinstance(inputs, Node), "Received object of invalid " \
-                                             "type ({type(inputs)}) as input " \
-                                             "for node '{self.name}'."
+            if not isinstance(inputs, Node):
+                raise ValueError(f"Received object of invalid type "
+                                 f"({type(inputs)}) as input for node "
+                                 f"'{self.name}'.")
             return [(inputs, 0), ]
 
     def __str__(self):
