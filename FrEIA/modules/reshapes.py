@@ -407,7 +407,7 @@ class Reshape(InvertibleModule):
         self.target_dim = output_dims
 
         if len(dims_in) != 1:
-            raise ValueError("Flattening must have exactly 1 input")
+            raise ValueError("Reshape must have exactly 1 input")
         if int(np.prod(dims_in[0])) != int(np.prod(self.target_dim)):
             raise ValueError(f"Incoming dimensions {dims_in[0]} and target_dim"
                              f"{self.target_dim} don't match."
