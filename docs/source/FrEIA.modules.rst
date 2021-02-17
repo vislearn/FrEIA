@@ -51,10 +51,6 @@ Reshaping
 Graph topology
 --------------
 
-.. autoclass:: SplitChannel
-
-.. autoclass:: ConcatChannel
-
 .. autoclass:: Split
 
 .. autoclass:: Concat

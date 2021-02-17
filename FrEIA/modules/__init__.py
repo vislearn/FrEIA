@@ -28,10 +28,8 @@ Reshaping:
 
 Graph topology:
 
-* SplitChannel
-* ConcatChannel
-* Split1D
-* Concat1d
+* Split
+* Concat
 
 Other learned transforms:
 
