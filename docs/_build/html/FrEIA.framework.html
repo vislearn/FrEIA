@@ -181,10 +181,10 @@ computes the log determinant of the (inverse) Jacobian of the forward
 <dl class="py method">
 <dt id="FrEIA.framework.GraphINN.__init__">
 <code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#GraphINN.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.GraphINN.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parameters:
+<dd><p>Args:
 dims_in: list of tuples specifying the shape of the inputs to this</p>
 <blockquote>
-<div><p>operator: dims_in = [shape_x_0, shape_x_1, …]</p>
+<div><p>operator: <code class="docutils literal notranslate"><span class="pre">dims_in</span> <span class="pre">=</span> <span class="pre">[shape_x_0,</span> <span class="pre">shape_x_1,</span> <span class="pre">...]</span></code></p>
 </div></blockquote>
 <dl class="simple">
 <dt>dims_c:  list of tuples specifying the shape of the conditions to</dt><dd><p>this operator.</p>
@@ -361,10 +361,10 @@ calling InvertibleModule#output_dims.</p>
 <dl class="py method">
 <dt id="FrEIA.framework.ReversibleGraphNet.__init__">
 <code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ind_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ind_out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/reversible_graph_net.html#ReversibleGraphNet.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ReversibleGraphNet.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parameters:
+<dd><p>Args:
 dims_in: list of tuples specifying the shape of the inputs to this</p>
 <blockquote>
-<div><p>operator: dims_in = [shape_x_0, shape_x_1, …]</p>
+<div><p>operator: <code class="docutils literal notranslate"><span class="pre">dims_in</span> <span class="pre">=</span> <span class="pre">[shape_x_0,</span> <span class="pre">shape_x_1,</span> <span class="pre">...]</span></code></p>
 </div></blockquote>
 <dl class="simple">
 <dt>dims_c:  list of tuples specifying the shape of the conditions to</dt><dd><p>this operator.</p>
@@ -397,10 +397,10 @@ dims_in: list of tuples specifying the shape of the inputs to this</p>
 <dl class="py method">
 <dt id="FrEIA.framework.ReversibleSequential.__init__">
 <code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/reversible_sequential_net.html#ReversibleSequential.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ReversibleSequential.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parameters:
+<dd><p>Args:
 dims_in: list of tuples specifying the shape of the inputs to this</p>
 <blockquote>
-<div><p>operator: dims_in = [shape_x_0, shape_x_1, …]</p>
+<div><p>operator: <code class="docutils literal notranslate"><span class="pre">dims_in</span> <span class="pre">=</span> <span class="pre">[shape_x_0,</span> <span class="pre">shape_x_1,</span> <span class="pre">...]</span></code></p>
 </div></blockquote>
 <dl class="simple">
 <dt>dims_c:  list of tuples specifying the shape of the conditions to</dt><dd><p>this operator.</p>
@@ -441,10 +441,10 @@ inn = SequenceINN(channels, dims_H, dims_W)</p>
 <dl class="py method">
 <dt id="FrEIA.framework.SequenceINN.__init__">
 <code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/sequence_inn.html#SequenceINN.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.SequenceINN.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parameters:
+<dd><p>Args:
 dims_in: list of tuples specifying the shape of the inputs to this</p>
 <blockquote>
-<div><p>operator: dims_in = [shape_x_0, shape_x_1, …]</p>
+<div><p>operator: <code class="docutils literal notranslate"><span class="pre">dims_in</span> <span class="pre">=</span> <span class="pre">[shape_x_0,</span> <span class="pre">shape_x_1,</span> <span class="pre">...]</span></code></p>
 </div></blockquote>
 <dl class="simple">
 <dt>dims_c:  list of tuples specifying the shape of the conditions to</dt><dd><p>this operator.</p>
