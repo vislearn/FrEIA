@@ -79,11 +79,34 @@ class InvertibleModule(nn.Module):
         raise NotImplementedError(
             f"{self.__class__.__name__} does not provide forward(...) method")
 
-    def jacobian(self, *args, **kwargs):
-        raise DeprecationWarning("module.jacobian(...) is deprecated. "
+    def log_jacobian(self, *args, **kwargs):
+        '''This method is deprecated, and does nothing except raise a warning.'''
+        raise DeprecationWarning("module.log_jacobian(...) is deprecated. "
                                  "module.forward(..., jac=True) returns a "
                                  "tuple (out, jacobian) now.")
 
     def output_dims(self, input_dims: List[Tuple[int]]) -> List[Tuple[int]]:
+        '''
+        Used for shape inference during construction of the graph. MUST be
+        implemented for each subclass of ``InvertibleModule``.
+
+        Args:
+          input_dims: A list with one entry for each input to the module.
+            Even if the module only has one input, must be a list with one
+            entry. Each entry is a tuple giving the shape of that input,
+            excluding the batch dimension. For example for a module with one
+            input, which receives a 32x32 pixel RGB image, ``input_dims`` would
+            be ``[(3, 32, 32)]``
+
+        Returns:
+            A list structured in the same way as ``input_dims``. Each entry
+            represents one output of the module, and the entry is a tuple giving
+            the shape of that output. For example if the module splits the image
+            into a right and a left half, the return value should be
+            ``[(3, 16, 32), (3, 16, 32)]``. It is up to the implementor of the
+            subclass to ensure that the total number of elements in all inputs
+            and all outputs is consistent.
+
+        '''
         raise NotImplementedError(
             f"{self.__class__.__name__} does not provide output_dims(...)")

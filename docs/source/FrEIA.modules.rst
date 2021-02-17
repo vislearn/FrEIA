@@ -2,12 +2,16 @@ FrEIA.modules package
 =====================
 
 .. automodule:: FrEIA.modules
+    :no-members:
 
 
 Abstract template
 -----------------
 
 .. autoclass:: InvertibleModule
+    :exclude-members:
+    :members: forward, output_dims
+
 
 
 Coupling blocks
@@ -26,6 +30,34 @@ Coupling blocks
 .. autoclass:: AffineCouplingOneSided
 
 .. autoclass:: ConditionalAffineTransform
+
+
+Reshaping
+---------
+
+.. autoclass:: IRevNetDownsampling
+
+.. autoclass:: IRevNetUpsampling
+
+.. autoclass:: HaarDownsampling
+
+.. autoclass:: HaarUpsampling
+
+.. autoclass:: Flatten
+
+.. autoclass:: Reshape
+
+
+Graph topology
+--------------
+
+.. autoclass:: SplitChannel
+
+.. autoclass:: ConcatChannel
+
+.. autoclass:: Split
+
+.. autoclass:: Concat
 
 
 Other learned transforms
@@ -62,31 +94,3 @@ Fixed (non-learned) transforms
 .. autoclass:: FixedLinearTransform
 
 .. autoclass:: Fixed1x1Conv
-
-
-Graph topology
---------------
-
-.. autoclass:: SplitChannel
-
-.. autoclass:: ConcatChannel
-
-.. autoclass:: Split
-
-.. autoclass:: Concat
-
-
-Reshaping
----------
-
-.. autoclass:: IRevNetDownsampling
-
-.. autoclass:: IRevNetUpsampling
-
-.. autoclass:: HaarDownsampling
-
-.. autoclass:: HaarUpsampling
-
-.. autoclass:: Flatten
-
-.. autoclass:: Reshape

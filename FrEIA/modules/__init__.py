@@ -9,7 +9,6 @@ Abstract template:
 
 Coupling blocks:
 
-* InvertibleModule
 * AllInOneBlock
 * NICECouplingBlock
 * RNVPCouplingBlock
@@ -17,6 +16,22 @@ Coupling blocks:
 * GINCouplingBlock
 * AffineCouplingOneSided
 * ConditionalAffineTransform
+
+Reshaping:
+
+* IRevNetDownsampling
+* IRevNetUpsampling
+* HaarDownsampling
+* HaarUpsampling
+* Flatten
+* Reshape
+
+Graph topology:
+
+* SplitChannel
+* ConcatChannel
+* Split1D
+* Concat1d
 
 Other learned transforms:
 
@@ -36,22 +51,6 @@ Fixed (non-learned) transforms:
 * PermuteRandom
 * FixedLinearTransform
 * Fixed1x1Conv
-
-Graph topology:
-
-* SplitChannel
-* ConcatChannel
-* Split1D
-* Concat1d
-
-Reshaping:
-
-* IRevNetDownsampling
-* IRevNetUpsampling
-* HaarDownsampling
-* HaarUpsampling',
-* Flatten
-* Reshape
 
 '''
 

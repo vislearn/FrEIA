@@ -64,5 +64,5 @@ autodoc_default_options = {
     'members': True,
     'undoc-members': True,
     'special-members': '__init__',
-    'exclude-members': 'training'
+    'exclude-members': 'training,forward,output_dims'
 }
