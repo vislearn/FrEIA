@@ -21,25 +21,24 @@ class AllInOneBlock(InvertibleModule):
 
     .. math::
 
-        y = VR \\Psi(s_\\mathrm{global}) \\bigodot  \\mathrm{Coupling}\\Big(R^{-1} V^{-1} x\\Big)+ t_\\mathrm{global}
+        y = V\\,R \\; \\Psi(s_\\mathrm{global}) \\odot \\mathrm{Coupling}\\Big(R^{-1} V^{-1} x\\Big)+ t_\\mathrm{global}
 
-    - The inverse pre-permutation of x (:math:`R^{-1} V^{-1}`) is optional (see
+    - The inverse pre-permutation of x (i.e. :math:`R^{-1} V^{-1}`) is optional (see
       ``reverse_permutation`` below).
     - The learned householder reflection matrix
       :math:`V` is also optional all together (see ``learned_householder_permutation``
-      below). 
+      below).
     - For the coupling, the input is split into :math:`x_1, x_2` along
-      the channel dimension.  Then the output of the coupling operation is the
+      the channel dimension. Then the output of the coupling operation is the
       two halves :math:`u = \\mathrm{concat}(u_1, u_2)`.
 
       .. math::
 
-          u_1 = x_1 \\bigodot \\exp \\Big( \\alpha \\mathrm{tanh}\\big( s(x_2) \\big)\\Big) + t(x_2) \\\\
-
-          u_2 = x_2
+          u_1 &= x_1 \\odot \\exp \\Big( \\alpha \\; \\mathrm{tanh}\\big( s(x_2) \\big)\\Big) + t(x_2) \\\\
+          u_2 &= x_2
 
       Because :math:`\\mathrm{tanh}(s) \\in [-1, 1]`, this clamping mechanism prevents
-      exploding values in the exponential.  :math:`\\alpha` can be adjusted.
+      exploding values in the exponential. The hyperparameter :math:`\\alpha` can be adjusted.
 
     '''
 
@@ -66,15 +65,16 @@ class AllInOneBlock(InvertibleModule):
           global_affine_init:
             Initial value for the global affine scaling :math:`s_\mathrm{global}`.
           global_affine_init:
-            'SIGMOID', 'SOFTPLUS', or 'EXP'. Defines the activation to be used
+            ``'SIGMOID'``, ``'SOFTPLUS'``, or ``'EXP'``. Defines the activation to be used
             on the beta for the global affine scaling (:math:`\\Psi` above).
           permute_soft:
             bool, whether to sample the permutation matrix :math:`R` from :math:`SO(N)`,
             or to use hard permutations instead. Note, ``permute_soft=True`` is very slow
             when working with >512 dimensions.
           learned_householder_permutation:
-            Int, if >0,  use that many learned householder reflections. Slow if
-            large number. Dubious whether it actually helps network performance.
+            Int, if >0, turn on the matrix :math:`V` above, that represents
+            multiple learned householder reflections. Slow if large number.
+            Dubious whether it actually helps network performance.
           reverse_permutation:
             Reverse the permutation before the block, as introduced by Putzky
             et al, 2019. Turns on the :math:`R^{-1} V^{-1}` pre-multiplication above.

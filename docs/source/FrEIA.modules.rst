@@ -13,8 +13,6 @@ Abstract template
 Coupling blocks
 ---------------
 
-.. autoclass:: InvertibleModule
-
 .. autoclass:: AllInOneBlock
 
 .. autoclass:: NICECouplingBlock
@@ -87,9 +85,8 @@ Reshaping
 
 .. autoclass:: HaarDownsampling
 
-.. autoclass:: HaarUpsampling',
+.. autoclass:: HaarUpsampling
 
 .. autoclass:: Flatten
 
 .. autoclass:: Reshape
-

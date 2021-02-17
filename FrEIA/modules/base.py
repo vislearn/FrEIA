@@ -25,10 +25,10 @@ class InvertibleModule(nn.Module):
 
     The ``module`` returns :math:`\\log \\det J = \\log \\left| \\det \\frac{\\partial f}{\\partial x} \\right|`
     of the operation in forward mode, and
-    :math:`-\\log | \\det J | = \\log \\left| \\det \\frac{\\partial f^{-1}}{\\partial z} \\right| = -\\log \\left| \\det \\frac{\\partial f}{\\partial x} \\right`
+    :math:`-\\log | \\det J | = \\log \\left| \\det \\frac{\\partial f^{-1}}{\\partial z} \\right| = -\\log \\left| \\det \\frac{\\partial f}{\\partial x} \\right|`
     in backward mode (``rev=True``).
 
-    Then, ``torch.allclose(x, x_rev[0]) == True`` and ``jac == -jac_rev``.
+    Then, ``torch.allclose(x, x_rev) == True`` and ``torch.allclose(jac, -jac_rev) == True``.
     """
 
     def __init__(self, dims_in: Iterable[Tuple[int]],
@@ -64,9 +64,8 @@ class InvertibleModule(nn.Module):
 
           .. math::
 
-              J = \\log \\det \\frac{\\partial f}{\\partial x} \\\\
-
-              -J = \\log \\det \\frac{\\partial f^{-1}}{\\partial z}.
+              J &= \\log \\det \\frac{\\partial f}{\\partial x} \\\\
+              -J &= \\log \\det \\frac{\\partial f^{-1}}{\\partial z}.
 
           Any subclass MUST return :math:`J` for forward evaluation (``rev=False``),
           and :math:`-J` for backward evaluation (``rev=True``).
