@@ -8,7 +8,7 @@ class InvertibleModule(nn.Module):
     """
     Base class for all invertible modules in FrEIA.
 
-    Given ``module``, an instance of some InvertibleOperator.
+    Given ``module``, an instance of some InvertibleModule.
     This ``module`` shall be invertible in its input dimensions,
     so that the input can be recovered by applying the module
     in backwards mode (``rev=True``), not to be confused with
@@ -21,11 +21,11 @@ class InvertibleModule(nn.Module):
         z, jac = module([x], [c], jac=True)
 
         # Backward mode
-        x_rev, jac_rev = module(z, [c], rev=True, jac=True)
+        x_rev, jac_rev = module(z, [c], rev=True)
 
-    The ``module`` returns :math:`\\log \\det J = \\log \\det \\frac{\\partial f}{\\partial x}`
+    The ``module`` returns :math:`\\log \\det J = \\log \\left| \\det \\frac{\\partial f}{\\partial x} \\right|`
     of the operation in forward mode, and
-    :math:`-\\log \\det J = \\log \\det \\frac{\\partial f^{-1}}{\\partial z} = -\\log \\det \\frac{\\partial f}{\\partial x}`
+    :math:`-\\log | \\det J | = \\log \\left| \\det \\frac{\\partial f^{-1}}{\\partial z} \\right| = -\\log \\left| \\det \\frac{\\partial f}{\\partial x} \\right`
     in backward mode (``rev=True``).
 
     Then, ``torch.allclose(x, x_rev[0]) == True`` and ``jac == -jac_rev``.
@@ -53,7 +53,8 @@ class InvertibleModule(nn.Module):
         Perform a forward (default, ``rev=False``) or backward pass (``rev=True``)
         through this module/operator.
 
-        *Note to implementers:*
+        **Note to implementers:**
+
         - Subclasses MUST return a Jacobian when ``jac=True``, but CAN return a
           valid Jacobian when ``jac=False`` (not punished). The latter is only recommended
           if the computation of the Jacobian is trivial.
@@ -63,9 +64,9 @@ class InvertibleModule(nn.Module):
 
           .. math::
 
-              J &= \\log \\det \\frac{\\partial f}{\\partial x} \\\\
+              J = \\log \\det \\frac{\\partial f}{\\partial x} \\\\
 
-              -J &= \\log \\det \\frac{\\partial f^{-1}}{\\partial z}.
+              -J = \\log \\det \\frac{\\partial f^{-1}}{\\partial z}.
 
           Any subclass MUST return :math:`J` for forward evaluation (``rev=False``),
           and :math:`-J` for backward evaluation (``rev=True``).
