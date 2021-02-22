@@ -9,7 +9,7 @@ Abstract template
 -----------------
 
 .. autoclass:: InvertibleModule
-    :exclude-members:
+    :exclude-members: training
     :members: forward, output_dims
 
 

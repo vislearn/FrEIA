@@ -17,20 +17,26 @@ class IRevNetDownsampling(InvertibleModule):
 
     def __init__(self, dims_in, dims_c=None, legacy_backend: bool = False):
         '''See docstring of base class (FrEIA.modules.InvertibleModule) for more.
+
         Args:
           legacy_backend: If True, uses the splitting and concatenating method,
             adapted from
             github.com/jhjacobsen/pytorch-i-revnet/blob/master/models/model_utils.py
             for the use in FrEIA. Is usually slower on GPU.
             If False, uses a 2d strided convolution with a kernel representing
-            the downsampling.  Note that the ordering of the output channels
-            will be different.  If pixels in each patch in channel 1
-            are a1, b1, ..., and in channel 2 are a2, b2, ...
+            the downsampling. Note that the ordering of the output channels
+            will be different. If pixels in each patch in channel 1
+            are ``a1, b1,...``, and in channel 2 are ``a2, b2,...``
             Then the output channels will be the following:
-            legacy_backend=True: a1, a2, ..., b1, b2, ..., c1, c2, ...
-            legacy_backend=False: a1, b1, ..., a2, b2, ..., a3, b3, ...
+
+            ``legacy_backend=True: a1, a2, ..., b1, b2, ..., c1, c2, ...``
+
+            ``legacy_backend=False: a1, b1, ..., a2, b2, ..., a3, b3, ...``
+
             (see also order_by_wavelet in module HaarDownsampling)
-            Usually this difference is completely irrelevant.
+            Generally this difference is completely irrelevant,
+            unless a certaint subset of pixels or channels is supposed to be
+            split off or extracted.
         '''
         super().__init__(dims_in, dims_c)
 
@@ -132,20 +138,26 @@ class IRevNetUpsampling(IRevNetDownsampling):
 
     def __init__(self, dims_in, dims_c=None, legacy_backend: bool = False):
         '''See docstring of base class (FrEIA.modules.InvertibleModule) for more.
+
         Args:
           legacy_backend: If True, uses the splitting and concatenating method,
             adapted from
             github.com/jhjacobsen/pytorch-i-revnet/blob/master/models/model_utils.py
             for the use in FrEIA. Is usually slower on GPU.
-            If False, uses a 2d strided convolution with a kernel representing
-            the downsampling.  Note that the ordering of the output channels
-            will be different.  If pixels in each patch in channel 1
-            are a1, b1, ..., and in channel 2 are a2, b2, ...
-            Then the output channels will be the following:
-            legacy_backend=True: a1, a2, ..., b1, b2, ..., c1, c2, ...
-            legacy_backend=False: a1, b1, ..., a2, b2, ..., a3, b3, ...
+            If False, uses a 2d strided transposed convolution with a representing
+            the downsampling. Note that the expected ordering of the input channels
+            will be different. If pixels in each output patch in channel 1
+            are ``a1, b1,...``, and in channel 2 are ``a2, b2,...``
+            Then the expected input channels are be the following:
+
+            ``legacy_backend=True: a1, a2, ..., b1, b2, ..., c1, c2, ...``
+
+            ``legacy_backend=False: a1, b1, ..., a2, b2, ..., a3, b3, ...``
+
             (see also order_by_wavelet in module HaarDownsampling)
-            Usually this difference is completely irrelevant.
+            Generally this difference is completely irrelevant,
+            unless a certaint subset of pixels or channels is supposed to be
+            split off or extracted.
         '''
 
         # have to initialize with the OUTPUT shape, because everything is
@@ -184,20 +196,24 @@ class HaarDownsampling(InvertibleModule):
                  order_by_wavelet: bool = False,
                  rebalance: float = 1.):
         '''See docstring of base class (FrEIA.modules.InvertibleModule) for more.
+
         Args:
           order_by_wavelet: Whether to group the output by original channels or
-            by wavelet. E.g. if the average, vertical, horizontal and diagonal
-            wavelets for channel 1 are a1, v1, h1, d1, those for channel 2 are
-            a2, v2, h2, d2, etc, then the output channels will be structured as
+            by wavelet. I.e. if the average, vertical, horizontal and diagonal
+            wavelets for channel 1 are ``a1, v1, h1, d1``, those for channel 2 are
+            ``a2, v2, h2, d2``, etc, then the output channels will be structured as
             follows:
-            set to True: a1, a2, ..., v1, v2, ..., h1, h2, ..., d1, d2, ...
-            set to False: a1, v1, h1, d1, a2, v2, h2, d2, ...
-            The True option is slightly slower to compute than the False option.
+
+            set to ``True: a1, a2, ..., v1, v2, ..., h1, h2, ..., d1, d2, ...``
+
+            set to ``False: a1, v1, h1, d1, a2, v2, h2, d2, ...``
+
+            The ``True`` option is slightly slower to compute than the ``False`` option.
             The option is useful if e.g. the average channels should be split
-            off by a FrEIA.modules.Split. Then, setting order_by_wavelet=True
+            off by a FrEIA.modules.Split. Then, setting ``order_by_wavelet=True``
             allows to split off the first quarter of channels to isolate the
             average wavelets only.
-          rebalance: Must !=0. There exist different conventions how to define
+          rebalance: Must be !=0. There exist different conventions how to define
             the Haar wavelets. The wavelet components in the forward direction
             are multiplied with this factor, and those in the inverse direction
             are adjusted accordingly, so that the module as a whole is
@@ -309,20 +325,23 @@ class HaarUpsampling(HaarDownsampling):
                  order_by_wavelet: bool = False,
                  rebalance: float = 1.):
         '''See docstring of base class (FrEIA.modules.InvertibleModule) for more.
+
         Args:
-          order_by_wavelet: Whether to group the output by original channels or
-            by wavelet. E.g. if the average, vertical, horizontal and diagonal
-            wavelets for channel 1 are a1, v1, h1, d1, those for channel 2 are
-            a2, v2, h2, d2, etc, then the output channels will be structured as
-            follows:
-            set to True: a1, a2, ..., v1, v2, ..., h1, h2, ..., d1, d2, ...
-            set to False: a1, v1, h1, d1, a2, v2, h2, d2, ...
-            The True option is slightly slower to compute than the False option.
-            The option is useful if e.g. the average channels should be split
-            off by a FrEIA.modules.Split. Then, setting order_by_wavelet=True
-            allows to split off the first quarter of channels to isolate the
-            average wavelets only.
-          rebalance: Must !=0. There exist different conventions how to define
+          order_by_wavelet: Expected grouping of the input channels by wavelet or
+            by output channel. I.e. if the average, vertical, horizontal and diagonal
+            wavelets for channel 1 are ``a1, v1, h1, d1``, those for channel 2 are
+            ``a2, v2, h2, d2``, etc, then the input channels are taken as follows:
+
+            set to ``True: a1, a2, ..., v1, v2, ..., h1, h2, ..., d1, d2, ...``
+
+            set to ``False: a1, v1, h1, d1, a2, v2, h2, d2, ...``
+
+            The ``True`` option is slightly slower to compute than the ``False`` option.
+            The option is useful if e.g. the input has been concatentated from average
+            channels and the higher-frequency channels. Then, setting
+            ``order_by_wavelet=True`` allows to split off the first quarter of
+            channels to isolate the average wavelets only.
+          rebalance: Must be !=0. There exist different conventions how to define
             the Haar wavelets. The wavelet components in the forward direction
             are multiplied with this factor, and those in the inverse direction
             are adjusted accordingly, so that the module as a whole is
@@ -383,11 +402,12 @@ class Flatten(InvertibleModule):
 class Reshape(InvertibleModule):
     '''Reshapes N-D tensors into target dim tensors. Note that the reshape resulting from
     e.g. (3, 32, 32) -> (12, 16, 16) will not necessarily be spatially sensible.
-    See IRevNetDownsampling, IRevNetUpsampling, HaarDownsampling, HaarUpsampling
-    for spatially meaningful reshaping operations.'''
+    See ``IRevNetDownsampling``, ``IRevNetUpsampling``, ``HaarDownsampling``, 
+    ``HaarUpsampling`` for spatially meaningful reshaping operations.'''
 
     def __init__(self, dims_in, dims_c=None, output_dims: Iterable[int] = None, target_dim = None):
         '''See docstring of base class (FrEIA.modules.InvertibleModule) for more.
+
         Args:
           output_dims: The shape the reshaped output is supposed to have (not
             including batch dimension)

@@ -18,6 +18,7 @@ class _BaseCouplingBlock(InvertibleModule):
                  clamp_activation: Union[str, Callable] = "ATAN"):
         '''
         Additional args in docstring of base class.
+
         Args:
           clamp: Soft clamping for the multiplicative component. The
             amplification or attenuation of each input dimension can be at most
@@ -87,6 +88,7 @@ class _BaseCouplingBlock(InvertibleModule):
 
     def _coupling1(self, x1, u2, rev=False):
         '''The first/left coupling operation in a two-sided coupling block.
+
         Args:
           x1 (Tensor): the 'active' half being transformed.
           u2 (Tensor): the 'passive' half, including the conditions, from
@@ -100,6 +102,7 @@ class _BaseCouplingBlock(InvertibleModule):
 
     def _coupling2(self, x2, u1, rev=False):
         '''The second/right coupling operation in a two-sided coupling block.
+
         Args:
           x2 (Tensor): the 'active' half being transformed.
           u1 (Tensor): the 'passive' half, including the conditions, from
@@ -129,6 +132,7 @@ class NICECouplingBlock(_BaseCouplingBlock):
                  subnet_constructor: callable = None):
         '''
         Additional args in docstring of base class.
+
         Args:
           subnet_constructor:
             Callable function, class, or factory object, with signature
@@ -167,6 +171,7 @@ class RNVPCouplingBlock(_BaseCouplingBlock):
                  clamp_activation: Union[str, Callable] = "ATAN"):
         '''
         Additional args in docstring of base class.
+
         Args:
           subnet_constructor: function or class, with signature
             constructor(dims_in, dims_out).  The result should be a torch
@@ -239,6 +244,7 @@ class GLOWCouplingBlock(_BaseCouplingBlock):
                  clamp_activation: Union[str, Callable] = "ATAN"):
         '''
         Additional args in docstring of base class.
+
         Args:
           subnet_constructor: function or class, with signature
             constructor(dims_in, dims_out).  The result should be a torch
@@ -317,6 +323,7 @@ class GINCouplingBlock(_BaseCouplingBlock):
                  clamp_activation: Union[str, Callable] = "ATAN"):
         '''
         Additional args in docstring of base class.
+
         Args:
           subnet_constructor: function or class, with signature
             constructor(dims_in, dims_out).  The result should be a torch
@@ -386,6 +393,7 @@ class AffineCouplingOneSided(_BaseCouplingBlock):
                  clamp_activation: Union[str, Callable] = "ATAN"):
         '''
         Additional args in docstring of base class.
+
         Args:
           subnet_constructor: function or class, with signature
             constructor(dims_in, dims_out).  The result should be a torch
@@ -441,6 +449,7 @@ class ConditionalAffineTransform(_BaseCouplingBlock):
                  clamp_activation: Union[str, Callable] = "ATAN"):
         '''
         Additional args in docstring of base class.
+
         Args:
           subnet_constructor: function or class, with signature
             constructor(dims_in, dims_out).  The result should be a torch
