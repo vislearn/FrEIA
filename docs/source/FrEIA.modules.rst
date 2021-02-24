@@ -65,8 +65,6 @@ Other learned transforms
 
 .. autoclass:: InvAutoAct
 
-.. autoclass:: InvAutoActFixed
-
 .. autoclass:: InvAutoActTwoSided
 
 .. autoclass:: InvAutoConv2D

@@ -1,5 +1,6 @@
 from . import InvertibleModule
 
+import warnings
 from copy import deepcopy
 
 import numpy as np
@@ -9,72 +10,121 @@ import torch.nn.functional as f
 
 
 class InvAutoActTwoSided(InvertibleModule):
+    '''A nonlinear invertible activation analogous to Leaky ReLU, with
+    learned slopes.
 
-    def __init__(self, dims_in, dims_c=None, clamp=5.):
+    The slopes are learned separately for each entry along the first
+    intput dimenison (after the batch dimenison). I.e. element-wise for
+    flattened inputs, channel-wise for image inputs, etc.
+    Internally, the slopes are learned in log-space, to ensure they stay
+    strictly > 0:
+
+    .. math::
+
+        x \\geq 0 &\\implies g(x) = x \\odot \\exp(\\alpha_+)
+
+        x < 0 &\\implies g(x) = x \\odot \\exp(\\alpha_-) x
+    '''
+
+    def __init__(self, dims_in, dims_c=None, init_pos: float = 2.0, init_neg: float = 0.5, learnable: bool = True):
+        '''
+        Args:
+          init_pos: The initial slope for the positive half of the activation. Must be > 0.
+            Note that the initial value accounts for the exp-activation, meaning
+            :math:`\\exp(\\alpha_+) =` ``init_pos``.
+          init_pos: The initial slope for the negative half of the activation. Must be > 0.
+            The initial value accounts for the exp-activation the same as init_pos.
+          learnable: If False, the slopes are fixed at their initial value, and not learned.
+        '''
         super().__init__(dims_in, dims_c)
-        self.clamp = clamp
-        self.alpha_pos = nn.Parameter(0.05 * torch.randn(dims_in[0][0]) + 0.7)
-        self.alpha_neg = nn.Parameter(0.05 * torch.randn(dims_in[0][0]) - 0.7)
+        self.tensor_rank = len(dims_in[0])
 
-    def e(self, s):
-        return torch.exp(self.clamp * 0.636 * torch.atan(s/self.clamp))
+        self.alpha_pos = np.log(init_pos) * torch.ones(dims_in[0][0])
+        self.alpha_pos = self.alpha_pos.view(1, -1, *([1] * (self.tensor_rank - 1)))
+        self.alpha_pos = nn.Parameter(self.alpha_pos)
 
-    def log_e(self, s):
-        '''log of the nonlinear function e'''
-        return self.clamp * 0.636 * torch.atan(s/self.clamp)
+        self.alpha_neg = np.log(init_neg) * torch.ones(dims_in[0][0])
+        self.alpha_neg = self.alpha_neg.view(1, -1, *([1] * (self.tensor_rank - 1)))
+        self.alpha_neg = nn.Parameter(self.alpha_neg)
+
+        if not learnable:
+            self.alpha_pos.requires_grad = False
+            self.alpha_neg.requires_grad = False
 
     def forward(self, x, rev=False, jac=True):
-        j = torch.sum(self.log_e(self.alpha_pos + 0.5 * (self.alpha_neg - self.alpha_pos) * (1 - x[0].sign())), dim=1)
 
-        if not rev:
-            return [x[0] * self.e(self.alpha_pos + 0.5 * (self.alpha_neg - self.alpha_pos) * (1 - x[0].sign()))], j
+        log_slope = self.alpha_pos + 0.5 * (self.alpha_neg - self.alpha_pos) * (1 - x[0].sign())
+        if rev:
+            log_slope *= -1
+
+        if jac:
+            j = torch.sum(log_slope, dim=tuple(range(1, self.tensor_rank + 1)))
         else:
-            return [x[0] * self.e(-self.alpha_pos - 0.5 * (self.alpha_neg - self.alpha_pos) * (1 - x[0].sign()))], -j
+            j = None
+
+        return [x[0] * torch.exp(log_slope)], j
 
     def output_dims(self, input_dims):
-        assert len(input_dims) == 1, "Can only use 1 input"
+        if len(input_dims) != 1:
+            raise ValueError(f"{self.__class__.__name__} can only use 1 input")
         return input_dims
 
 
 class InvAutoAct(InvertibleModule):
+    '''A nonlinear invertible activation analogous to Leaky ReLU, with
+    learned slopes.
 
-    def __init__(self, dims_in, dims_c=None):
+    The slope is symmetric between the positive and negative side, i.e.
+
+    .. math::
+
+        x \\geq 0 &\\implies g(x) = x \\odot \\exp(\\alpha)
+
+        x < 0 &\\implies g(x) = x \\oslash \\exp(\\alpha)
+
+    A separate slope is learned for each entry along the first
+    intput dimenison (after the batch dimenison). I.e. element-wise for
+    flattened inputs, channel-wise for image inputs, etc.
+    '''
+
+    def __init__(self, dims_in, dims_c=None, slope_init=2.0, learnable=True):
+        '''
+        Args:
+          slope_init: The initial value of the slope on the positive side.
+            Accounts for the exp-activation, i.e. :math:`\\exp(\\alpha) =` ``slope_init``.
+          learnable: If False, the slopes are fixed at their initial value, and not learned.
+        '''
         super().__init__(dims_in, dims_c)
-        self.alpha = nn.Parameter(0.01 * torch.randn(dims_in[0][0]) + 0.7)
+
+        self.tensor_rank = len(dims_in[0])
+        self.alpha = np.log(slope_init) * torch.ones(1, dims_in[0][0], *([1] * (len(dims_in[0]) - 1)))
+        self.alpha = nn.Parameter(self.alpha)
+
+        if not learnable:
+            self.alpha.requires_grad = False
 
     def forward(self, x, rev=False, jac=True):
+        log_slope = self.alpha * x[0].sign()
+        if rev:
+            log_slope *= -1
+
         if jac:
-            raise NotImplementedError("TODO: Jacobian is not implemented for InvAutoAct")
-
-        if not rev:
-            return [x[0] * torch.exp(self.alpha * x[0].sign())], None
+            j = torch.sum(log_slope, dim=tuple(range(1, self.tensor_rank + 1)))
         else:
-            return [x[0] * torch.exp(self.alpha * x[0].sign().neg_())], None
+            j = None
+
+        return [x[0] * torch.exp(log_slope)], j
 
     def output_dims(self, input_dims):
-        assert len(input_dims) == 1, "Can only use 1 input"
+        if len(input_dims) != 1:
+            raise ValueError(f"{self.__class__.__name__} can only use 1 input")
         return input_dims
 
 
-class InvAutoActFixed(nn.Module):
-
-    def __init__(self, dims_in, dims_c=None, alpha=2.0):
-        super().__init__(dims_in, dims_c)
-        self.alpha = alpha
-        self.alpha_inv = 1. / alpha
-
-        self.log_alpha = np.log(alpha)
-
-    def forward(self, x, rev=False, jac=True):
-        j = torch.sum(self.log_alpha * x[0].sign(), dim=1)
-        if not rev:
-            return [self.alpha_inv * f.leaky_relu(x[0], self.alpha*self.alpha)], j
-        else:
-            return [self.alpha * f.leaky_relu(x[0], self.alpha_inv*self.alpha_inv)], -j
-
-    def output_dims(self, input_dims):
-        assert len(input_dims) == 1, "Can only use 1 input"
-        return input_dims
+class InvAutoActFixed(InvAutoAct):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        warnings.warn("Deprecated: please use InvAutoAct with the learnable=False argument.")
 
 
 class LearnedElementwiseScaling(InvertibleModule):
