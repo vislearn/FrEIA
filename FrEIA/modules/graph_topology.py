@@ -108,7 +108,7 @@ class Concat(InvertibleModule):
             A list of tuples containing the non-batch dimensionality of all
             incoming tensors. Handled automatically during compute graph setup.
             Dimensionality of incoming tensors must be identical, except in the
-            merge dimension `dim`. Concat only makes sense with multiple input
+            merge dimension ``dim``. Concat only makes sense with multiple input
             tensors.
           dim:
             Index of the dimension along which to concatenate, not counting the

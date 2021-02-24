@@ -81,7 +81,7 @@ class SequenceINN(InvertibleModule):
         """
 
         iterator = range(len(self.module_list))
-        jac = 0
+        log_det_jac = 0
 
         if rev:
             iterator = reversed(iterator)
@@ -94,8 +94,8 @@ class SequenceINN(InvertibleModule):
             else:
                 x_or_z, j = self.module_list[i](x_or_z, c=[c[self.conditions[i]]],
                                            jac=jac, rev=rev)
-            jac = j + jac
+            log_det_jac = j + log_det_jac
 
-        return x_or_z if self.force_tuple_output else x_or_z[0], jac
+        return x_or_z if self.force_tuple_output else x_or_z[0], log_det_jac
 
 
