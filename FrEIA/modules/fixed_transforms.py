@@ -31,11 +31,8 @@ class PermuteRandom(InvertibleModule):
         for i, p in enumerate(self.perm):
             self.perm_inv[p] = i
 
-        self.perm = nn.Parameter(torch.LongTensor(self.perm))
-        self.perm.requires_grad = False
-
-        self.perm_inv = nn.Parameter(torch.LongTensor(self.perm_inv))
-        self.perm_inv.requires_grad = False
+        self.perm = nn.Parameter(torch.LongTensor(self.perm), requires_grad=False)
+        self.perm_inv = nn.Parameter(torch.LongTensor(self.perm_inv), requires_grad=False)
 
     def forward(self, x, rev=False, jac=True):
         if not rev:
