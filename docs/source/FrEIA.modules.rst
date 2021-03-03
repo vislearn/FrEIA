@@ -61,23 +61,15 @@ Other learned transforms
 
 .. autoclass:: ActNorm
 
-.. autoclass:: IResNetLayer
-
 .. autoclass:: InvAutoAct
 
 .. autoclass:: InvAutoActTwoSided
-
-.. autoclass:: InvAutoConv2D
-
-.. autoclass:: InvAutoFC
 
 .. autoclass:: LearnedElementwiseScaling
 
 .. autoclass:: OrthogonalTransform
 
 .. autoclass:: HouseholderPerm
-
-.. autoclass:: GaussianMixtureModel
 
 
 Fixed (non-learned) transforms
@@ -88,3 +80,16 @@ Fixed (non-learned) transforms
 .. autoclass:: FixedLinearTransform
 
 .. autoclass:: Fixed1x1Conv
+
+
+Approximately- or semi-invertible transforms
+--------------------------------------------
+
+.. autoclass:: InvAutoFC
+
+.. autoclass:: InvAutoConv2D
+
+.. autoclass:: IResNetLayer
+
+.. autoclass:: GaussianMixtureModel
+

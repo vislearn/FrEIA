@@ -78,9 +78,32 @@ def correct_weights(module, grad_in, grad_out):
         orth_correction(module.weights.data)
 
 class OrthogonalTransform(InvertibleModule):
-    '''  '''
+    '''Learnable orthogonal matrix, with additional scaling and bias term.
 
-    def __init__(self, dims_in, dims_c=None, correction_interval=256, clamp=5.):
+    The matrix is learned as a completely free weight matrix, and projected back
+    to the Stiefel manifold (set of all orthogonal matrices) in regular intervals.
+    With input x, the output z is computed as
+
+    .. math::
+
+        z = \\Psi(s) \\odot  Rx + b
+
+    R is the orthogonal matrix, b the bias, s the scaling, and :math:`\\Psi`
+    is a clamped scaling activation 
+    :math:`\\Psi(\\cdot) = \\exp(\\frac{2 \\alpha}{\\pi} \\mathrm{atan}(\\cdot))`.
+    '''
+
+    def __init__(self, dims_in, dims_c=None,
+                 correction_interval: int = 256,
+                 clamp: float = 5.):
+        '''
+        Args:
+
+          correction_interval: After this many gradient steps, the matrix is
+            projected back to the Stiefel manifold to make it perfectly orthogonal.
+          clamp: clamps the log scaling for stability. Corresponds to
+            :math:`alpha` above.
+        '''
         super().__init__(dims_in, dims_c)
         self.width = dims_in[0][0]
         self.clamp = clamp
@@ -94,43 +117,77 @@ class OrthogonalTransform(InvertibleModule):
 
         self.weights = nn.Parameter(self.weights)
 
-        self.bias = nn.Parameter(0.05 * torch.randn(self.width))
-        self.scaling = nn.Parameter(0.02 * torch.randn(self.width))
+        self.bias = nn.Parameter(0.05 * torch.randn(1, self.width))
+        self.scaling = nn.Parameter(0.02 * torch.randn(1, self.width))
 
         self.register_backward_hook(correct_weights)
 
-    def e(self, s):
-        return torch.exp(self.clamp * 0.636 * torch.atan(s/self.clamp))
-
-    def log_e(self, s):
+    def _log_e(self, s):
         '''log of the nonlinear function e'''
         return self.clamp * 0.636 * torch.atan(s/self.clamp)
 
     def forward(self, x, rev=False, jac=True):
-        j = torch.sum(self.log_e(self.scaling)).view(1,).expand(x[0].shape[0])
+        log_scaling = self._log_e(self.scaling)
+        j = torch.sum(log_scaling, dim=1).expand(x[0].shape[0])
+
         if rev:
-            return [(x[0] / self.e(self.scaling) - self.bias).mm(self.weights.t())], -j
-        return [(x[0].mm(self.weights) + self.bias) * self.e(self.scaling)], j
+            return [(x[0] * torch.exp(-log_scaling) - self.bias).mm(self.weights.t())], -j
+        return [(x[0].mm(self.weights) + self.bias) * torch.exp(log_scaling)], j
 
     def output_dims(self, input_dims):
-        assert len(input_dims) == 1, "Can only use 1 input"
+        if len(input_dims) != 1:
+            raise ValueError(f"{self.__class__.__name__} can only use 1 input")
+        if len(input_dims[0]) != 1:
+            raise ValueError(f"{self.__class__.__name__} input tensor must be 1D")
         return input_dims
 
 
 class HouseholderPerm(InvertibleModule):
+    '''
+    Fast product of a series of learned Householder matrices.
+    This implementation is based on work by Mathiesen et al, 2020:
+    https://invertibleworkshop.github.io/accepted_papers/pdfs/10.pdf
+    Only works for flattened 1D input tensors.
 
-    def __init__(self, dims_in, dims_c=[], n_reflections=1, fixed=False):
+    The module can be used in one of two ways:
+
+    * Without a condition, the reflection vectors that form the householder
+      matrices are learned as free parameters
+    * Used as a conditional module, the condition conatins the reflection vectors.
+      The module does not have any learnable parameters in that case, but the
+      condition can be backpropagated (e.g. to predict the reflection vectors by
+      some other network). The condition must have the shape
+      ``(input size, n_reflections)``.
+    '''
+
+    def __init__(self, dims_in, dims_c=None,
+                 n_reflections: int = 1,
+                 fixed: bool = False):
+        '''
+        Args:
+
+          n_reflections: How many subsequent householder reflections to perform.
+            Each householder reflection is learned independently.
+            Must be ``>= 2`` due to implementation reasons.
+          fixed: If true, the householder matrices are initialized randomly and
+            only computed once, and then kept fixed from there on.
+        '''
         super().__init__(dims_in, dims_c)
         self.width = dims_in[0][0]
         self.n_reflections = n_reflections
         self.fixed = fixed
-        self.conditional = (len(dims_c) > 0)
+        self.conditional = (not dims_c is None) and (len(dims_c) > 0)
+
+        if self.n_reflections < 2:
+            raise ValueError("Need at least 2 householder reflections.")
 
         if self.conditional:
-            assert len(dims_c) == 1, "No more than one conditional input supported."
-            assert not self.fixed, "Permutation can't be fixed and conditional simultaneously."
-            assert np.prod(dims_c[0]) == self.width * self.n_reflections,\
-                "Dimensions of input, n_reflections and condition don't agree."
+            if len(dims_c) != 1:
+                raise ValueError("No more than one conditional input supported.")
+            if self.fixed:
+                raise ValueError("Permutation can't be fixed and conditional simultaneously.")
+            if np.prod(dims_c[0]) != self.width * self.n_reflections:
+                raise ValueError("Dimensions of input, n_reflections and condition don't agree.")
         else:
             if self.fixed:
                 # init randomly
@@ -167,5 +224,8 @@ class HouseholderPerm(InvertibleModule):
             return [x[0].mm(W.transpose(-1, -2))], 0.
 
     def output_dims(self, input_dims):
-        assert len(input_dims) == 1, "Can only use 1 input"
+        if len(input_dims) != 1:
+            raise ValueError(f"{self.__class__.__name__} can only use 1 input")
+        if len(input_dims[0]) != 1:
+            raise ValueError(f"{self.__class__.__name__} input tensor must be 1D")
         return input_dims
