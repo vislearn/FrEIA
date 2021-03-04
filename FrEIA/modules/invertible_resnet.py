@@ -1,5 +1,7 @@
 from . import InvertibleModule
 
+from typing import Union
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -7,8 +9,30 @@ from torch.nn.functional import conv2d, conv_transpose2d
 
 
 class ActNorm(InvertibleModule):
+    '''A technique to achieve a stable initlization.
 
-    def __init__(self, dims_in, dims_c=None, init_data=None):
+    First introduced in Kingma et al 2018: https://arxiv.org/abs/1807.03039
+    The module is similar to a traditional batch normalization layer, but the
+    data mean and standard deviation is only computed for the first batch of
+    data. To ensure invertibility, the mean and standard devation are kept
+    fixed from that point on.
+    Using ActNorm layers interspersed throughout an INN ensures that
+    intermediate outputs of the INN have standard deviation 1 and mean 0, so
+    that the training is stable at the start, avoiding exploding or zeroed
+    outputs.
+    Just as with standard batch normalization layers, ActNorm contains
+    additional channel-wise scaling and bias parameters.
+    '''
+
+    def __init__(self, dims_in, dims_c=None, init_data: Union[torch.Tensor, None] = None):
+        '''
+        Args:
+          init_data: If ``None``, use the first batch of data passed through this
+            module to initialize the mean and standard deviation.
+            If ``torch.Tensor``, use this as data to initialize instead of the
+            first real batch.
+        '''
+
         super().__init__(dims_in, dims_c)
         self.dims_in = dims_in[0]
         param_dims = [1, self.dims_in[0]] + [1 for i in range(len(self.dims_in) - 1)]
@@ -16,7 +40,7 @@ class ActNorm(InvertibleModule):
         self.bias = nn.Parameter(torch.zeros(*param_dims))
 
         if init_data:
-            self.initialize_with_data(init_data)
+            self._initialize_with_data(init_data)
         else:
             self.init_on_next_batch = True
 
@@ -27,7 +51,7 @@ class ActNorm(InvertibleModule):
             self.init_on_next_batch = False
         self._register_load_state_dict_pre_hook(on_load_state_dict)
 
-    def initialize_with_data(self, data):
+    def _initialize_with_data(self, data):
         # Initialize to mean 0 and std 1 with sample batch
         # 'data' expected to be of shape (batch, channels[, ...])
         assert all([data.shape[i+1] == self.dims_in[i] for i in range(len(self.dims_in))]),\
@@ -41,7 +65,7 @@ class ActNorm(InvertibleModule):
 
     def forward(self, x, rev=False, jac=True):
         if self.init_on_next_batch:
-            self.initialize_with_data(x[0])
+            self._initialize_with_data(x[0])
 
         jac = (self.scale.sum() * np.prod(self.dims_in[1:])).repeat(x[0].shape[0])
         if rev:
