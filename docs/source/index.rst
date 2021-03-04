@@ -6,16 +6,21 @@
 Welcome to FrEIA's documentation!
 =================================
 
-Module contents
----------------
-
 .. automodule:: FrEIA
    :members:
    :undoc-members:
    :show-inheritance:
 
-Subpackages
------------
+Tutorial
+--------
+
+.. toctree::
+   :maxdepth: 4
+
+   tutorial/tutorial
+
+Package Documentation
+---------------------
 
 .. toctree::
    :maxdepth: 4
@@ -24,7 +29,7 @@ Subpackages
    FrEIA.modules
 
 Indices and tables
-==================
+--------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
