@@ -15,8 +15,32 @@ class AllInOneBlock(InvertibleModule):
 
     It combines affine coupling, permutation, and global affine transformation
     ('ActNorm'). It can also be used as GIN coupling block, perform learned
-    householder permutations, and use an inverted pre-permutation (see
-    constructor docstring for details).'''
+    householder permutations, and use an inverted pre-permutation. The affine
+    transformation includes a soft clamping mechanism, first used in Real-NVP.
+    The block as a whole performs the following computation:
+
+    .. math::
+
+        y = V\\,R \\; \\Psi(s_\\mathrm{global}) \\odot \\mathrm{Coupling}\\Big(R^{-1} V^{-1} x\\Big)+ t_\\mathrm{global}
+
+    - The inverse pre-permutation of x (i.e. :math:`R^{-1} V^{-1}`) is optional (see
+      ``reverse_permutation`` below).
+    - The learned householder reflection matrix
+      :math:`V` is also optional all together (see ``learned_householder_permutation``
+      below).
+    - For the coupling, the input is split into :math:`x_1, x_2` along
+      the channel dimension. Then the output of the coupling operation is the
+      two halves :math:`u = \\mathrm{concat}(u_1, u_2)`.
+
+      .. math::
+
+          u_1 &= x_1 \\odot \\exp \\Big( \\alpha \\; \\mathrm{tanh}\\big( s(x_2) \\big)\\Big) + t(x_2) \\\\
+          u_2 &= x_2
+
+      Because :math:`\\mathrm{tanh}(s) \\in [-1, 1]`, this clamping mechanism prevents
+      exploding values in the exponential. The hyperparameter :math:`\\alpha` can be adjusted.
+
+    '''
 
     def __init__(self, dims_in, dims_c=[],
                  subnet_constructor: Callable = None,
@@ -30,28 +54,30 @@ class AllInOneBlock(InvertibleModule):
         '''
         Args:
           subnet_constructor:
-            class or callable f, called as f(channels_in, channels_out) and
-            should return a torch.nn.Module
+            class or callable ``f``, called as ``f(channels_in, channels_out)`` and
+            should return a torch.nn.Module. Predicts coupling coefficients :math:`s, t`.
           affine_clamping:
-            clamp the output of the multiplicative coefficients (before
-            exponentiation) to +/- affine_clamping.
+            clamp the output of the multiplicative coefficients before
+            exponentiation to +/- ``affine_clamping`` (see :math:`\\alpha` above).
           gin_block:
-            Turn the block into a GIN block from Sorrenson et al, 2019
+            Turn the block into a GIN block from Sorrenson et al, 2019.
+            Makes it so that the coupling operations as a whole is volume preserving.
           global_affine_init:
-            Initial value for the global affine scaling beta
+            Initial value for the global affine scaling :math:`s_\mathrm{global}`.
           global_affine_init:
-            'SIGMOID', 'SOFTPLUS', or 'EXP'. Defines the activation to be used
-            on the beta for the global affine scaling.
+            ``'SIGMOID'``, ``'SOFTPLUS'``, or ``'EXP'``. Defines the activation to be used
+            on the beta for the global affine scaling (:math:`\\Psi` above).
           permute_soft:
-            bool, whether to sample the permutation matrices from SO(N), or to
-            use hard permutations in stead. Note, permute_soft=True is very slow
+            bool, whether to sample the permutation matrix :math:`R` from :math:`SO(N)`,
+            or to use hard permutations instead. Note, ``permute_soft=True`` is very slow
             when working with >512 dimensions.
           learned_householder_permutation:
-            Int, if >0,  use that many learned householder reflections. Slow if
-            large number. Dubious whether it actually helps.
+            Int, if >0, turn on the matrix :math:`V` above, that represents
+            multiple learned householder reflections. Slow if large number.
+            Dubious whether it actually helps network performance.
           reverse_permutation:
             Reverse the permutation before the block, as introduced by Putzky
-            et al, 2019.
+            et al, 2019. Turns on the :math:`R^{-1} V^{-1}` pre-multiplication above.
         '''
 
         super().__init__(dims_in, dims_c)

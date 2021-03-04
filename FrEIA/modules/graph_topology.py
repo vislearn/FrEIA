@@ -1,5 +1,6 @@
 from . import InvertibleModule
 
+import warnings
 from copy import deepcopy
 from typing import Sequence, Union
 
@@ -12,24 +13,6 @@ class Split(InvertibleModule):
     Splits the incoming tensor along the given dimension, and returns a list of
     separate output tensors. The inverse is the corresponding merge operation.
 
-    Attributes:
-      dims_in:
-        A list of tuples containing the non-batch dimensionality of all
-        incoming tensors. Handled automatically during compute graph setup.
-        Split only takes one input tensor.
-      section_sizes:
-        If set, takes precedence over 'n_sections' and behaves like the
-        argument in torch.split(), except when a list of section sizes is given
-        that doesn't add up to the size of 'dim', an additional split section is
-        created to take the slack. Defaults to None.
-      n_sections:
-        If 'section_sizes' is None, the tensor is split into 'n_sections'
-        parts of equal size or close to it. This mode behaves like
-        numpy.array_split(). Defaults to 2, i.e. splitting the data into two
-        equal halves.
-      dim:
-        Index of the dimension along which to split, not counting the batch
-        dimension. Defaults to 0, i.e. the channel dimension in structured data.
     """
 
     def __init__(self,
@@ -39,7 +22,27 @@ class Split(InvertibleModule):
                  dim: int = 0,
      ):
         """Inits the Split module with the attributes described above and
-        checks that split sizes and dimensionality are compatible."""
+        checks that split sizes and dimensionality are compatible.
+
+        Args:
+          dims_in:
+            A list of tuples containing the non-batch dimensionality of all
+            incoming tensors. Handled automatically during compute graph setup.
+            Split only takes one input tensor.
+          section_sizes:
+            If set, takes precedence over ``n_sections`` and behaves like the
+            argument in torch.split(), except when a list of section sizes is given
+            that doesn't add up to the size of ``dim``, an additional split section is
+            created to take the slack. Defaults to None.
+          n_sections:
+            If ``section_sizes`` is None, the tensor is split into ``n_sections``
+            parts of equal size or close to it. This mode behaves like
+            ``numpy.array_split()``. Defaults to 2, i.e. splitting the data into two
+            equal halves.
+          dim:
+            Index of the dimension along which to split, not counting the batch
+            dimension. Defaults to 0, i.e. the channel dimension in structured data.
+        """
         super().__init__(dims_in)
 
         # Size and dimensionality checks
@@ -91,18 +94,6 @@ class Concat(InvertibleModule):
 
     Concatenates a list of incoming tensors along a given dimension and passes
     on the result. Inverse is the corresponding split operation.
-
-    Attributes:
-      dims_in:
-        A list of tuples containing the non-batch dimensionality of all
-        incoming tensors. Handled automatically during compute graph setup.
-        Dimensionality of incoming tensors must be identical, except in the
-        merge dimension `dim`. Concat only makes sense with multiple input
-        tensors.
-      dim:
-        Index of the dimension along which to concatenate, not counting the
-        batch dimension. Defaults to 0, i.e. the channel dimension in structured
-        data.
     """
 
     def __init__(self,
@@ -110,7 +101,20 @@ class Concat(InvertibleModule):
                  dim: int = 0,
      ):
         """Inits the Concat module with the attributes described above and
-        checks that all dimensions are compatible."""
+        checks that all dimensions are compatible.
+
+        Args:
+          dims_in:
+            A list of tuples containing the non-batch dimensionality of all
+            incoming tensors. Handled automatically during compute graph setup.
+            Dimensionality of incoming tensors must be identical, except in the
+            merge dimension ``dim``. Concat only makes sense with multiple input
+            tensors.
+          dim:
+            Index of the dimension along which to concatenate, not counting the
+            batch dimension. Defaults to 0, i.e. the channel dimension in structured
+            data.
+        """
         super().__init__(dims_in)
         assert len(dims_in) > 1, ("Concatenation only makes sense for "
                                   "multiple inputs")
@@ -148,13 +152,9 @@ class Concat(InvertibleModule):
         return [tuple(output_dims)]
 
 
-
-import warnings
-
 def _deprecated_by(orig_class):
     class deprecated_class(orig_class):
         def __init__(self, *args, **kwargs):
-
             warnings.warn(F"{self.__class__.__name__} is deprecated and will be removed in the public release. "
                           F"Use {orig_class.__name__} instead.",
                           DeprecationWarning)
@@ -162,11 +162,16 @@ def _deprecated_by(orig_class):
 
     return deprecated_class
 
-channel_split_layer = _deprecated_by(Split)
-split_layer = _deprecated_by(Split)
+_depr_docstring = "This class is deprecated and replaced by ``{}``"
+
 Split1D = _deprecated_by(Split)
+Split1D.__doc__ = _depr_docstring.format(Split.__name__)
+
 SplitChannel = _deprecated_by(Split)
-channel_merge_layer = _deprecated_by(Concat)
-cat_layer = _deprecated_by(Concat)
+SplitChannel.__doc__ = _depr_docstring.format(Split.__name__)
+
 Concat1d = _deprecated_by(Concat)
+Concat1d.__doc__ = _depr_docstring.format(Concat.__name__)
+
 ConcatChannel = _deprecated_by(Concat)
+ConcatChannel.__doc__ = _depr_docstring.format(Concat.__name__)
