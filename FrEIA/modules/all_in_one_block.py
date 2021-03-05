@@ -50,7 +50,8 @@ class AllInOneBlock(InvertibleModule):
                  global_affine_type: str = 'SOFTPLUS',
                  permute_soft: bool = False,
                  learned_householder_permutation: int = 0,
-                 reverse_permutation: bool = False):
+                 reverse_permutation: bool = False,
+                 subnet_kwargs: Dict = {}):
         '''
         Args:
           subnet_constructor:
@@ -78,6 +79,7 @@ class AllInOneBlock(InvertibleModule):
           reverse_permutation:
             Reverse the permutation before the block, as introduced by Putzky
             et al, 2019. Turns on the :math:`R^{-1} V^{-1}` pre-multiplication above.
+          subnet_kwargs: additional kwargs for the subnet_constructor
         '''
 
         super().__init__(dims_in, dims_c)
@@ -164,7 +166,7 @@ class AllInOneBlock(InvertibleModule):
         if subnet_constructor is None:
             raise ValueError("Please supply a callable subnet_constructor"
                              "function or object (see docstring)")
-        self.subnet = subnet_constructor(self.splits[0] + self.condition_channels, 2 * self.splits[1])
+        self.subnet = subnet_constructor(self.splits[0] + self.condition_channels, 2 * self.splits[1], **subnet_kwargs)
         self.last_jac = None
 
     def _construct_householder_permutation(self):

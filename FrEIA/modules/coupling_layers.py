@@ -1,6 +1,6 @@
 from . import InvertibleModule
 
-from typing import Callable, Union
+from typing import Callable, Union, Dict
 
 import torch
 
@@ -129,7 +129,8 @@ class NICECouplingBlock(_BaseCouplingBlock):
     '''
 
     def __init__(self, dims_in, dims_c=[],
-                 subnet_constructor: callable = None):
+                 subnet_constructor: callable = None,
+                 subnet_kwargs: Dict = {}):
         '''
         Additional args in docstring of base class.
 
@@ -140,11 +141,12 @@ class NICECouplingBlock(_BaseCouplingBlock):
             nn.Module, that takes dims_in input channels, and dims_out output
             channels. See tutorial for examples.
             Two of these subnetworks will be initialized inside the block.
+          subnet_kwargs: additional kwargs for the subnet_constructor
         '''
         super().__init__(dims_in, dims_c, clamp=0., clamp_activation=(lambda u: u))
 
-        self.F = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1)
-        self.G = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2)
+        self.F = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1, **subnet_kwargs)
+        self.G = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2, **subnet_kwargs)
 
     def _coupling1(self, x1, u2, rev=False):
         if rev:
@@ -168,7 +170,8 @@ class RNVPCouplingBlock(_BaseCouplingBlock):
     def __init__(self, dims_in, dims_c=[],
                  subnet_constructor: Callable = None,
                  clamp: float = 2.,
-                 clamp_activation: Union[str, Callable] = "ATAN"):
+                 clamp_activation: Union[str, Callable] = "ATAN",
+                 subnet_kwargs: Dict = {}):
         '''
         Additional args in docstring of base class.
 
@@ -185,14 +188,15 @@ class RNVPCouplingBlock(_BaseCouplingBlock):
             "ATAN", "TANH", and "SIGMOID" are recognized, or a function of
             object can be passed. TANH behaves like the original realNVP paper.
             A custom function should take tensors and map -inf to -1 and +inf to +1.
+          subnet_kwargs: additional kwargs for the subnet_constructor
         '''
 
         super().__init__(dims_in, dims_c, clamp, clamp_activation)
 
-        self.subnet_s1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2)
-        self.subnet_t1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2)
-        self.subnet_s2 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1)
-        self.subnet_t2 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1)
+        self.subnet_s1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2, **subnet_kwargs)
+        self.subnet_t1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2, **subnet_kwargs)
+        self.subnet_s2 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1, **subnet_kwargs)
+        self.subnet_t2 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1, **subnet_kwargs)
 
     def _coupling1(self, x1, u2, rev=False):
 
@@ -241,7 +245,8 @@ class GLOWCouplingBlock(_BaseCouplingBlock):
     def __init__(self, dims_in, dims_c=[],
                  subnet_constructor: Callable = None,
                  clamp: float = 2.,
-                 clamp_activation: Union[str, Callable] = "ATAN"):
+                 clamp_activation: Union[str, Callable] = "ATAN",
+                 subnet_kwargs: Dict = {}):
         '''
         Additional args in docstring of base class.
 
@@ -258,12 +263,13 @@ class GLOWCouplingBlock(_BaseCouplingBlock):
             "ATAN", "TANH", and "SIGMOID" are recognized, or a function of
             object can be passed. TANH behaves like the original realNVP paper.
             A custom function should take tensors and map -inf to -1 and +inf to +1.
+          subnet_kwargs: additional kwargs for the subnet_constructor
         '''
 
         super().__init__(dims_in, dims_c, clamp, clamp_activation)
 
-        self.subnet1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2 * 2)
-        self.subnet2 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1 * 2)
+        self.subnet1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2 * 2, **subnet_kwargs)
+        self.subnet2 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1 * 2, **subnet_kwargs)
 
     def _coupling1(self, x1, u2, rev=False):
 
@@ -320,7 +326,8 @@ class GINCouplingBlock(_BaseCouplingBlock):
     def __init__(self, dims_in, dims_c=[],
                  subnet_constructor: Callable = None,
                  clamp: float = 2.,
-                 clamp_activation: Union[str, Callable] = "ATAN"):
+                 clamp_activation: Union[str, Callable] = "ATAN",
+                 subnet_kwargs: Dict = {}):
         '''
         Additional args in docstring of base class.
 
@@ -337,12 +344,13 @@ class GINCouplingBlock(_BaseCouplingBlock):
             "ATAN", "TANH", and "SIGMOID" are recognized, or a function of
             object can be passed. TANH behaves like the original realNVP paper.
             A custom function should take tensors and map -inf to -1 and +inf to +1.
+          subnet_kwargs: additional kwargs for the subnet_constructor
         '''
 
         super().__init__(dims_in, dims_c, clamp, clamp_activation)
 
-        self.subnet1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2 * 2)
-        self.subnet2 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1 * 2)
+        self.subnet1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2 * 2, **subnet_kwargs)
+        self.subnet2 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1 * 2, **subnet_kwargs)
 
     def _coupling1(self, x1, u2, rev=False):
 
@@ -390,7 +398,8 @@ class AffineCouplingOneSided(_BaseCouplingBlock):
     def __init__(self, dims_in, dims_c=[],
                  subnet_constructor: Callable = None,
                  clamp: float = 2.,
-                 clamp_activation: Union[str, Callable] = "ATAN"):
+                 clamp_activation: Union[str, Callable] = "ATAN",
+                 subnet_kwargs: Dict = {}):
         '''
         Additional args in docstring of base class.
 
@@ -407,10 +416,11 @@ class AffineCouplingOneSided(_BaseCouplingBlock):
             "ATAN", "TANH", and "SIGMOID" are recognized, or a function of
             object can be passed. TANH behaves like the original realNVP paper.
             A custom function should take tensors and map -inf to -1 and +inf to +1.
+          subnet_kwargs: additional kwargs for the subnet_constructor
         '''
 
         super().__init__(dims_in, dims_c, clamp, clamp_activation)
-        self.subnet = subnet_constructor(self.split_len1 + self.condition_length, 2 * self.split_len2)
+        self.subnet = subnet_constructor(self.split_len1 + self.condition_length, 2 * self.split_len2, **subnet_kwargs)
 
     def forward(self, x, c=[], rev=False, jac=True):
         x1, x2 = torch.split(x[0], [self.split_len1, self.split_len2], dim=1)
@@ -446,7 +456,8 @@ class ConditionalAffineTransform(_BaseCouplingBlock):
     def __init__(self, dims_in, dims_c=[],
                  subnet_constructor: Callable = None,
                  clamp: float = 2.,
-                 clamp_activation: Union[str, Callable] = "ATAN"):
+                 clamp_activation: Union[str, Callable] = "ATAN",
+                 subnet_kwargs: Dict = {}):
         '''
         Additional args in docstring of base class.
 
@@ -463,6 +474,7 @@ class ConditionalAffineTransform(_BaseCouplingBlock):
             "ATAN", "TANH", and "SIGMOID" are recognized, or a function of
             object can be passed. TANH behaves like the original realNVP paper.
             A custom function should take tensors and map -inf to -1 and +inf to +1.
+          subnet_kwargs: additional kwargs for the subnet_constructor
         '''
 
         super().__init__(dims_in, dims_c, clamp, clamp_activation)
@@ -470,7 +482,7 @@ class ConditionalAffineTransform(_BaseCouplingBlock):
         if not self.conditional:
             raise ValueError("ConditionalAffineTransform must have a condition")
 
-        self.subnet = subnet_constructor(self.condition_length, 2 * self.channels)
+        self.subnet = subnet_constructor(self.condition_length, 2 * self.channels, **subnet_kwargs)
 
     def forward(self, x, c=[], rev=False, jac=True):
         if len(c) > 1:
