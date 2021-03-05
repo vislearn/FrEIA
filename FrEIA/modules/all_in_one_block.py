@@ -1,7 +1,7 @@
 from . import InvertibleModule
 
 import warnings
-from typing import Callable
+from typing import Callable, Dict
 
 import numpy as np
 import torch
