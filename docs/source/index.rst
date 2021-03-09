@@ -12,12 +12,14 @@ Welcome to FrEIA's documentation!
    :show-inheritance:
 
 Tutorial
---------
+----------------------
 
 .. toctree::
    :maxdepth: 4
 
-   tutorial/tutorial
+   tutorial/quickstart.rst
+   tutorial/tutorial.rst
+   tutorial/examples.rst
 
 Package Documentation
 ---------------------
