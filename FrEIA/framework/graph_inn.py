@@ -53,11 +53,12 @@ class Node:
         # Entry at position co -> (n, ci) means:
         # My output co goes to input channel ci of n.
         for in_idx, (in_node, out_idx) in enumerate(self.inputs):
-            in_node.outputs.append((self, in_idx))
+            in_node.outputs[out_idx] = (self, in_idx)
 
         # Enable .outX access
         for i in range(len(self.output_dims)):
             self.__dict__[f"out{i}"] = self, i
+            self.outputs.append(None)
 
     def build_module(self, condition_shapes, input_shapes) \
             -> Tuple[InvertibleModule, List[Tuple[int]]]:
@@ -142,6 +143,7 @@ class ConditionNode(Node):
     def __init__(self, *dims: int, name=None):
         self.dims = dims
         super().__init__([], None, {}, name=name)
+        self.outputs: List[Tuple[Node, int]] = []
 
     def build_module(self, condition_shapes, input_shapes) \
             -> Tuple[None, List[Tuple[int]]]:
