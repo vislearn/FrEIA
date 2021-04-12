@@ -1,6 +1,9 @@
 Invertible Operations
 =======================
 
+A number of commonly used invertible operations are provided in the ``FrEIA.modules`` submodule.
+They are documented in detail `here <https://vll-hd.github.io/FrEIA/_build/html/FrEIA.modules.html>`.
+
 Coupling blocks
 **************************
 
@@ -35,6 +38,11 @@ they are the most used invertible transforms.
     glow = Node([in1.out0], GLOWCouplingBlock,
                 {'subnet_constructor': fc_constr, 'clamp': 2.0},
                 name='GLOW coupling block')
+
+* The module ``FrEIA.modules.AllInOneBlock`` not only includes glow coupling, but also a learned global scaling ('ActNorm'),
+  and a random permutation, along with various other features.
+  This saves implementation effort, as these three operations are usually used together.
+  See `here <https://vll-hd.github.io/FrEIA/_build/html/FrEIA.modules.html#coupling-blocks>` for details.
 
 
 Defining custom invertible operations
