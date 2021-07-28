@@ -1,0 +1,648 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FrEIA.modules.coupling_layers &#8212; FrEIA v0.2 documentation</title>
+    
+  <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
+    
+  <link rel="preload" as="script" href="../../../_static/js/index.d3f166471bb80abb5163.js">
+
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+<div class="container-xl">
+
+    <a class="navbar-brand" href="../../../index.html">
+    
+      <p class="title">FrEIA</p>
+    
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../../FrEIA.framework.html">FrEIA.framework package</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link" href="../../../FrEIA.modules.html">FrEIA.modules package</a>
+        </li>
+        
+        
+      </ul>
+
+
+      
+
+      <ul class="navbar-nav">
+        
+        
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+          <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+    <div class="bd-toc-item active">
+    
+  
+    <ul class="nav bd-sidenav">
+        
+        
+        
+        
+        
+      </ul>
+  
+  </nav>
+          </div>
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+              
+
+<nav id="bd-toc-nav">
+    <ul class="nav section-nav flex-column">
+    
+    </ul>
+</nav>
+
+
+              
+          </div>
+          
+
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <h1>Source code for FrEIA.modules.coupling_layers</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">InvertibleModule</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+
+
+<span class="k">class</span> <span class="nc">_BaseCouplingBlock</span><span class="p">(</span><span class="n">InvertibleModule</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Base class to implement various coupling schemes.  It takes care of</span>
+<span class="sd">    checking the dimensions, conditions, clamping mechanism, etc.</span>
+<span class="sd">    Each child class only has to implement the _coupling1 and _coupling2 methods</span>
+<span class="sd">    for the left and right coupling operations.</span>
+<span class="sd">    (In some cases below, forward() is also overridden)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="p">[],</span>
+                 <span class="n">clamp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.</span><span class="p">,</span>
+                 <span class="n">clamp_activation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ATAN&quot;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Additional args in docstring of base class.</span>
+<span class="sd">        Args:</span>
+<span class="sd">          clamp: Soft clamping for the multiplicative component. The</span>
+<span class="sd">            amplification or attenuation of each input dimension can be at most</span>
+<span class="sd">            exp(±clamp).</span>
+<span class="sd">          clamp_activation: Function to perform the clamping. String values</span>
+<span class="sd">            &quot;ATAN&quot;, &quot;TANH&quot;, and &quot;SIGMOID&quot; are recognized, or a function of</span>
+<span class="sd">            object can be passed. TANH behaves like the original realNVP paper.</span>
+<span class="sd">            A custom function should take tensors and map -inf to -1 and +inf to +1.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># ndims means the rank of tensor strictly speaking.</span>
+        <span class="c1"># i.e. 1D, 2D, 3D tensor, etc.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">//</span> <span class="mi">2</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">clamp</span> <span class="o">=</span> <span class="n">clamp</span>
+
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">([</span><span class="nb">tuple</span><span class="p">(</span><span class="n">dims_c</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">:])</span> <span class="o">==</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">:])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dims_c</span><span class="p">))]),</span> \
+            <span class="s2">&quot;Dimensions of input and one or more conditions don&#39;t agree.&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conditional</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dims_c</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">condition_length</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">dims_c</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dims_c</span><span class="p">))])</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">clamp_activation</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">clamp_activation</span> <span class="o">==</span> <span class="s2">&quot;ATAN&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">f_clamp</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">u</span><span class="p">:</span> <span class="mf">0.636</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">atan</span><span class="p">(</span><span class="n">u</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">clamp_activation</span> <span class="o">==</span> <span class="s2">&quot;TANH&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">f_clamp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tanh</span>
+            <span class="k">elif</span> <span class="n">clamp_activation</span> <span class="o">==</span> <span class="s2">&quot;SIGMOID&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">f_clamp</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">u</span><span class="p">:</span> <span class="mf">2.</span> <span class="o">*</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unknown clamp activation &quot;</span><span class="si">{</span><span class="n">clamp_activation</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">f_clamp</span> <span class="o">=</span> <span class="n">clamp_activation</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="p">[],</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See base class docstring&#39;&#39;&#39;</span>
+
+        <span class="c1"># notation:</span>
+        <span class="c1"># x1, x2: two halves of the input</span>
+        <span class="c1"># y1, y2: two halves of the output</span>
+        <span class="c1"># *_c: variable with condition concatenated</span>
+        <span class="c1"># j1, j2: Jacobians of the two coupling operations</span>
+
+        <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="n">x2_c</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x2</span><span class="p">,</span> <span class="o">*</span><span class="n">c</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional</span> <span class="k">else</span> <span class="n">x2</span>
+            <span class="n">y1</span><span class="p">,</span> <span class="n">j1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coupling1</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2_c</span><span class="p">)</span>
+
+            <span class="n">y1_c</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">y1</span><span class="p">,</span> <span class="o">*</span><span class="n">c</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional</span> <span class="k">else</span> <span class="n">y1</span>
+            <span class="n">y2</span><span class="p">,</span> <span class="n">j2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coupling2</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y1_c</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># names of x and y are swapped for the reverse computation</span>
+            <span class="n">x1_c</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x1</span><span class="p">,</span> <span class="o">*</span><span class="n">c</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional</span> <span class="k">else</span> <span class="n">x1</span>
+            <span class="n">y2</span><span class="p">,</span> <span class="n">j2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coupling2</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">x1_c</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="n">y2_c</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">y2</span><span class="p">,</span> <span class="o">*</span><span class="n">c</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional</span> <span class="k">else</span> <span class="n">y2</span>
+            <span class="n">y1</span><span class="p">,</span> <span class="n">j1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coupling1</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y2_c</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">y1</span><span class="p">,</span> <span class="n">y2</span><span class="p">),</span> <span class="mi">1</span><span class="p">),),</span> <span class="n">j1</span> <span class="o">+</span> <span class="n">j2</span>
+
+    <span class="k">def</span> <span class="nf">_coupling1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">u2</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The first/left coupling operation in a two-sided coupling block.</span>
+<span class="sd">        Args:</span>
+<span class="sd">          x1 (Tensor): the &#39;active&#39; half being transformed.</span>
+<span class="sd">          u2 (Tensor): the &#39;passive&#39; half, including the conditions, from</span>
+<span class="sd">            which the transformation is computed.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">          y1 (Tensor): same shape as x1, the transformed &#39;active&#39; half.</span>
+<span class="sd">          j1 (float or Tensor): the Jacobian, only has batch dimension.</span>
+<span class="sd">            If the Jacobian is zero of fixed, may also return float.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_coupling2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The second/right coupling operation in a two-sided coupling block.</span>
+<span class="sd">        Args:</span>
+<span class="sd">          x2 (Tensor): the &#39;active&#39; half being transformed.</span>
+<span class="sd">          u1 (Tensor): the &#39;passive&#39; half, including the conditions, from</span>
+<span class="sd">            which the transformation is computed.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">          y2 (Tensor): same shape as x1, the transformed &#39;active&#39; half.</span>
+<span class="sd">          j2 (float or Tensor): the Jacobian, only has batch dimension.</span>
+<span class="sd">            If the Jacobian is zero of fixed, may also return float.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;See base class for docstring&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dims</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can only use 1 input&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">input_dims</span>
+
+
+<div class="viewcode-block" id="NICECouplingBlock"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.NICECouplingBlock">[docs]</a><span class="k">class</span> <span class="nc">NICECouplingBlock</span><span class="p">(</span><span class="n">_BaseCouplingBlock</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Coupling Block following the NICE (Dinh et al, 2015) design.</span>
+<span class="sd">    The inputs are split in two halves. For 2D, 3D, 4D inputs, the split is</span>
+<span class="sd">    performed along the channel dimension. Then, residual coefficients are</span>
+<span class="sd">    predicted by two subnetworks that are added to each half in turn.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="NICECouplingBlock.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.NICECouplingBlock.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="p">[],</span>
+                 <span class="n">subnet_constructor</span><span class="p">:</span> <span class="n">callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Additional args in docstring of base class.</span>
+<span class="sd">        Args:</span>
+<span class="sd">          subnet_constructor:</span>
+<span class="sd">            Callable function, class, or factory object, with signature</span>
+<span class="sd">            constructor(dims_in, dims_out). The result should be a torch</span>
+<span class="sd">            nn.Module, that takes dims_in input channels, and dims_out output</span>
+<span class="sd">            channels. See tutorial for examples.</span>
+<span class="sd">            Two of these subnetworks will be initialized inside the block.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">,</span> <span class="n">clamp</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">clamp_activation</span><span class="o">=</span><span class="p">(</span><span class="k">lambda</span> <span class="n">u</span><span class="p">:</span> <span class="n">u</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="o">=</span> <span class="n">subnet_constructor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">G</span> <span class="o">=</span> <span class="n">subnet_constructor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_coupling1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">u2</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span><span class="p">(</span><span class="n">u2</span><span class="p">),</span> <span class="mf">0.</span>
+        <span class="k">return</span> <span class="n">x1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span><span class="p">(</span><span class="n">u2</span><span class="p">),</span> <span class="mf">0.</span>
+
+    <span class="k">def</span> <span class="nf">_coupling2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x2</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="n">u1</span><span class="p">),</span> <span class="mf">0.</span>
+        <span class="k">return</span> <span class="n">x2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="n">u1</span><span class="p">),</span> <span class="mf">0.</span></div>
+
+
+<div class="viewcode-block" id="RNVPCouplingBlock"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.RNVPCouplingBlock">[docs]</a><span class="k">class</span> <span class="nc">RNVPCouplingBlock</span><span class="p">(</span><span class="n">_BaseCouplingBlock</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Coupling Block following the RealNVP design (Dinh et al, 2017) with some</span>
+<span class="sd">    minor differences. The inputs are split in two halves. For 2D, 3D, 4D</span>
+<span class="sd">    inputs, the split is performed along the channel dimension. For</span>
+<span class="sd">    checkerboard-splitting, prepend an i_RevNet_downsampling module. Two affine</span>
+<span class="sd">    coupling operations are performed in turn on both halves of the input.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="RNVPCouplingBlock.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.RNVPCouplingBlock.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="p">[],</span>
+                 <span class="n">subnet_constructor</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">clamp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.</span><span class="p">,</span>
+                 <span class="n">clamp_activation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ATAN&quot;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Additional args in docstring of base class.</span>
+<span class="sd">        Args:</span>
+<span class="sd">          subnet_constructor: function or class, with signature</span>
+<span class="sd">            constructor(dims_in, dims_out).  The result should be a torch</span>
+<span class="sd">            nn.Module, that takes dims_in input channels, and dims_out output</span>
+<span class="sd">            channels. See tutorial for examples. Four of these subnetworks will be</span>
+<span class="sd">            initialized in the block.</span>
+<span class="sd">          clamp: Soft clamping for the multiplicative component. The</span>
+<span class="sd">            amplification or attenuation of each input dimension can be at most</span>
+<span class="sd">            exp(±clamp).</span>
+<span class="sd">          clamp_activation: Function to perform the clamping. String values</span>
+<span class="sd">            &quot;ATAN&quot;, &quot;TANH&quot;, and &quot;SIGMOID&quot; are recognized, or a function of</span>
+<span class="sd">            object can be passed. TANH behaves like the original realNVP paper.</span>
+<span class="sd">            A custom function should take tensors and map -inf to -1 and +inf to +1.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">,</span> <span class="n">clamp</span><span class="p">,</span> <span class="n">clamp_activation</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">subnet_s1</span> <span class="o">=</span> <span class="n">subnet_constructor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subnet_t1</span> <span class="o">=</span> <span class="n">subnet_constructor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subnet_s2</span> <span class="o">=</span> <span class="n">subnet_constructor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subnet_t2</span> <span class="o">=</span> <span class="n">subnet_constructor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_coupling1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">u2</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+        <span class="c1"># notation (same for _coupling2):</span>
+        <span class="c1"># x: inputs (i.e. &#39;x-side&#39; when rev is False, &#39;z-side&#39; when rev is True)</span>
+        <span class="c1"># y: outputs (same scheme)</span>
+        <span class="c1"># *_c: variables with condition appended</span>
+        <span class="c1"># *1, *2: left half, right half</span>
+        <span class="c1"># a: all affine coefficients</span>
+        <span class="c1"># s, t: multiplicative and additive coefficients</span>
+        <span class="c1"># j: log det Jacobian</span>
+
+        <span class="n">s2</span><span class="p">,</span> <span class="n">t2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subnet_s2</span><span class="p">(</span><span class="n">u2</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">subnet_t2</span><span class="p">(</span><span class="n">u2</span><span class="p">)</span>
+        <span class="n">s2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clamp</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_clamp</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+        <span class="n">j1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="n">y1</span> <span class="o">=</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="n">t2</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">s2</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">y1</span><span class="p">,</span> <span class="o">-</span><span class="n">j1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">+</span> <span class="n">t2</span>
+            <span class="k">return</span> <span class="n">y1</span><span class="p">,</span> <span class="n">j1</span>
+
+    <span class="k">def</span> <span class="nf">_coupling2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">s1</span><span class="p">,</span> <span class="n">t1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subnet_s1</span><span class="p">(</span><span class="n">u1</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">subnet_t1</span><span class="p">(</span><span class="n">u1</span><span class="p">)</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clamp</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_clamp</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
+        <span class="n">j2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="n">y2</span> <span class="o">=</span> <span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">s1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">y2</span><span class="p">,</span> <span class="o">-</span><span class="n">j2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">+</span> <span class="n">t1</span>
+            <span class="k">return</span> <span class="n">y2</span><span class="p">,</span> <span class="n">j2</span></div>
+
+
+<div class="viewcode-block" id="GLOWCouplingBlock"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.GLOWCouplingBlock">[docs]</a><span class="k">class</span> <span class="nc">GLOWCouplingBlock</span><span class="p">(</span><span class="n">_BaseCouplingBlock</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Coupling Block following the GLOW design. Note, this is only the coupling</span>
+<span class="sd">    part itself, and does not include ActNorm, invertible 1x1 convolutions, etc.</span>
+<span class="sd">    See AllInOneBlock for a block combining these functions at once.</span>
+<span class="sd">    The only difference to the RNVPCouplingBlock coupling blocks</span>
+<span class="sd">    is that it uses a single subnetwork to jointly predict [s_i, t_i], instead of two separate</span>
+<span class="sd">    subnetworks. This reduces computational cost and speeds up learning.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="GLOWCouplingBlock.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.GLOWCouplingBlock.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="p">[],</span>
+                 <span class="n">subnet_constructor</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">clamp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.</span><span class="p">,</span>
+                 <span class="n">clamp_activation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ATAN&quot;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Additional args in docstring of base class.</span>
+<span class="sd">        Args:</span>
+<span class="sd">          subnet_constructor: function or class, with signature</span>
+<span class="sd">            constructor(dims_in, dims_out).  The result should be a torch</span>
+<span class="sd">            nn.Module, that takes dims_in input channels, and dims_out output</span>
+<span class="sd">            channels. See tutorial for examples. Two of these subnetworks will be</span>
+<span class="sd">            initialized in the block.</span>
+<span class="sd">          clamp: Soft clamping for the multiplicative component. The</span>
+<span class="sd">            amplification or attenuation of each input dimension can be at most</span>
+<span class="sd">            exp(±clamp).</span>
+<span class="sd">          clamp_activation: Function to perform the clamping. String values</span>
+<span class="sd">            &quot;ATAN&quot;, &quot;TANH&quot;, and &quot;SIGMOID&quot; are recognized, or a function of</span>
+<span class="sd">            object can be passed. TANH behaves like the original realNVP paper.</span>
+<span class="sd">            A custom function should take tensors and map -inf to -1 and +inf to +1.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">,</span> <span class="n">clamp</span><span class="p">,</span> <span class="n">clamp_activation</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">subnet1</span> <span class="o">=</span> <span class="n">subnet_constructor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subnet2</span> <span class="o">=</span> <span class="n">subnet_constructor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_coupling1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">u2</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+        <span class="c1"># notation (same for _coupling2):</span>
+        <span class="c1"># x: inputs (i.e. &#39;x-side&#39; when rev is False, &#39;z-side&#39; when rev is True)</span>
+        <span class="c1"># y: outputs (same scheme)</span>
+        <span class="c1"># *_c: variables with condition appended</span>
+        <span class="c1"># *1, *2: left half, right half</span>
+        <span class="c1"># a: all affine coefficients</span>
+        <span class="c1"># s, t: multiplicative and additive coefficients</span>
+        <span class="c1"># j: log det Jacobian</span>
+
+        <span class="n">a2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subnet2</span><span class="p">(</span><span class="n">u2</span><span class="p">)</span>
+        <span class="n">s2</span><span class="p">,</span> <span class="n">t2</span> <span class="o">=</span> <span class="n">a2</span><span class="p">[:,</span> <span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span><span class="p">],</span> <span class="n">a2</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span><span class="p">:]</span>
+        <span class="n">s2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clamp</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_clamp</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+        <span class="n">j1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="n">y1</span> <span class="o">=</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="n">t2</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">s2</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">y1</span><span class="p">,</span> <span class="o">-</span><span class="n">j1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">+</span> <span class="n">t2</span>
+            <span class="k">return</span> <span class="n">y1</span><span class="p">,</span> <span class="n">j1</span>
+
+    <span class="k">def</span> <span class="nf">_coupling2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">a1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subnet1</span><span class="p">(</span><span class="n">u1</span><span class="p">)</span>
+        <span class="n">s1</span><span class="p">,</span> <span class="n">t1</span> <span class="o">=</span> <span class="n">a1</span><span class="p">[:,</span> <span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span><span class="p">],</span> <span class="n">a1</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span><span class="p">:]</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clamp</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_clamp</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
+        <span class="n">j2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="n">y2</span> <span class="o">=</span> <span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">s1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">y2</span><span class="p">,</span> <span class="o">-</span><span class="n">j2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">+</span> <span class="n">t1</span>
+            <span class="k">return</span> <span class="n">y2</span><span class="p">,</span> <span class="n">j2</span></div>
+
+
+<div class="viewcode-block" id="GINCouplingBlock"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.GINCouplingBlock">[docs]</a><span class="k">class</span> <span class="nc">GINCouplingBlock</span><span class="p">(</span><span class="n">_BaseCouplingBlock</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Coupling Block following the GIN design. The difference from</span>
+<span class="sd">    GLOWCouplingBlock (and other affine coupling blocks) is that the Jacobian</span>
+<span class="sd">    determinant is constrained to be 1.  This constrains the block to be</span>
+<span class="sd">    volume-preserving. Volume preservation is achieved by subtracting the mean</span>
+<span class="sd">    of the output of the s subnetwork from itself.  While volume preserving, GIN</span>
+<span class="sd">    is still more powerful than NICE, as GIN is not volume preserving within</span>
+<span class="sd">    each dimension.</span>
+<span class="sd">    Note: this implementation differs slightly from the originally published</span>
+<span class="sd">    implementation, which scales the final component of the s subnetwork so the</span>
+<span class="sd">    sum of the outputs of s is zero. There was no difference found between the</span>
+<span class="sd">    implementations in practice, but subtracting the mean guarantees that all</span>
+<span class="sd">    outputs of s are at most ±exp(clamp), which might be more stable in certain</span>
+<span class="sd">    cases.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<div class="viewcode-block" id="GINCouplingBlock.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.GINCouplingBlock.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="p">[],</span>
+                 <span class="n">subnet_constructor</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">clamp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.</span><span class="p">,</span>
+                 <span class="n">clamp_activation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ATAN&quot;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Additional args in docstring of base class.</span>
+<span class="sd">        Args:</span>
+<span class="sd">          subnet_constructor: function or class, with signature</span>
+<span class="sd">            constructor(dims_in, dims_out).  The result should be a torch</span>
+<span class="sd">            nn.Module, that takes dims_in input channels, and dims_out output</span>
+<span class="sd">            channels. See tutorial for examples. Two of these subnetworks will be</span>
+<span class="sd">            initialized in the block.</span>
+<span class="sd">          clamp: Soft clamping for the multiplicative component. The</span>
+<span class="sd">            amplification or attenuation of each input dimension can be at most</span>
+<span class="sd">            exp(±clamp).</span>
+<span class="sd">          clamp_activation: Function to perform the clamping. String values</span>
+<span class="sd">            &quot;ATAN&quot;, &quot;TANH&quot;, and &quot;SIGMOID&quot; are recognized, or a function of</span>
+<span class="sd">            object can be passed. TANH behaves like the original realNVP paper.</span>
+<span class="sd">            A custom function should take tensors and map -inf to -1 and +inf to +1.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">,</span> <span class="n">clamp</span><span class="p">,</span> <span class="n">clamp_activation</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">subnet1</span> <span class="o">=</span> <span class="n">subnet_constructor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subnet2</span> <span class="o">=</span> <span class="n">subnet_constructor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_coupling1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">u2</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+        <span class="c1"># notation (same for _coupling2):</span>
+        <span class="c1"># x: inputs (i.e. &#39;x-side&#39; when rev is False, &#39;z-side&#39; when rev is True)</span>
+        <span class="c1"># y: outputs (same scheme)</span>
+        <span class="c1"># *_c: variables with condition appended</span>
+        <span class="c1"># *1, *2: left half, right half</span>
+        <span class="c1"># a: all affine coefficients</span>
+        <span class="c1"># s, t: multiplicative and additive coefficients</span>
+        <span class="c1"># j: log det Jacobian</span>
+
+        <span class="n">a2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subnet2</span><span class="p">(</span><span class="n">u2</span><span class="p">)</span>
+        <span class="n">s2</span><span class="p">,</span> <span class="n">t2</span> <span class="o">=</span> <span class="n">a2</span><span class="p">[:,</span> <span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span><span class="p">],</span> <span class="n">a2</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span><span class="p">:]</span>
+        <span class="n">s2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clamp</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_clamp</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+        <span class="n">s2</span> <span class="o">-=</span> <span class="n">s2</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="n">y1</span> <span class="o">=</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="n">t2</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">s2</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">y1</span><span class="p">,</span> <span class="mf">0.</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">+</span> <span class="n">t2</span>
+            <span class="k">return</span> <span class="n">y1</span><span class="p">,</span> <span class="mf">0.</span>
+
+    <span class="k">def</span> <span class="nf">_coupling2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">a1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subnet1</span><span class="p">(</span><span class="n">u1</span><span class="p">)</span>
+        <span class="n">s1</span><span class="p">,</span> <span class="n">t1</span> <span class="o">=</span> <span class="n">a1</span><span class="p">[:,</span> <span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span><span class="p">],</span> <span class="n">a1</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span><span class="p">:]</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clamp</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_clamp</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
+        <span class="n">s1</span> <span class="o">-=</span> <span class="n">s1</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="n">y2</span> <span class="o">=</span> <span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">s1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">y2</span><span class="p">,</span> <span class="mf">0.</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">+</span> <span class="n">t1</span>
+            <span class="k">return</span> <span class="n">y2</span><span class="p">,</span> <span class="mf">0.</span></div>
+
+
+<div class="viewcode-block" id="AffineCouplingOneSided"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.AffineCouplingOneSided">[docs]</a><span class="k">class</span> <span class="nc">AffineCouplingOneSided</span><span class="p">(</span><span class="n">_BaseCouplingBlock</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Half of a coupling block following the GLOWCouplingBlock design.  This</span>
+<span class="sd">    means only one affine transformation on half the inputs.  In the case where</span>
+<span class="sd">    random permutations or orthogonal transforms are used after every block,</span>
+<span class="sd">    this is not a restriction and simplifies the design.  &#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="AffineCouplingOneSided.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.AffineCouplingOneSided.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="p">[],</span>
+                 <span class="n">subnet_constructor</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">clamp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.</span><span class="p">,</span>
+                 <span class="n">clamp_activation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ATAN&quot;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Additional args in docstring of base class.</span>
+<span class="sd">        Args:</span>
+<span class="sd">          subnet_constructor: function or class, with signature</span>
+<span class="sd">            constructor(dims_in, dims_out).  The result should be a torch</span>
+<span class="sd">            nn.Module, that takes dims_in input channels, and dims_out output</span>
+<span class="sd">            channels. See tutorial for examples. One subnetwork will be</span>
+<span class="sd">            initialized in the block.</span>
+<span class="sd">          clamp: Soft clamping for the multiplicative component. The</span>
+<span class="sd">            amplification or attenuation of each input dimension can be at most</span>
+<span class="sd">            exp(±clamp).</span>
+<span class="sd">          clamp_activation: Function to perform the clamping. String values</span>
+<span class="sd">            &quot;ATAN&quot;, &quot;TANH&quot;, and &quot;SIGMOID&quot; are recognized, or a function of</span>
+<span class="sd">            object can be passed. TANH behaves like the original realNVP paper.</span>
+<span class="sd">            A custom function should take tensors and map -inf to -1 and +inf to +1.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">,</span> <span class="n">clamp</span><span class="p">,</span> <span class="n">clamp_activation</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subnet</span> <span class="o">=</span> <span class="n">subnet_constructor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_length</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AffineCouplingOneSided.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.AffineCouplingOneSided.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="p">[],</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">x1_c</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x1</span><span class="p">,</span> <span class="o">*</span><span class="n">c</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional</span> <span class="k">else</span> <span class="n">x1</span>
+
+        <span class="c1"># notation:</span>
+        <span class="c1"># x1, x2: two halves of the input</span>
+        <span class="c1"># y1, y2: two halves of the output</span>
+        <span class="c1"># a: all affine coefficients</span>
+        <span class="c1"># s, t: multiplicative and additive coefficients</span>
+        <span class="c1"># j: log det Jacobian</span>
+
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subnet</span><span class="p">(</span><span class="n">x1_c</span><span class="p">)</span>
+        <span class="n">s</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">a</span><span class="p">[:,</span> <span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span><span class="p">],</span> <span class="n">a</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_len2</span><span class="p">:]</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clamp</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_clamp</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="n">y2</span> <span class="o">=</span> <span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">s</span><span class="p">)</span>
+            <span class="n">j</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y2</span> <span class="o">=</span> <span class="n">x2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">+</span> <span class="n">t</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">x1</span><span class="p">,</span> <span class="n">y2</span><span class="p">),</span> <span class="mi">1</span><span class="p">),),</span> <span class="n">j</span></div></div>
+
+
+<div class="viewcode-block" id="ConditionalAffineTransform"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.ConditionalAffineTransform">[docs]</a><span class="k">class</span> <span class="nc">ConditionalAffineTransform</span><span class="p">(</span><span class="n">_BaseCouplingBlock</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Similar to the conditioning layers from SPADE (Park et al, 2019): Perform</span>
+<span class="sd">    an affine transformation on the whole input, where the affine coefficients</span>
+<span class="sd">    are predicted from only the condition.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="ConditionalAffineTransform.__init__"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.ConditionalAffineTransform.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="p">[],</span>
+                 <span class="n">subnet_constructor</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">clamp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.</span><span class="p">,</span>
+                 <span class="n">clamp_activation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ATAN&quot;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Additional args in docstring of base class.</span>
+<span class="sd">        Args:</span>
+<span class="sd">          subnet_constructor: function or class, with signature</span>
+<span class="sd">            constructor(dims_in, dims_out).  The result should be a torch</span>
+<span class="sd">            nn.Module, that takes dims_in input channels, and dims_out output</span>
+<span class="sd">            channels. See tutorial for examples. One subnetwork will be</span>
+<span class="sd">            initialized in the block.</span>
+<span class="sd">          clamp: Soft clamping for the multiplicative component. The</span>
+<span class="sd">            amplification or attenuation of each input dimension can be at most</span>
+<span class="sd">            exp(±clamp).</span>
+<span class="sd">          clamp_activation: Function to perform the clamping. String values</span>
+<span class="sd">            &quot;ATAN&quot;, &quot;TANH&quot;, and &quot;SIGMOID&quot; are recognized, or a function of</span>
+<span class="sd">            object can be passed. TANH behaves like the original realNVP paper.</span>
+<span class="sd">            A custom function should take tensors and map -inf to -1 and +inf to +1.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">,</span> <span class="n">clamp</span><span class="p">,</span> <span class="n">clamp_activation</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;ConditionalAffineTransform must have a condition&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">subnet</span> <span class="o">=</span> <span class="n">subnet_constructor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">condition_length</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ConditionalAffineTransform.forward"><a class="viewcode-back" href="../../../FrEIA.modules.html#FrEIA.modules.ConditionalAffineTransform.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="p">[],</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">cond</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cond</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># notation:</span>
+        <span class="c1"># x: inputs (i.e. &#39;x-side&#39; when rev is False, &#39;z-side&#39; when rev is True)</span>
+        <span class="c1"># y: outputs (same scheme)</span>
+        <span class="c1"># *_c: variables with condition appended</span>
+        <span class="c1"># *1, *2: left half, right half</span>
+        <span class="c1"># a: all affine coefficients</span>
+        <span class="c1"># s, t: multiplicative and additive coefficients</span>
+        <span class="c1"># j: log det Jacobian</span>
+
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subnet</span><span class="p">(</span><span class="n">cond</span><span class="p">)</span>
+        <span class="n">s</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">a</span><span class="p">[:,</span> <span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">],</span> <span class="n">a</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">:]</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clamp</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_clamp</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">s</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">y</span><span class="p">,),</span> <span class="o">-</span><span class="n">j</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">t</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">y</span><span class="p">,),</span> <span class="n">j</span></div></div>
+</pre></div>
+
+              </div>
+              
+              
+              <div class='prev-next-bottom'>
+                
+
+              </div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+
+    
+  <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
+
+
+    <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <p>
+          &copy; Copyright 2021, VLL-HD.<br/>
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.4.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
