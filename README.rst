@@ -20,12 +20,17 @@ Papers
 
 Our following papers use FrEIA, with links to code given below.
 
-**"Training Normalizing Flows with the Information Bottleneck for Competitive Generative Classification" (2020)**
+**"Generative Classifiers as a Basis for Trustworthy Image Classification" (CVPR 2021)**
+
+* Paper: https://arxiv.org/abs/2007.15036
+* Code: https://github.com/RayDeeA/ibinn_imagenet
+
+**"Training Normalizing Flows with the Information Bottleneck for Competitive Generative Classification" (Neurips 2020)**
 
 * Paper: `arxiv.org/abs/2001.06448 <https://arxiv.org/abs/2001.06448>`_
 * Code: `github.com/VLL-HD/exact_information_bottleneck <https://github.com/VLL-HD/exact_information_bottleneck>`_
 
-**"Disentanglement by Nonlinear ICA with General Incompressible-flow Networks (GIN)" (2020)**
+**"Disentanglement by Nonlinear ICA with General Incompressible-flow Networks (GIN)" (ICLR 2020)**
 
 * Paper: `arxiv.org/abs/2001.04872 <https://arxiv.org/abs/2001.04872>`_
 * Code: `github.com/VLL-HD/GIN <https://github.com/VLL-HD/GIN>`_
@@ -36,7 +41,7 @@ Our following papers use FrEIA, with links to code given below.
 * Supplement: `drive.google.com/file/d/1_OoiIGhLeVJGaZFeBt0OWOq8ZCtiI7li <https://drive.google.com/file/d/1_OoiIGhLeVJGaZFeBt0OWOq8ZCtiI7li>`_
 * Code: `github.com/VLL-HD/conditional_invertible_neural_networks <https://github.com/VLL-HD/conditional_invertible_neural_networks>`_
 
-**"Analyzing inverse problems with invertible neural networks." (2018)**
+**"Analyzing inverse problems with invertible neural networks." (ICLR 2019)**
 
 * Paper: `arxiv.org/abs/1808.04730 <https://arxiv.org/abs/1808.04730>`_
 * Code: `github.com/VLL-HD/analyzing_inverse_problems <https://github.com/VLL-HD/analyzing_inverse_problems>`_
