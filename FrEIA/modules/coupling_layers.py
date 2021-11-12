@@ -58,7 +58,7 @@ class _BaseCouplingBlock(InvertibleModule):
         self.clamp = clamp
 
         assert all([tuple(dims_c[i][1:]) == tuple(dims_in[0][1:]) for i in range(len(dims_c))]), \
-            "Dimensions of input and one or more conditions don't agree."
+            F"Dimensions of input {dims_in} and one or more conditions {dims_c} don't agree."
         self.conditional = (len(dims_c) > 0)
         self.condition_length = sum([dims_c[i][0] for i in range(len(dims_c))])
 
