@@ -4,10 +4,12 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
     <title>FrEIA.framework package &#8212; FrEIA v0.2 documentation</title>
     
-  <link rel="stylesheet" href="_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
 
     
   <link rel="stylesheet"
@@ -19,18 +21,14 @@
 
     
       
-  <link rel="stylesheet"
-    href="_static/vendor/open-sans_all/1.44.1/index.css">
-  <link rel="stylesheet"
-    href="_static/vendor/lato_latin-ext/1.44.1/index.css">
 
     
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/blank.css" />
     
-  <link rel="preload" as="script" href="_static/js/index.d3f166471bb80abb5163.js">
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
 
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
@@ -39,45 +37,66 @@
     <link rel="next" title="FrEIA.modules package" href="FrEIA.modules.html" />
     <link rel="prev" title="Welcome to FrEIA’s documentation!" href="index.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="docsearch:language" content="en" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
   </head>
   <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
-    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-<div class="container-xl">
+    <div class="container-fluid" id="banner"></div>
 
-    <a class="navbar-brand" href="index.html">
     
-      <p class="title">FrEIA</p>
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
     
-    </a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
+    
+<a class="navbar-brand" href="index.html">
+<p class="title">FrEIA</p>
+</a>
 
-    <div id="navbar-menu" class="col-lg-9 collapse navbar-collapse">
-      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
-        
-        
-        <li class="nav-item active">
-            <a class="nav-link" href="">FrEIA.framework package</a>
-        </li>
-        
-        <li class="nav-item ">
-            <a class="nav-link" href="FrEIA.modules.html">FrEIA.modules package</a>
-        </li>
-        
-        
-      </ul>
+    
+  </div>
 
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
 
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
       
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 current active nav-item">
+ <a class="current reference internal nav-link" href="#">
+  FrEIA.framework package
+ </a>
+</li>
 
-      <ul class="navbar-nav">
-        
-        
-      </ul>
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="FrEIA.modules.html">
+  FrEIA.modules package
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
     </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+      </ul>
+      </div>
+      
+    </div>
+  </div>
 </div>
     </nav>
     
@@ -85,78 +104,79 @@
     <div class="container-xl">
       <div class="row">
           
-          <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="search.html" method="get">
   <i class="icon fas fa-search"></i>
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form>
-<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-
-    <div class="bd-toc-item active">
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
     
-  
-    <ul class="nav bd-sidenav">
-        
-        
-          
-        
-        
-        
-        
-      </ul>
-  
-  </nav>
-          </div>
+  </div>
+</nav>
+            </div>
+            
           
 
           
           <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
               
+              <div class="toc-item">
+                
 <div class="tocsection onthispage pt-5 pb-3">
     <i class="fas fa-list"></i> On this page
 </div>
 
 <nav id="bd-toc-nav">
-    <ul class="nav section-nav flex-column">
-    
-        <li class="nav-item toc-entry toc-h2">
-            <a href="#module-FrEIA.framework" class="nav-link">Module contents</a>
-        </li>
-    
-    </ul>
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-FrEIA.framework">
+   Module contents
+  </a>
+ </li>
+</ul>
+
 </nav>
-
-
+              </div>
               
+              <div class="toc-item">
+                
+              </div>
+              
+            
           </div>
           
 
+          
+          
+            
           
           <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
               
               <div>
                 
-  <div class="section" id="freia-framework-package">
+  <section id="freia-framework-package">
 <h1>FrEIA.framework package<a class="headerlink" href="#freia-framework-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-FrEIA.framework">
+<section id="module-FrEIA.framework">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-FrEIA.framework" title="Permalink to this headline">¶</a></h2>
 <p>The framework module contains the logic used in building the graph and
 inferring the order that the nodes have to be executed in forward and backward
 direction.</p>
 <dl class="py class">
-<dt id="FrEIA.framework.ConditionNode">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></code><code class="sig-name descname"><span class="pre">ConditionNode</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#ConditionNode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ConditionNode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FrEIA.framework.graph_inn.Node</span></code></p>
+<dt class="sig sig-object py" id="FrEIA.framework.ConditionNode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></span><span class="sig-name descname"><span class="pre">ConditionNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#ConditionNode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ConditionNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">FrEIA.framework.graph_inn.Node</span></code></a></p>
 <p>Special type of node that represents contitional input to the internal
 networks inside coupling layers.</p>
 <dl class="py method">
-<dt id="FrEIA.framework.ConditionNode.__init__">
-<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#ConditionNode.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ConditionNode.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
-</dd></dl>
+<dt class="sig sig-object py" id="FrEIA.framework.ConditionNode.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#ConditionNode.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ConditionNode.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
-<dt id="FrEIA.framework.ConditionNode.build_module">
-<code class="sig-name descname"><span class="pre">build_module</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition_shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_shapes</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#ConditionNode.build_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ConditionNode.build_module" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="FrEIA.framework.ConditionNode.build_module">
+<span class="sig-name descname"><span class="pre">build_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition_shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_shapes</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#ConditionNode.build_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ConditionNode.build_module" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiates the module and determines the output dimension by
 calling InvertibleModule#output_dims.</p>
 </dd></dl>
@@ -164,9 +184,9 @@ calling InvertibleModule#output_dims.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="FrEIA.framework.GraphINN">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></code><code class="sig-name descname"><span class="pre">GraphINN</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#GraphINN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.GraphINN" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FrEIA.modules.base.InvertibleModule</span></code></p>
+<dt class="sig sig-object py" id="FrEIA.framework.GraphINN">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></span><span class="sig-name descname"><span class="pre">GraphINN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#GraphINN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.GraphINN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="FrEIA.modules.html#FrEIA.modules.InvertibleModule" title="FrEIA.modules.base.InvertibleModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">FrEIA.modules.base.InvertibleModule</span></code></a></p>
 <p>This class represents the invertible net itself. It is a subclass of
 InvertibleModule and supports the same methods.</p>
 <p>The forward method has an additional option ‘rev’, with which the net can be
@@ -174,54 +194,54 @@ computed in reverse. Passing <cite>jac</cite> to the forward method additionally
 computes the log determinant of the (inverse) Jacobian of the forward
 (backward) pass.</p>
 <dl class="py method">
-<dt id="FrEIA.framework.GraphINN.__init__">
-<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#GraphINN.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.GraphINN.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Args:
-dims_in: list of tuples specifying the shape of the inputs to this</p>
-<blockquote>
-<div><p>operator: <code class="docutils literal notranslate"><span class="pre">dims_in</span> <span class="pre">=</span> <span class="pre">[shape_x_0,</span> <span class="pre">shape_x_1,</span> <span class="pre">...]</span></code></p>
-</div></blockquote>
-<dl class="simple">
-<dt>dims_c:  list of tuples specifying the shape of the conditions to</dt><dd><p>this operator.</p>
+<dt class="sig sig-object py" id="FrEIA.framework.GraphINN.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#GraphINN.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.GraphINN.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dims_in</strong> – list of tuples specifying the shape of the inputs to this
+operator: <code class="docutils literal notranslate"><span class="pre">dims_in</span> <span class="pre">=</span> <span class="pre">[shape_x_0,</span> <span class="pre">shape_x_1,</span> <span class="pre">...]</span></code></p></li>
+<li><p><strong>dims_c</strong> – list of tuples specifying the shape of the conditions to
+this operator.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="FrEIA.framework.GraphINN.get_module_by_name">
-<code class="sig-name descname"><span class="pre">get_module_by_name</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.nn.modules.module.Module</span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#GraphINN.get_module_by_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.GraphINN.get_module_by_name" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="FrEIA.framework.GraphINN.get_module_by_name">
+<span class="sig-name descname"><span class="pre">get_module_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.nn.modules.module.Module</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#GraphINN.get_module_by_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.GraphINN.get_module_by_name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return module of the first node in the graph with the provided name.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="FrEIA.framework.GraphINN.get_node_by_name">
-<code class="sig-name descname"><span class="pre">get_node_by_name</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.framework.graph_inn.Node</span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#GraphINN.get_node_by_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.GraphINN.get_node_by_name" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="FrEIA.framework.GraphINN.get_node_by_name">
+<span class="sig-name descname"><span class="pre">get_node_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><span class="pre">FrEIA.framework.graph_inn.Node</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#GraphINN.get_node_by_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.GraphINN.get_node_by_name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the first node in the graph with the provided name.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="FrEIA.framework.GraphINN.log_jacobian_numerical">
-<code class="sig-name descname"><span class="pre">log_jacobian_numerical</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rev</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#GraphINN.log_jacobian_numerical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.GraphINN.log_jacobian_numerical" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="FrEIA.framework.GraphINN.log_jacobian_numerical">
+<span class="sig-name descname"><span class="pre">log_jacobian_numerical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rev</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#GraphINN.log_jacobian_numerical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.GraphINN.log_jacobian_numerical" title="Permalink to this definition">¶</a></dt>
 <dd><p>Approximate log Jacobian determinant via finite differences.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt id="FrEIA.framework.InputNode">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></code><code class="sig-name descname"><span class="pre">InputNode</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#InputNode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.InputNode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FrEIA.framework.graph_inn.Node</span></code></p>
+<dt class="sig sig-object py" id="FrEIA.framework.InputNode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></span><span class="sig-name descname"><span class="pre">InputNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#InputNode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.InputNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">FrEIA.framework.graph_inn.Node</span></code></a></p>
 <p>Special type of node that represents the input data of the whole net (or the
 output when running reverse)</p>
 <dl class="py method">
-<dt id="FrEIA.framework.InputNode.__init__">
-<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#InputNode.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.InputNode.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
-</dd></dl>
+<dt class="sig sig-object py" id="FrEIA.framework.InputNode.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#InputNode.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.InputNode.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
-<dt id="FrEIA.framework.InputNode.build_module">
-<code class="sig-name descname"><span class="pre">build_module</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition_shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_shapes</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#InputNode.build_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.InputNode.build_module" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="FrEIA.framework.InputNode.build_module">
+<span class="sig-name descname"><span class="pre">build_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition_shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_shapes</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#InputNode.build_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.InputNode.build_module" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiates the module and determines the output dimension by
 calling InvertibleModule#output_dims.</p>
 </dd></dl>
@@ -229,29 +249,28 @@ calling InvertibleModule#output_dims.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="FrEIA.framework.Node">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></code><code class="sig-name descname"><span class="pre">Node</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.framework.graph_inn.Node</span><span class="p"><span class="pre">,</span> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.framework.graph_inn.Node</span><span class="p"><span class="pre">,</span> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.framework.graph_inn.Node</span><span class="p"><span class="pre">,</span> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#Node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.Node" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="FrEIA.framework.Node">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></span><span class="sig-name descname"><span class="pre">Node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><span class="pre">FrEIA.framework.graph_inn.Node</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><span class="pre">FrEIA.framework.graph_inn.Node</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><span class="pre">FrEIA.framework.graph_inn.Node</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#Node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.Node" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>The Node class represents one transformation in the graph, with an
 arbitrary number of in- and outputs.</p>
 <p>The user specifies the input, and the underlying module computes the
 number of outputs.</p>
 <dl class="py method">
-<dt id="FrEIA.framework.Node.__init__">
-<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.framework.graph_inn.Node</span><span class="p"><span class="pre">,</span> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.framework.graph_inn.Node</span><span class="p"><span class="pre">,</span> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.framework.graph_inn.Node</span><span class="p"><span class="pre">,</span> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#Node.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.Node.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
-</dd></dl>
+<dt class="sig sig-object py" id="FrEIA.framework.Node.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><span class="pre">FrEIA.framework.graph_inn.Node</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><span class="pre">FrEIA.framework.graph_inn.Node</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><span class="pre">FrEIA.framework.graph_inn.Node</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#Node.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.Node.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
-<dt id="FrEIA.framework.Node.build_module">
-<code class="sig-name descname"><span class="pre">build_module</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition_shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_shapes</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.modules.base.InvertibleModule</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#Node.build_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.Node.build_module" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="FrEIA.framework.Node.build_module">
+<span class="sig-name descname"><span class="pre">build_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition_shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_shapes</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="FrEIA.modules.html#FrEIA.modules.InvertibleModule" title="FrEIA.modules.base.InvertibleModule"><span class="pre">FrEIA.modules.base.InvertibleModule</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#Node.build_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.Node.build_module" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiates the module and determines the output dimension by
 calling InvertibleModule#output_dims.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="FrEIA.framework.Node.parse_inputs">
-<code class="sig-name descname"><span class="pre">parse_inputs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.framework.graph_inn.Node</span><span class="p"><span class="pre">,</span> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.framework.graph_inn.Node</span><span class="p"><span class="pre">,</span> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.framework.graph_inn.Node</span><span class="p"><span class="pre">,</span> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.framework.graph_inn.Node</span><span class="p"><span class="pre">,</span> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#Node.parse_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.Node.parse_inputs" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="FrEIA.framework.Node.parse_inputs">
+<span class="sig-name descname"><span class="pre">parse_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><span class="pre">FrEIA.framework.graph_inn.Node</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><span class="pre">FrEIA.framework.graph_inn.Node</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><span class="pre">FrEIA.framework.graph_inn.Node</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><span class="pre">FrEIA.framework.graph_inn.Node</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#Node.parse_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.Node.parse_inputs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts specified inputs to a node to a canonical format.
 Inputs can be specified in three forms:</p>
 <ul class="simple">
@@ -265,20 +284,19 @@ Inputs can be specified in three forms:</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="FrEIA.framework.OutputNode">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></code><code class="sig-name descname"><span class="pre">OutputNode</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_node</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.framework.graph_inn.Node</span><span class="p"><span class="pre">,</span> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.framework.graph_inn.Node</span><span class="p"><span class="pre">,</span> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#OutputNode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.OutputNode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FrEIA.framework.graph_inn.Node</span></code></p>
+<dt class="sig sig-object py" id="FrEIA.framework.OutputNode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></span><span class="sig-name descname"><span class="pre">OutputNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><span class="pre">FrEIA.framework.graph_inn.Node</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><span class="pre">FrEIA.framework.graph_inn.Node</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#OutputNode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.OutputNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">FrEIA.framework.graph_inn.Node</span></code></a></p>
 <p>Special type of node that represents the output of the whole net (or the
 input when running in reverse).</p>
 <dl class="py method">
-<dt id="FrEIA.framework.OutputNode.__init__">
-<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_node</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.framework.graph_inn.Node</span><span class="p"><span class="pre">,</span> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">FrEIA.framework.graph_inn.Node</span><span class="p"><span class="pre">,</span> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#OutputNode.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.OutputNode.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
-</dd></dl>
+<dt class="sig sig-object py" id="FrEIA.framework.OutputNode.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><span class="pre">FrEIA.framework.graph_inn.Node</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#FrEIA.framework.Node" title="FrEIA.framework.graph_inn.Node"><span class="pre">FrEIA.framework.graph_inn.Node</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#OutputNode.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.OutputNode.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
-<dt id="FrEIA.framework.OutputNode.build_module">
-<code class="sig-name descname"><span class="pre">build_module</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition_shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_shapes</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#OutputNode.build_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.OutputNode.build_module" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="FrEIA.framework.OutputNode.build_module">
+<span class="sig-name descname"><span class="pre">build_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition_shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_shapes</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/FrEIA/framework/graph_inn.html#OutputNode.build_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.OutputNode.build_module" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiates the module and determines the output dimension by
 calling InvertibleModule#output_dims.</p>
 </dd></dl>
@@ -286,19 +304,20 @@ calling InvertibleModule#output_dims.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="FrEIA.framework.ReversibleGraphNet">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></code><code class="sig-name descname"><span class="pre">ReversibleGraphNet</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ind_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ind_out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/reversible_graph_net.html#ReversibleGraphNet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ReversibleGraphNet" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FrEIA.framework.graph_inn.GraphINN</span></code></p>
+<dt class="sig sig-object py" id="FrEIA.framework.ReversibleGraphNet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></span><span class="sig-name descname"><span class="pre">ReversibleGraphNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ind_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ind_out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/reversible_graph_net.html#ReversibleGraphNet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ReversibleGraphNet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#FrEIA.framework.GraphINN" title="FrEIA.framework.graph_inn.GraphINN"><code class="xref py py-class docutils literal notranslate"><span class="pre">FrEIA.framework.graph_inn.GraphINN</span></code></a></p>
 <dl class="py method">
-<dt id="FrEIA.framework.ReversibleGraphNet.__init__">
-<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ind_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ind_out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/reversible_graph_net.html#ReversibleGraphNet.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ReversibleGraphNet.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Args:
-dims_in: list of tuples specifying the shape of the inputs to this</p>
-<blockquote>
-<div><p>operator: <code class="docutils literal notranslate"><span class="pre">dims_in</span> <span class="pre">=</span> <span class="pre">[shape_x_0,</span> <span class="pre">shape_x_1,</span> <span class="pre">...]</span></code></p>
-</div></blockquote>
-<dl class="simple">
-<dt>dims_c:  list of tuples specifying the shape of the conditions to</dt><dd><p>this operator.</p>
+<dt class="sig sig-object py" id="FrEIA.framework.ReversibleGraphNet.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ind_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ind_out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/reversible_graph_net.html#ReversibleGraphNet.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ReversibleGraphNet.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dims_in</strong> – list of tuples specifying the shape of the inputs to this
+operator: <code class="docutils literal notranslate"><span class="pre">dims_in</span> <span class="pre">=</span> <span class="pre">[shape_x_0,</span> <span class="pre">shape_x_1,</span> <span class="pre">...]</span></code></p></li>
+<li><p><strong>dims_c</strong> – list of tuples specifying the shape of the conditions to
+this operator.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -306,19 +325,20 @@ dims_in: list of tuples specifying the shape of the inputs to this</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="FrEIA.framework.ReversibleSequential">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></code><code class="sig-name descname"><span class="pre">ReversibleSequential</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/reversible_sequential_net.html#ReversibleSequential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ReversibleSequential" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FrEIA.framework.sequence_inn.SequenceINN</span></code></p>
+<dt class="sig sig-object py" id="FrEIA.framework.ReversibleSequential">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></span><span class="sig-name descname"><span class="pre">ReversibleSequential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/reversible_sequential_net.html#ReversibleSequential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ReversibleSequential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#FrEIA.framework.SequenceINN" title="FrEIA.framework.sequence_inn.SequenceINN"><code class="xref py py-class docutils literal notranslate"><span class="pre">FrEIA.framework.sequence_inn.SequenceINN</span></code></a></p>
 <dl class="py method">
-<dt id="FrEIA.framework.ReversibleSequential.__init__">
-<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/reversible_sequential_net.html#ReversibleSequential.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ReversibleSequential.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Args:
-dims_in: list of tuples specifying the shape of the inputs to this</p>
-<blockquote>
-<div><p>operator: <code class="docutils literal notranslate"><span class="pre">dims_in</span> <span class="pre">=</span> <span class="pre">[shape_x_0,</span> <span class="pre">shape_x_1,</span> <span class="pre">...]</span></code></p>
-</div></blockquote>
-<dl class="simple">
-<dt>dims_c:  list of tuples specifying the shape of the conditions to</dt><dd><p>this operator.</p>
+<dt class="sig sig-object py" id="FrEIA.framework.ReversibleSequential.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/reversible_sequential_net.html#ReversibleSequential.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.ReversibleSequential.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dims_in</strong> – list of tuples specifying the shape of the inputs to this
+operator: <code class="docutils literal notranslate"><span class="pre">dims_in</span> <span class="pre">=</span> <span class="pre">[shape_x_0,</span> <span class="pre">shape_x_1,</span> <span class="pre">...]</span></code></p></li>
+<li><p><strong>dims_c</strong> – list of tuples specifying the shape of the conditions to
+this operator.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -326,9 +346,9 @@ dims_in: list of tuples specifying the shape of the inputs to this</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="FrEIA.framework.SequenceINN">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></code><code class="sig-name descname"><span class="pre">SequenceINN</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/sequence_inn.html#SequenceINN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.SequenceINN" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FrEIA.modules.base.InvertibleModule</span></code></p>
+<dt class="sig sig-object py" id="FrEIA.framework.SequenceINN">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">FrEIA.framework.</span></span><span class="sig-name descname"><span class="pre">SequenceINN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/sequence_inn.html#SequenceINN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.SequenceINN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="FrEIA.modules.html#FrEIA.modules.InvertibleModule" title="FrEIA.modules.base.InvertibleModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">FrEIA.modules.base.InvertibleModule</span></code></a></p>
 <p>Simpler than FrEIA.framework.GraphINN:
 Only supports a sequential series of modules (no splitting, merging,
 branching off).
@@ -344,22 +364,23 @@ inn = SequenceINN(channels, dims_H, dims_W)</p>
 # and so on
 <a href="#id3"><span class="problematic" id="id4">``</span></a><a href="#id5"><span class="problematic" id="id6">`</span></a></p>
 <dl class="py method">
-<dt id="FrEIA.framework.SequenceINN.__init__">
-<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/sequence_inn.html#SequenceINN.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.SequenceINN.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Args:
-dims_in: list of tuples specifying the shape of the inputs to this</p>
-<blockquote>
-<div><p>operator: <code class="docutils literal notranslate"><span class="pre">dims_in</span> <span class="pre">=</span> <span class="pre">[shape_x_0,</span> <span class="pre">shape_x_1,</span> <span class="pre">...]</span></code></p>
-</div></blockquote>
-<dl class="simple">
-<dt>dims_c:  list of tuples specifying the shape of the conditions to</dt><dd><p>this operator.</p>
+<dt class="sig sig-object py" id="FrEIA.framework.SequenceINN.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/sequence_inn.html#SequenceINN.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.SequenceINN.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dims_in</strong> – list of tuples specifying the shape of the inputs to this
+operator: <code class="docutils literal notranslate"><span class="pre">dims_in</span> <span class="pre">=</span> <span class="pre">[shape_x_0,</span> <span class="pre">shape_x_1,</span> <span class="pre">...]</span></code></p></li>
+<li><p><strong>dims_c</strong> – list of tuples specifying the shape of the conditions to
+this operator.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt id="FrEIA.framework.SequenceINN.append">
-<code class="sig-name descname"><span class="pre">append</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cond</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cond_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/sequence_inn.html#SequenceINN.append"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.SequenceINN.append" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="FrEIA.framework.SequenceINN.append">
+<span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cond</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cond_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/sequence_inn.html#SequenceINN.append"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.SequenceINN.append" title="Permalink to this definition">¶</a></dt>
 <dd><p>Append a reversible block from FrEIA.modules to the network.
 module_class: Class from FrEIA.modules.
 cond (int): index of which condition to use (conditions will be passed as list to forward()).</p>
@@ -372,36 +393,53 @@ cond (int): index of which condition to use (conditions will be passed as list t
 
 </dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
 
               </div>
               
               
-              <div class='prev-next-bottom'>
-                
-    <a class='left-prev' id="prev-link" href="index.html" title="previous page">Welcome to FrEIA’s documentation!</a>
-    <a class='right-next' id="next-link" href="FrEIA.modules.html" title="next page">FrEIA.modules package</a>
-
-              </div>
+              <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="index.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Welcome to FrEIA’s documentation!</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="FrEIA.modules.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">FrEIA.modules package</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
               
           </main>
           
 
       </div>
     </div>
-
-    
-  <script src="_static/js/index.d3f166471bb80abb5163.js"></script>
-
-
-    <footer class="footer mt-5 mt-md-0">
+  
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+<footer class="footer mt-5 mt-md-0">
   <div class="container">
-    <p>
-          &copy; Copyright 2021, VLL-HD.<br/>
-        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.5.1.<br/>
-    </p>
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright 2021, VLL-HD.<br>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.0.<br>
+</p>
+    </div>
+    
   </div>
 </footer>
   </body>

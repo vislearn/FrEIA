@@ -15,7 +15,8 @@ class _BaseCouplingBlock(InvertibleModule):
 
     def __init__(self, dims_in, dims_c=[],
                  clamp: float = 2.,
-                 clamp_activation: Union[str, Callable] = "ATAN"):
+                 clamp_activation: Union[str, Callable] = "ATAN",
+                 split_len: Union[float, int] = 0.5):
         '''
         Additional args in docstring of base class.
 
@@ -27,6 +28,10 @@ class _BaseCouplingBlock(InvertibleModule):
             "ATAN", "TANH", and "SIGMOID" are recognized, or a function of
             object can be passed. TANH behaves like the original realNVP paper.
             A custom function should take tensors and map -inf to -1 and +inf to +1.
+          split_len: Specify the dimension where the data should be split.
+            If given as int, directly indicates the split dimension.
+            If given as float, must fulfil 0 <= split_len <= 1 and number of
+            unchanged dimensions is set to `round(split_len * dims_in[0, 0])`.
         '''
 
         super().__init__(dims_in, dims_c)
@@ -37,8 +42,18 @@ class _BaseCouplingBlock(InvertibleModule):
         # i.e. 1D, 2D, 3D tensor, etc.
         self.ndims = len(dims_in[0])
 
-        self.split_len1 = self.channels // 2
-        self.split_len2 = self.channels - self.channels // 2
+        if isinstance(split_len, float):
+            if not (0 <= split_len <= 1):
+                raise ValueError(f"Float split_len must be in range [0, 1], "
+                                 f"but is: {split_len}")
+            split_len = round(self.channels * split_len)
+        else:
+            if not (0 <= split_len <= self.channels):
+                raise ValueError(f"Integer split_len must be in range "
+                                 f"0 <= split_len <= {self.channels}, "
+                                 f"but is: {split_len}")
+        self.split_len1 = split_len
+        self.split_len2 = self.channels - split_len
 
         self.clamp = clamp
 
@@ -130,6 +145,7 @@ class NICECouplingBlock(_BaseCouplingBlock):
 
     def __init__(self, dims_in, dims_c=[],
                  subnet_constructor: callable = None,
+                 split_len: Union[float, int] = 0.5,
                  subnet_kwargs: Dict = {}):
         '''
         Additional args in docstring of base class.
@@ -143,7 +159,9 @@ class NICECouplingBlock(_BaseCouplingBlock):
             Two of these subnetworks will be initialized inside the block.
           subnet_kwargs: additional kwargs for the subnet_constructor
         '''
-        super().__init__(dims_in, dims_c, clamp=0., clamp_activation=(lambda u: u))
+        super().__init__(dims_in, dims_c,
+                         clamp=0., clamp_activation=(lambda u: u),
+                         split_len=split_len)
 
         self.F = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1, **subnet_kwargs)
         self.G = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2, **subnet_kwargs)
@@ -171,6 +189,7 @@ class RNVPCouplingBlock(_BaseCouplingBlock):
                  subnet_constructor: Callable = None,
                  clamp: float = 2.,
                  clamp_activation: Union[str, Callable] = "ATAN",
+                 split_len: Union[float, int] = 0.5,
                  subnet_kwargs: Dict = {}):
         '''
         Additional args in docstring of base class.
@@ -191,7 +210,8 @@ class RNVPCouplingBlock(_BaseCouplingBlock):
           subnet_kwargs: additional kwargs for the subnet_constructor
         '''
 
-        super().__init__(dims_in, dims_c, clamp, clamp_activation)
+        super().__init__(dims_in, dims_c, clamp, clamp_activation,
+                         split_len=split_len)
 
         self.subnet_s1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2, **subnet_kwargs)
         self.subnet_t1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2, **subnet_kwargs)
@@ -246,6 +266,7 @@ class GLOWCouplingBlock(_BaseCouplingBlock):
                  subnet_constructor: Callable = None,
                  clamp: float = 2.,
                  clamp_activation: Union[str, Callable] = "ATAN",
+                 split_len: Union[float, int] = 0.5,
                  subnet_kwargs: Dict = {}):
         '''
         Additional args in docstring of base class.
@@ -266,7 +287,8 @@ class GLOWCouplingBlock(_BaseCouplingBlock):
           subnet_kwargs: additional kwargs for the subnet_constructor
         '''
 
-        super().__init__(dims_in, dims_c, clamp, clamp_activation)
+        super().__init__(dims_in, dims_c, clamp, clamp_activation,
+                         split_len=split_len)
 
         self.subnet1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2 * 2, **subnet_kwargs)
         self.subnet2 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1 * 2, **subnet_kwargs)
@@ -327,6 +349,7 @@ class GINCouplingBlock(_BaseCouplingBlock):
                  subnet_constructor: Callable = None,
                  clamp: float = 2.,
                  clamp_activation: Union[str, Callable] = "ATAN",
+                 split_len: Union[float, int] = 0.5,
                  subnet_kwargs: Dict = {}):
         '''
         Additional args in docstring of base class.
@@ -347,7 +370,8 @@ class GINCouplingBlock(_BaseCouplingBlock):
           subnet_kwargs: additional kwargs for the subnet_constructor
         '''
 
-        super().__init__(dims_in, dims_c, clamp, clamp_activation)
+        super().__init__(dims_in, dims_c, clamp, clamp_activation,
+                         split_len=split_len)
 
         self.subnet1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2 * 2, **subnet_kwargs)
         self.subnet2 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1 * 2, **subnet_kwargs)
@@ -399,6 +423,7 @@ class AffineCouplingOneSided(_BaseCouplingBlock):
                  subnet_constructor: Callable = None,
                  clamp: float = 2.,
                  clamp_activation: Union[str, Callable] = "ATAN",
+                 split_len: Union[float, int] = 0.5,
                  subnet_kwargs: Dict = {}):
         '''
         Additional args in docstring of base class.
@@ -419,7 +444,8 @@ class AffineCouplingOneSided(_BaseCouplingBlock):
           subnet_kwargs: additional kwargs for the subnet_constructor
         '''
 
-        super().__init__(dims_in, dims_c, clamp, clamp_activation)
+        super().__init__(dims_in, dims_c, clamp, clamp_activation,
+                         split_len=split_len)
         self.subnet = subnet_constructor(self.split_len1 + self.condition_length, 2 * self.split_len2, **subnet_kwargs)
 
     def forward(self, x, c=[], rev=False, jac=True):
@@ -457,6 +483,7 @@ class ConditionalAffineTransform(_BaseCouplingBlock):
                  subnet_constructor: Callable = None,
                  clamp: float = 2.,
                  clamp_activation: Union[str, Callable] = "ATAN",
+                 split_len: Union[float, int] = 0.5,
                  subnet_kwargs: Dict = {}):
         '''
         Additional args in docstring of base class.
@@ -477,7 +504,8 @@ class ConditionalAffineTransform(_BaseCouplingBlock):
           subnet_kwargs: additional kwargs for the subnet_constructor
         '''
 
-        super().__init__(dims_in, dims_c, clamp, clamp_activation)
+        super().__init__(dims_in, dims_c, clamp, clamp_activation,
+                         split_len=split_len)
 
         if not self.conditional:
             raise ValueError("ConditionalAffineTransform must have a condition")

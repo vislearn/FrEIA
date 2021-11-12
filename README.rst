@@ -20,12 +20,17 @@ Papers
 
 Our following papers use FrEIA, with links to code given below.
 
-**"Training Normalizing Flows with the Information Bottleneck for Competitive Generative Classification" (2020)**
+**"Generative Classifiers as a Basis for Trustworthy Image Classification" (CVPR 2021)**
+
+* Paper: https://arxiv.org/abs/2007.15036
+* Code: https://github.com/RayDeeA/ibinn_imagenet
+
+**"Training Normalizing Flows with the Information Bottleneck for Competitive Generative Classification" (Neurips 2020)**
 
 * Paper: https://arxiv.org/abs/2001.06448
 * Code: https://github.com/VLL-HD/exact_information_bottleneck
 
-**"Disentanglement by Nonlinear ICA with General Incompressible-flow Networks (GIN)" (2020)**
+**"Disentanglement by Nonlinear ICA with General Incompressible-flow Networks (GIN)" (ICLR 2020)**
 
 * Paper: https://arxiv.org/abs/2001.04872
 * Code: https://github.com/VLL-HD/GIN
@@ -36,7 +41,7 @@ Our following papers use FrEIA, with links to code given below.
 * Supplement: https://drive.google.com/file/d/1_OoiIGhLeVJGaZFeBt0OWOq8ZCtiI7li
 * Code: https://github.com/VLL-HD/conditional_invertible_neural_networks
 
-**"Analyzing inverse problems with invertible neural networks." (2018)**
+**"Analyzing inverse problems with invertible neural networks." (ICLR 2019)**
 
 * Paper: https://arxiv.org/abs/1808.04730
 * Code: https://github.com/VLL-HD/analyzing_inverse_problems
@@ -278,8 +283,8 @@ All coupling blocks (GLOW, RNVP, NICE), merit special discussion, because
 they are the most used invertible transforms.
 
 * The coupling blocks contain smaller feed-forward subnetworks predicting the affine coefficients.
-  The in- and output shapes of the subnetworks depend on the in- output size of the coupling block itself.
-  These size are not known when coding the INN (or perhaps can be worked out by
+  The in- and output shapes of the subnetworks depend on the in- output sizes of the coupling block itself.
+  These sizes are not known when coding the INN (or perhaps can be worked out by
   hand, but would have to be worked out anew every time the architecture is modified slightly).
   Therefore, the subnetworks can not be directly passed as ``nn.Modules``, but
   rather in the form of a function or class, that constructs the subnetworks
@@ -293,7 +298,7 @@ they are the most used invertible transforms.
                             nn.Linear(128,  dims_out))
 
 * The RNVP and GLOW coupling blocks have an additional hyperparameter ``clamp``.
-  This is becuase, instead of the exponential function ``exp(s)``, we use ``exp( 2*c/pi * atan(x))``
+  This is because, instead of the exponential function ``exp(s)``, we use ``exp( 2*c/pi * atan(x))``
   in the coupling blocks (``clamp``-parameter ``c``).
   This leads to much more stable training and enables larger learning rates.
   Effectively, the multiplication component of the coupling block is limited between ``exp(c)`` and ``1/exp(c)``.
@@ -394,7 +399,7 @@ Conditional INN for MNIST
 ***************************
 
 The following cINN is able to perform conditional MNIST generation quite well.
-Note that is is not particularly efficient, with respect to the number of parameters (see convolutional INN for that).
+Note that it is not particularly efficient, with respect to the number of parameters (see convolutional INN for that).
 Again, we use a chain of ``AllInOneBlock``s, collected together by ``SequenceINN``.
 
 .. code:: python
@@ -612,9 +617,9 @@ Useful Tips & Engineering Heuristics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Stochastic gradient descent will not work (well) for INNs. Use e.g. Adam instead.
-* Gradient clipping can be useful if you are experiencing training instabilities, e.g. use ``torch.nn.utils.clip_grad_norm_``
+* Gradient clipping can be useful if you are experiencing training instabilities, e.g. use ``torch.nn.utils.clip_grad_norm_``.
 * Add some slight noise to the inputs (order of 1E-2). This stabilizes training and prevents sparse gradients,
-  if there are some quantized or perfectly correlated input dimenions
+  if there are some quantized or perfectly correlated input dimensions.
 
 For coupling blocks in particular:
 
@@ -622,7 +627,7 @@ For coupling blocks in particular:
 * If your network is very deep (>30 coupling blocks), initialize the last layer in the subnetworks to zero.
   This means the INN as a whole is initialized to the identity, and you will not get NaNs at the first iteration.
 * Do not forget permutations/orthogonal transforms between coupling blocks.
-* Keep the subnetworks shallow (2-3 layers only), but wide (>= 128 neurons/ >= 64 conv. channels)
+* Keep the subnetworks shallow (2-3 layers only), but wide (>= 128 neurons/ >= 64 conv. channels).
 * Keep in mind that one coupling block contains between 4 and 12 individual convolutions or fully connected layers.
   So you may not have to use as many as you think, else the number of parameters will be huge.
 * This being said, as the coupling blocks initialize to roughly the identity transform,
@@ -631,9 +636,9 @@ For coupling blocks in particular:
 
 For convolutional INNs in particular:
 
-* Perform some kind of reshaping early, so the INN has >3 channels to work with
+* Perform some kind of reshaping early, so the INN has >3 channels to work with.
 * Coupling blocks using 1x1 convolutions in the subnets seem important for the quality,
-  they should constitute every other, or every third coupling block
+  they should constitute every other, or every third coupling block.
 
 .. |Logo| image:: docs/freia_logo.png
 .. |complicatedINN| image:: docs/inn_example_architecture.png
