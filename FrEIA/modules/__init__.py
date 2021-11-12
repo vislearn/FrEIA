@@ -49,6 +49,7 @@ Fixed (non-learned) transforms:
 * PermuteRandom
 * FixedLinearTransform
 * Fixed1x1Conv
+* InvertibleSigmoid
 
 '''
 
@@ -88,6 +89,7 @@ __all__ = [
             'PermuteRandom',
             'FixedLinearTransform',
             'Fixed1x1Conv',
+            'InvertibleSigmoid',
             'SplitChannel',
             'ConcatChannel',
             'Split',
