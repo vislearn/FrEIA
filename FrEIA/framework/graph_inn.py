@@ -94,13 +94,13 @@ class Node:
             elif len(inputs) == 2:
                 return [inputs, ]
             else:
-                raise RuntimeError(
+                raise ValueError(
                     f"Cannot parse inputs provided to node '{self.name}'.")
         else:
             if not isinstance(inputs, Node):
-                raise ValueError(f"Received object of invalid type "
-                                 f"({type(inputs)}) as input for node "
-                                 f"'{self.name}'.")
+                raise TypeError(f"Received object of invalid type "
+                                f"({type(inputs)}) as input for node "
+                                f"'{self.name}'.")
             return [(inputs, 0), ]
 
     def __str__(self):

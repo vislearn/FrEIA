@@ -56,6 +56,15 @@ class SequenceINN(InvertibleModule):
         assert len(ouput_dims) == 1, "Module has more than one output"
         self.shapes.append(ouput_dims[0])
 
+    def __getitem__(self, item):
+        return self.module_list.__getitem__(item)
+
+    def __len__(self):
+        return self.module_list.__len__()
+
+    def __iter__(self):
+        return self.module_list.__iter__()
+
     def output_dims(self, input_dims: List[Tuple[int]]) -> List[Tuple[int]]:
         if not self.force_tuple_output:
             raise ValueError("You can only call output_dims on a SequentialINN "
