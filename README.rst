@@ -269,7 +269,7 @@ The arguments of the ``Node`` constructor are the following:
 * ``module_type``: This argument gives the class of operation to be performed by this node,
   for example ``GLOWCouplingBlock`` for a coupling block following the GLOW-design.
   Many implemented classes can be found in the documentation under
-  https://vll-hd.github.io/FrEIA/modules/index.html
+  https://vll-hd.github.io/FrEIA/_build/html/FrEIA.modules.html
 * ``module_args``: This argument is a dictionary. It provides arguments for the
   ``module_type``-constructor. For instance, a random invertible permutation
   (``module_type=PermuteRandom``) can accept the argument ``seed``, so we could use
