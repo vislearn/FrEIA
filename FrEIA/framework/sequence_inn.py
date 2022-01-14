@@ -15,14 +15,14 @@ class SequenceINN(InvertibleModule):
     Has an append() method, to add new blocks in a more simple way than the
     computation-graph based approach of GraphINN. For example:
 
-    ```
-    inn = SequenceINN(channels, dims_H, dims_W)
+    .. code-block:: python
 
-    for i in range(n_blocks):
-        inn.append(FrEIA.modules.AllInOneBlock, clamp=2.0, permute_soft=True)
-    inn.append(FrEIA.modules.HaarDownsampling)
-    # and so on
-    ```
+       inn = SequenceINN(channels, dims_H, dims_W)
+
+       for i in range(n_blocks):
+           inn.append(FrEIA.modules.AllInOneBlock, clamp=2.0, permute_soft=True)
+       inn.append(FrEIA.modules.HaarDownsampling)
+       # and so on
     """
 
     def __init__(self, *dims: int, force_tuple_output=False):
@@ -37,11 +37,13 @@ class SequenceINN(InvertibleModule):
     def append(self, module_class, cond=None, cond_shape=None, **kwargs):
         """
         Append a reversible block from FrEIA.modules to the network.
-        module_class: Class from FrEIA.modules.
-        cond (int): index of which condition to use (conditions will be passed as list to forward()).
-                    Conditioning nodes are not needed for SequenceINN.
-        cond_shape (tuple[int]): the shape of the condition tensor.
-        **kwargs: Further keyword arguments that are passed to the constructor of module_class (see example).
+
+        Args:
+          module_class: Class from FrEIA.modules.
+          cond (int): index of which condition to use (conditions will be passed as list to forward()).
+            Conditioning nodes are not needed for SequenceINN.
+          cond_shape (tuple[int]): the shape of the condition tensor.
+          **kwargs: Further keyword arguments that are passed to the constructor of module_class (see example).
         """
 
         dims_in = [self.shapes[-1]]
@@ -76,7 +78,7 @@ class SequenceINN(InvertibleModule):
         """
         Executes the sequential INN in forward or inverse (rev=True) direction.
 
-        Arguments:
+        Args:
             x_or_z: input tensor (in contrast to GraphINN, a list of
                     tensors is not supported, as SequenceINN only has
                     one input).
@@ -102,9 +104,7 @@ class SequenceINN(InvertibleModule):
                 x_or_z, j = self.module_list[i](x_or_z, jac=jac, rev=rev)
             else:
                 x_or_z, j = self.module_list[i](x_or_z, c=[c[self.conditions[i]]],
-                                           jac=jac, rev=rev)
+                                                jac=jac, rev=rev)
             log_det_jac = j + log_det_jac
 
         return x_or_z if self.force_tuple_output else x_or_z[0], log_det_jac
-
-
