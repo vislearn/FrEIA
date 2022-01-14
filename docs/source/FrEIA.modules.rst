@@ -81,6 +81,8 @@ Fixed (non-learned) transforms
 
 .. autoclass:: Fixed1x1Conv
 
+.. autoclass:: InvertibleSigmoid
+
 
 Approximately- or semi-invertible transforms
 --------------------------------------------

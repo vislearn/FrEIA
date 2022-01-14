@@ -58,7 +58,7 @@ class _BaseCouplingBlock(InvertibleModule):
         self.clamp = clamp
 
         assert all([tuple(dims_c[i][1:]) == tuple(dims_in[0][1:]) for i in range(len(dims_c))]), \
-            "Dimensions of input and one or more conditions don't agree."
+            F"Dimensions of input {dims_in} and one or more conditions {dims_c} don't agree."
         self.conditional = (len(dims_c) > 0)
         self.condition_length = sum([dims_c[i][0] for i in range(len(dims_c))])
 
@@ -144,7 +144,8 @@ class NICECouplingBlock(_BaseCouplingBlock):
     '''
 
     def __init__(self, dims_in, dims_c=[],
-                 subnet_constructor: callable = None):
+                 subnet_constructor: callable = None,
+                 split_len: Union[float, int] = 0.5):
         '''
         Additional args in docstring of base class.
 
@@ -156,7 +157,9 @@ class NICECouplingBlock(_BaseCouplingBlock):
             channels. See tutorial for examples.
             Two of these subnetworks will be initialized inside the block.
         '''
-        super().__init__(dims_in, dims_c, clamp=0., clamp_activation=(lambda u: u))
+        super().__init__(dims_in, dims_c,
+                         clamp=0., clamp_activation=(lambda u: u),
+                         split_len=split_len)
 
         self.F = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1)
         self.G = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2)
@@ -183,7 +186,8 @@ class RNVPCouplingBlock(_BaseCouplingBlock):
     def __init__(self, dims_in, dims_c=[],
                  subnet_constructor: Callable = None,
                  clamp: float = 2.,
-                 clamp_activation: Union[str, Callable] = "ATAN"):
+                 clamp_activation: Union[str, Callable] = "ATAN",
+                 split_len: Union[float, int] = 0.5):
         '''
         Additional args in docstring of base class.
 
@@ -202,7 +206,8 @@ class RNVPCouplingBlock(_BaseCouplingBlock):
             A custom function should take tensors and map -inf to -1 and +inf to +1.
         '''
 
-        super().__init__(dims_in, dims_c, clamp, clamp_activation)
+        super().__init__(dims_in, dims_c, clamp, clamp_activation,
+                         split_len=split_len)
 
         self.subnet_s1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2)
         self.subnet_t1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2)
@@ -256,7 +261,8 @@ class GLOWCouplingBlock(_BaseCouplingBlock):
     def __init__(self, dims_in, dims_c=[],
                  subnet_constructor: Callable = None,
                  clamp: float = 2.,
-                 clamp_activation: Union[str, Callable] = "ATAN"):
+                 clamp_activation: Union[str, Callable] = "ATAN",
+                 split_len: Union[float, int] = 0.5):
         '''
         Additional args in docstring of base class.
 
@@ -275,7 +281,8 @@ class GLOWCouplingBlock(_BaseCouplingBlock):
             A custom function should take tensors and map -inf to -1 and +inf to +1.
         '''
 
-        super().__init__(dims_in, dims_c, clamp, clamp_activation)
+        super().__init__(dims_in, dims_c, clamp, clamp_activation,
+                         split_len=split_len)
 
         self.subnet1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2 * 2)
         self.subnet2 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1 * 2)
@@ -335,7 +342,8 @@ class GINCouplingBlock(_BaseCouplingBlock):
     def __init__(self, dims_in, dims_c=[],
                  subnet_constructor: Callable = None,
                  clamp: float = 2.,
-                 clamp_activation: Union[str, Callable] = "ATAN"):
+                 clamp_activation: Union[str, Callable] = "ATAN",
+                 split_len: Union[float, int] = 0.5):
         '''
         Additional args in docstring of base class.
 
@@ -354,7 +362,8 @@ class GINCouplingBlock(_BaseCouplingBlock):
             A custom function should take tensors and map -inf to -1 and +inf to +1.
         '''
 
-        super().__init__(dims_in, dims_c, clamp, clamp_activation)
+        super().__init__(dims_in, dims_c, clamp, clamp_activation,
+                         split_len=split_len)
 
         self.subnet1 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2 * 2)
         self.subnet2 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1 * 2)
@@ -405,7 +414,8 @@ class AffineCouplingOneSided(_BaseCouplingBlock):
     def __init__(self, dims_in, dims_c=[],
                  subnet_constructor: Callable = None,
                  clamp: float = 2.,
-                 clamp_activation: Union[str, Callable] = "ATAN"):
+                 clamp_activation: Union[str, Callable] = "ATAN",
+                 split_len: Union[float, int] = 0.5):
         '''
         Additional args in docstring of base class.
 
@@ -424,7 +434,8 @@ class AffineCouplingOneSided(_BaseCouplingBlock):
             A custom function should take tensors and map -inf to -1 and +inf to +1.
         '''
 
-        super().__init__(dims_in, dims_c, clamp, clamp_activation)
+        super().__init__(dims_in, dims_c, clamp, clamp_activation,
+                         split_len=split_len)
         self.subnet = subnet_constructor(self.split_len1 + self.condition_length, 2 * self.split_len2)
 
     def forward(self, x, c=[], rev=False, jac=True):
@@ -461,7 +472,8 @@ class ConditionalAffineTransform(_BaseCouplingBlock):
     def __init__(self, dims_in, dims_c=[],
                  subnet_constructor: Callable = None,
                  clamp: float = 2.,
-                 clamp_activation: Union[str, Callable] = "ATAN"):
+                 clamp_activation: Union[str, Callable] = "ATAN",
+                 split_len: Union[float, int] = 0.5):
         '''
         Additional args in docstring of base class.
 
@@ -480,7 +492,8 @@ class ConditionalAffineTransform(_BaseCouplingBlock):
             A custom function should take tensors and map -inf to -1 and +inf to +1.
         '''
 
-        super().__init__(dims_in, dims_c, clamp, clamp_activation)
+        super().__init__(dims_in, dims_c, clamp, clamp_activation,
+                         split_len=split_len)
 
         if not self.conditional:
             raise ValueError("ConditionalAffineTransform must have a condition")

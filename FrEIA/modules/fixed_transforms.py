@@ -1,6 +1,6 @@
 from . import InvertibleModule
 
-from typing import Union
+from typing import Union, Iterable, Tuple
 
 import numpy as np
 import torch
@@ -131,3 +131,52 @@ class Fixed1x1Conv(InvertibleModule):
         if len(input_dims[0]) != 3:
             raise ValueError(f"{self.__class__.__name__} requires 3D input (channels, height, width)")
         return input_dims
+
+
+class InvertibleSigmoid(InvertibleModule):
+    '''Applies the sigmoid function element-wise across all batches, and the associated
+    inverse function in reverse pass. Contains no trainable parameters.
+    Sigmoid function S(x) and its corresponding inverse function is given by
+
+    .. math::
+
+        S(x)      &= \\frac{1}{1 + \\exp(-x)} \\\\
+        S^{-1}(x) &= \\log{\\frac{x}{1-x}}.
+
+    The returning Jacobian is computed as
+
+    .. math::
+
+        J = \\log \\det \\frac{1}{(1+\\exp{x})(1+\\exp{-x})}.
+
+    '''
+    def __init__(self, dims_in, **kwargs):
+        super().__init__(dims_in, **kwargs)
+
+    def output_dims(self, dims_in):
+        return dims_in
+
+    def forward(self, x_or_z: Iterable[torch.Tensor], c: Iterable[torch.Tensor] = None,
+                rev: bool = False, jac: bool = True) \
+            -> Tuple[Tuple[torch.Tensor], torch.Tensor]:
+        x_or_z = x_or_z[0]
+        if not rev:
+            # S(x)
+            result = 1 / (1 + torch.exp(-x_or_z))
+        else:
+            # S^-1(z)
+            # only defined within range 0-1, non-inclusive; else, it will returns nan.
+            result = torch.log(x_or_z / (1 - x_or_z))
+        if not jac:
+            return (result, )
+
+        # always compute jacobian using the forward direction, but with different inputs
+        _input = result if rev else x_or_z
+        # the following is the diagonal Jacobian as sigmoid is an element-wise op
+        logJ = torch.log(1 / ((1 + torch.exp(_input)) * (1 + torch.exp(-_input))))
+        # determinant of a log diagonal Jacobian is simply the sum of its diagonals
+        detLogJ = logJ.sum(1)
+        if not rev:
+            return ((result, ), detLogJ)
+        else:
+            return ((result, ), -detLogJ)
