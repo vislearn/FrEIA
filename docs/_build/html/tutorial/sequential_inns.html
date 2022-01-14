@@ -1,0 +1,310 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Sequential API &#8212; FrEIA v0.2 documentation</title>
+    
+  <link href="../_static/css/theme.css" rel="stylesheet">
+  <link href="../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/blank.css" />
+    
+  <link rel="preload" as="script" href="../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Computation graph API" href="graph_inns.html" />
+    <link rel="prev" title="Invertible Operations" href="invertible_operations.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
+    
+    
+<a class="navbar-brand" href="../index.html">
+<p class="title">FrEIA</p>
+</a>
+
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="quickstart.html">
+  Quickstart guide
+ </a>
+</li>
+
+<li class="toctree-l1 current active nav-item">
+ <a class="reference internal nav-link" href="tutorial.html">
+  Tutorial
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="examples.html">
+  Examples
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../FrEIA.framework.html">
+  FrEIA.framework package
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../FrEIA.modules.html">
+  FrEIA.modules package
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    <ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="basic_concepts.html">
+   Basic concepts
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="invertible_operations.html">
+   Invertible Operations
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Sequential API
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="graph_inns.html">
+   Computation graph API
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tips_tricks_faq.html">
+   Tips &amp; Tricks, FAQ
+  </a>
+ </li>
+</ul>
+
+  </div>
+</nav>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+
+<nav id="bd-toc-nav">
+    
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
+              </div>
+              
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <section id="sequential-api">
+<h1>Sequential API<a class="headerlink" href="#sequential-api" title="Permalink to this headline">¶</a></h1>
+<p>In many cases, the INN will just consist of a sequence of invertible operations with one input and one output
+without any splitting or merging in between.
+For this simple case, we provide <code class="docutils literal notranslate"><span class="pre">FrEIA.framework.SequenceINN</span></code>. Here, invertible operations can be added to the INN
+through the <code class="docutils literal notranslate"><span class="pre">.append()</span></code>-method, without having to explicitly write out a computation graph.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">FrEIA.framework</span> <span class="k">as</span> <span class="nn">Ff</span>
+<span class="kn">import</span> <span class="nn">FrEIA.modules</span> <span class="k">as</span> <span class="nn">Fm</span>
+
+<span class="k">def</span> <span class="nf">subnet_fc</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_out</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Return a feed-forward subnetwork, to be used in the coupling blocks below&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+                         <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span>  <span class="mi">128</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+                         <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span>  <span class="n">dims_out</span><span class="p">))</span>
+
+<span class="c1"># a tuple of the input data dimension. 784 is the dimension of flattened MNIST images.</span>
+<span class="c1"># (input_dims would be (3, 32, 32) for CIFAR for instance)</span>
+<span class="n">input_dims</span> <span class="o">=</span> <span class="p">(</span><span class="mi">784</span><span class="p">,)</span>
+
+<span class="c1"># construct the INN (not containing any operations so far)</span>
+<span class="n">inn</span> <span class="o">=</span> <span class="n">Ff</span><span class="o">.</span><span class="n">SequenceINN</span><span class="p">(</span><span class="o">*</span><span class="n">input_dims</span><span class="p">)</span>
+
+<span class="c1"># append coupling blocks to the sequence of operations</span>
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">):</span>
+    <span class="n">inn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Fm</span><span class="o">.</span><span class="n">AllInOneBlock</span><span class="p">,</span> <span class="n">subnet_constructor</span><span class="o">=</span><span class="n">subnet_fc</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The INN contain 8 <code class="docutils literal notranslate"><span class="pre">AllInOneBlock</span></code> coupling blocks in a sequence.
+Given an input <code class="docutils literal notranslate"><span class="pre">x</span></code>, the output <code class="docutils literal notranslate"><span class="pre">z</span></code> together with  the log-determinant-Jacobian <code class="docutils literal notranslate"><span class="pre">jac</span></code>
+is simply obtained by calling the INN: <code class="docutils literal notranslate"><span class="pre">z,</span> <span class="pre">jac</span> <span class="pre">=</span> <span class="pre">inn(x)</span></code>.
+The inverse can be computed using the <code class="docutils literal notranslate"><span class="pre">rev</span></code> keyword:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">z</span><span class="p">,</span> <span class="n">jac</span> <span class="o">=</span> <span class="n">inn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">x_inv</span><span class="p">,</span> <span class="n">jac_inv</span> <span class="o">=</span> <span class="n">inn</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># inverting from the outputs should give the original inputs again</span>
+<span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">x_inv</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mf">1e-5</span>
+
+<span class="c1"># the inverse log-det-Jacobian should be the negative of the forward log-det-Jacobian</span>
+<span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">jac</span> <span class="o">+</span> <span class="n">jac_inv</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mf">1e-5</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">SequenceINN</span></code> is a child class of <code class="docutils literal notranslate"><span class="pre">torch.nn.Module</span></code>, so all pytorch methods will work
+(<code class="docutils literal notranslate"><span class="pre">.cuda()</span></code>, <code class="docutils literal notranslate"><span class="pre">.state_dict()</span></code>, etc.).</p>
+<p>For <strong>conditional</strong> sequential architectures, we presuppose a known list of
+conditions, and that each invertible operation only receives one condition.
+If this is not the case, we refer to <code class="docutils literal notranslate"><span class="pre">FrEIA.framework.GraphINN</span></code> (see next page).
+For now, we imagine that the only condition is a one-hot label of the MNIST class.
+A conditional INN would then be constructed as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cond_dims</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,)</span>
+
+<span class="c1"># use the input_dims (784,) from above</span>
+<span class="n">cinn</span> <span class="o">=</span> <span class="n">Ff</span><span class="o">.</span><span class="n">SequenceINN</span><span class="p">(</span><span class="o">*</span><span class="n">input_dims</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">):</span>
+    <span class="c1"># The cond=0 argument tells the operation which of the conditions it should</span>
+    <span class="c1"># use, that are supplied with the call. So cond=0 means &#39;use the first condition&#39;</span>
+    <span class="c1"># (there is only one condition in this case).</span>
+    <span class="n">cinn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Fm</span><span class="o">.</span><span class="n">AllInOneBlock</span><span class="p">,</span> <span class="n">cond</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">cond_shape</span><span class="o">=</span><span class="n">cond_dims</span><span class="p">,</span> <span class="n">subnet_constructor</span><span class="o">=</span><span class="n">subnet_fc</span><span class="p">)</span>
+
+<span class="c1"># the conditions have to be given as a list (in this example, a list with</span>
+<span class="c1"># one entry, &#39;one_hot_labels&#39;).  In general, multiple conditions can be</span>
+<span class="c1"># given. The cond argument of the append() method above specifies which</span>
+<span class="c1"># condition is used for each operation.</span>
+<span class="n">z</span><span class="p">,</span> <span class="n">jac</span> <span class="o">=</span> <span class="n">cinn</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="p">[</span><span class="n">one_hot_labels</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+
+
+              </div>
+              
+              
+              <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="invertible_operations.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Invertible Operations</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="graph_inns.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Computation graph API</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+  
+  <script src="../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+<footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright 2021, VLL-HD.<br>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.2.<br>
+</p>
+    </div>
+    
+  </div>
+</footer>
+  </body>
+</html>

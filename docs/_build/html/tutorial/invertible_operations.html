@@ -1,0 +1,425 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Invertible Operations &#8212; FrEIA v0.2 documentation</title>
+    
+  <link href="../_static/css/theme.css" rel="stylesheet">
+  <link href="../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/blank.css" />
+    
+  <link rel="preload" as="script" href="../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Sequential API" href="sequential_inns.html" />
+    <link rel="prev" title="Basic concepts" href="basic_concepts.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
+    
+    
+<a class="navbar-brand" href="../index.html">
+<p class="title">FrEIA</p>
+</a>
+
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="quickstart.html">
+  Quickstart guide
+ </a>
+</li>
+
+<li class="toctree-l1 current active nav-item">
+ <a class="reference internal nav-link" href="tutorial.html">
+  Tutorial
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="examples.html">
+  Examples
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../FrEIA.framework.html">
+  FrEIA.framework package
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../FrEIA.modules.html">
+  FrEIA.modules package
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    <ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="basic_concepts.html">
+   Basic concepts
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Invertible Operations
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sequential_inns.html">
+   Sequential API
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="graph_inns.html">
+   Computation graph API
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tips_tricks_faq.html">
+   Tips &amp; Tricks, FAQ
+  </a>
+ </li>
+</ul>
+
+  </div>
+</nav>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#coupling-blocks">
+   Coupling blocks
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#defining-custom-invertible-operations">
+   Defining custom invertible operations
+  </a>
+ </li>
+</ul>
+
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
+              </div>
+              
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <section id="invertible-operations">
+<h1>Invertible Operations<a class="headerlink" href="#invertible-operations" title="Permalink to this headline">¶</a></h1>
+<p>A number of commonly used invertible operations are provided in the <code class="docutils literal notranslate"><span class="pre">FrEIA.modules</span></code> submodule.
+They are documented in detail <cite>here &lt;https://vll-hd.github.io/FrEIA/_build/html/FrEIA.modules.html&gt;</cite>.</p>
+<section id="coupling-blocks">
+<h2>Coupling blocks<a class="headerlink" href="#coupling-blocks" title="Permalink to this headline">¶</a></h2>
+<p>All coupling blocks (GLOW, RNVP, NICE), merit special discussion, because
+they are the most used invertible transforms.</p>
+<ul>
+<li><p>The coupling blocks contain smaller feed-forward subnetworks predicting the affine coefficients.
+The in- and output shapes of the subnetworks depend on the in- output size of the coupling block itself.
+These size are not known when coding the INN (or perhaps can be worked out by
+hand, but would have to be worked out anew every time the architecture is modified slightly).
+Therefore, the subnetworks can not be directly passed as <code class="docutils literal notranslate"><span class="pre">nn.Modules</span></code>, but
+rather in the form of a function or class, that constructs the subnetworks
+given in- and output size. This is a lot simpler than it sounds, for a fully connected subnetwork we could use for example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">fc_constr</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_out</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+                        <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span>  <span class="mi">128</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+                        <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span>  <span class="n">dims_out</span><span class="p">))</span>
+</pre></div>
+</div>
+</li>
+<li><p>The RNVP and GLOW coupling blocks have an additional hyperparameter <code class="docutils literal notranslate"><span class="pre">clamp</span></code>.
+This is becuase, instead of the exponential function <code class="docutils literal notranslate"><span class="pre">exp(s)</span></code>, we use <code class="docutils literal notranslate"><span class="pre">exp(</span> <span class="pre">2*c/pi</span> <span class="pre">*</span> <span class="pre">atan(x))</span></code>
+in the coupling blocks (<code class="docutils literal notranslate"><span class="pre">clamp</span></code>-parameter <code class="docutils literal notranslate"><span class="pre">c</span></code>).
+This leads to much more stable training and enables larger learning rates.
+Effectively, the multiplication component of the coupling block is limited between <code class="docutils literal notranslate"><span class="pre">exp(c)</span></code> and <code class="docutils literal notranslate"><span class="pre">1/exp(c)</span></code>.
+The Jacobian determinant is thereby limited between <code class="docutils literal notranslate"><span class="pre">±D*c</span></code> (dimensionality of data <code class="docutils literal notranslate"><span class="pre">D</span></code>).
+In general, <code class="docutils literal notranslate"><span class="pre">clamp</span> <span class="pre">=</span> <span class="pre">2.0</span></code> is a good place to start:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">glow</span> <span class="o">=</span> <span class="n">Node</span><span class="p">([</span><span class="n">in1</span><span class="o">.</span><span class="n">out0</span><span class="p">],</span> <span class="n">GLOWCouplingBlock</span><span class="p">,</span>
+            <span class="p">{</span><span class="s1">&#39;subnet_constructor&#39;</span><span class="p">:</span> <span class="n">fc_constr</span><span class="p">,</span> <span class="s1">&#39;clamp&#39;</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">},</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;GLOW coupling block&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p>The module <code class="docutils literal notranslate"><span class="pre">FrEIA.modules.AllInOneBlock</span></code> not only includes glow coupling, but also a learned global scaling (‘ActNorm’),
+and a random permutation, along with various other features.
+This saves implementation effort, as these three operations are usually used together.
+See <cite>here &lt;https://vll-hd.github.io/FrEIA/_build/html/FrEIA.modules.html#coupling-blocks&gt;</cite> for details.</p></li>
+</ul>
+</section>
+<section id="defining-custom-invertible-operations">
+<h2>Defining custom invertible operations<a class="headerlink" href="#defining-custom-invertible-operations" title="Permalink to this headline">¶</a></h2>
+<p>Custom invertible modules can be written as extensions of the
+<code class="docutils literal notranslate"><span class="pre">Fm.InvertibleModule</span></code> base class. Refer to the documentation of this class
+for detailed information on requirements.</p>
+<p>Below are two simple examples which illustrate the definition and use of custom
+modules and can be used as basic templates.  The first multiplies each
+dimension of an input tensor by either 1 or 2, chosen in a random but fixed
+way.  The second is a conditional operation which takes two inputs and swaps
+them if the condition is positive, doing nothing otherwise.</p>
+<p>Notes:</p>
+<ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">Fm.InvertibleModule</span></code> must be initialized with the <code class="docutils literal notranslate"><span class="pre">dims_in</span></code> argument
+and optionally <code class="docutils literal notranslate"><span class="pre">dims_c</span></code> if there is a conditioning input.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">forward</span></code> should return a tuple of outputs (even if there is only one), with additional
+<code class="docutils literal notranslate"><span class="pre">log_jac_det</span></code> term. This Jacobian term can be, but does not need to be
+calculated if <code class="docutils literal notranslate"><span class="pre">jac=False</span></code>.</p></li>
+</ul>
+<p>Definition:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">FixedRandomElementwiseMultiply</span><span class="p">(</span><span class="n">Fm</span><span class="o">.</span><span class="n">InvertibleModule</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">random_factor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="c1"># the Jacobian term is trivial to calculate so we return it</span>
+        <span class="c1"># even if jac=False</span>
+
+        <span class="c1"># x is passed to the function as a list (in this case of only on element)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rev</span><span class="p">:</span>
+            <span class="c1"># forward operation</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_factor</span>
+            <span class="n">log_jac_det</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_factor</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">log</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># backward operation</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_factor</span>
+            <span class="n">log_jac_det</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">random_factor</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">log</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="p">,),</span> <span class="n">log_jac_det</span>
+
+    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">input_dims</span>
+
+
+
+
+<span class="k">class</span> <span class="nc">ConditionalSwap</span><span class="p">(</span><span class="n">Fm</span><span class="o">.</span><span class="n">InvertibleModule</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims_in</span><span class="p">,</span> <span class="n">dims_c</span><span class="o">=</span><span class="n">dims_c</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="c1"># in this case, the forward and reverse operations are identical</span>
+        <span class="c1"># so we don&#39;t use the rev argument</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="n">log_jac_det</span> <span class="o">=</span> <span class="mf">0.</span>
+
+        <span class="c1"># make copies of the inputs</span>
+        <span class="n">x1_new</span> <span class="o">=</span> <span class="n">x1</span> <span class="o">+</span> <span class="mf">0.</span>
+        <span class="n">x2_new</span> <span class="o">=</span> <span class="n">x2</span> <span class="o">+</span> <span class="mf">0.</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x1</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span>
+            <span class="n">x1_new</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">x1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">x2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">x2_new</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">x2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">x1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">x1_new</span><span class="p">,</span> <span class="n">x2_new</span><span class="p">),</span> <span class="n">log_jac_det</span>
+
+    <span class="k">def</span> <span class="nf">output_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">input_dims</span>
+</pre></div>
+</div>
+<p>Basic Usage Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">BATCHSIZE</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">DIMS_IN</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="c1"># build up basic net using SequenceINN</span>
+<span class="n">net</span> <span class="o">=</span> <span class="n">Ff</span><span class="o">.</span><span class="n">SequenceINN</span><span class="p">(</span><span class="n">DIMS_IN</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+    <span class="n">net</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FixedRandomElementwiseMultiply</span><span class="p">)</span>
+
+<span class="c1"># define inputs</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">BATCHSIZE</span><span class="p">,</span> <span class="n">DIMS_IN</span><span class="p">)</span>
+
+<span class="c1"># run forward</span>
+<span class="n">z</span><span class="p">,</span> <span class="n">log_jac_det</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="c1"># run in reverse</span>
+<span class="n">x_rev</span><span class="p">,</span> <span class="n">log_jac_det_rev</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>More Complicated Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">BATCHSIZE</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">DIMS_IN</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="c1"># define a graph INN</span>
+
+<span class="n">input_1</span> <span class="o">=</span> <span class="n">Ff</span><span class="o">.</span><span class="n">InputNode</span><span class="p">(</span><span class="n">DIMS_IN</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;input_1&#39;</span><span class="p">)</span>
+<span class="n">input_2</span> <span class="o">=</span> <span class="n">Ff</span><span class="o">.</span><span class="n">InputNode</span><span class="p">(</span><span class="n">DIMS_IN</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;input_2&#39;</span><span class="p">)</span>
+
+<span class="n">cond</span> <span class="o">=</span> <span class="n">Ff</span><span class="o">.</span><span class="n">ConditionNode</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;condition&#39;</span><span class="p">)</span>
+
+<span class="n">mult_1</span> <span class="o">=</span> <span class="n">Ff</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">input_1</span><span class="o">.</span><span class="n">out0</span><span class="p">,</span> <span class="n">FixedRandomElementwiseMultiply</span><span class="p">,</span> <span class="p">{},</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mult_1&#39;</span><span class="p">)</span>
+<span class="n">cond_swap</span> <span class="o">=</span> <span class="n">Ff</span><span class="o">.</span><span class="n">Node</span><span class="p">([</span><span class="n">mult_1</span><span class="o">.</span><span class="n">out0</span><span class="p">,</span> <span class="n">input_2</span><span class="o">.</span><span class="n">out0</span><span class="p">],</span> <span class="n">ConditionalSwap</span><span class="p">,</span> <span class="p">{},</span> <span class="n">conditions</span><span class="o">=</span><span class="n">cond</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;conditional_swap&#39;</span><span class="p">)</span>
+<span class="n">mult_2</span> <span class="o">=</span> <span class="n">Ff</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">cond_swap</span><span class="o">.</span><span class="n">out1</span><span class="p">,</span> <span class="n">FixedRandomElementwiseMultiply</span><span class="p">,</span> <span class="p">{},</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mult_2&#39;</span><span class="p">)</span>
+
+<span class="n">output_1</span> <span class="o">=</span> <span class="n">Ff</span><span class="o">.</span><span class="n">OutputNode</span><span class="p">(</span><span class="n">cond_swap</span><span class="o">.</span><span class="n">out0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;output_1&#39;</span><span class="p">)</span>
+<span class="n">output_2</span> <span class="o">=</span> <span class="n">Ff</span><span class="o">.</span><span class="n">OutputNode</span><span class="p">(</span><span class="n">mult_2</span><span class="o">.</span><span class="n">out0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;output_2&#39;</span><span class="p">)</span>
+
+<span class="n">net</span> <span class="o">=</span> <span class="n">Ff</span><span class="o">.</span><span class="n">GraphINN</span><span class="p">([</span><span class="n">input_1</span><span class="p">,</span> <span class="n">input_2</span><span class="p">,</span> <span class="n">cond</span><span class="p">,</span> <span class="n">mult_1</span><span class="p">,</span> <span class="n">cond_swap</span><span class="p">,</span> <span class="n">mult_2</span><span class="p">,</span> <span class="n">output_1</span><span class="p">,</span> <span class="n">output_2</span><span class="p">])</span>
+
+<span class="c1"># define inputs</span>
+<span class="n">x1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">BATCHSIZE</span><span class="p">,</span> <span class="n">DIMS_IN</span><span class="p">)</span>
+<span class="n">x2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">BATCHSIZE</span><span class="p">,</span> <span class="n">DIMS_IN</span><span class="p">)</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">BATCHSIZE</span><span class="p">)</span>
+
+<span class="c1"># run forward</span>
+<span class="p">(</span><span class="n">z1</span><span class="p">,</span> <span class="n">z2</span><span class="p">),</span> <span class="n">log_jac_det</span> <span class="o">=</span> <span class="n">net</span><span class="p">([</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">)</span>
+
+<span class="c1"># run in reverse without necessarily calculating Jacobian term (i.e. jac=False)</span>
+<span class="p">(</span><span class="n">x1_rev</span><span class="p">,</span> <span class="n">x2_rev</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">net</span><span class="p">([</span><span class="n">z1</span><span class="p">,</span> <span class="n">z2</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+              </div>
+              
+              
+              <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="basic_concepts.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Basic concepts</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="sequential_inns.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Sequential API</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+  
+  <script src="../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+<footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright 2021, VLL-HD.<br>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.2.<br>
+</p>
+    </div>
+    
+  </div>
+</footer>
+  </body>
+</html>

@@ -34,7 +34,7 @@
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="FrEIA.framework package" href="FrEIA.framework.html" />
+    <link rel="next" title="Quickstart guide" href="tutorial/quickstart.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -70,6 +70,24 @@
       <div class="navbar-center-item">
         <ul id="navbar-main-elements" class="navbar-nav">
     <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="tutorial/quickstart.html">
+  Quickstart guide
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="tutorial/tutorial.html">
+  Tutorial
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="tutorial/examples.html">
+  Examples
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
  <a class="reference internal nav-link" href="FrEIA.framework.html">
   FrEIA.framework package
  </a>
@@ -129,24 +147,17 @@
 
 <nav id="bd-toc-nav">
     <ul class="visible nav section-nav flex-column">
- <li class="toc-h1 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#">
-   Welcome to FrEIA’s documentation!
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#tutorial">
+   Tutorial
   </a>
-  <ul class="visible nav section-nav flex-column">
-   <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#module-FrEIA">
-     Module contents
-    </a>
-   </li>
-   <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#subpackages">
-     Subpackages
-    </a>
-   </li>
-  </ul>
  </li>
- <li class="toc-h1 nav-item toc-entry">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#package-documentation">
+   Package Documentation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#indices-and-tables">
    Indices and tables
   </a>
@@ -172,16 +183,52 @@
               
               <div>
                 
-  <section id="welcome-to-freia-s-documentation">
-<h1>Welcome to FrEIA’s documentation!<a class="headerlink" href="#welcome-to-freia-s-documentation" title="Permalink to this headline">¶</a></h1>
-<section id="module-FrEIA">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-FrEIA" title="Permalink to this headline">¶</a></h2>
+  <section id="module-FrEIA">
+<span id="welcome-to-freia-s-documentation"></span><h1>Welcome to FrEIA’s documentation!<a class="headerlink" href="#module-FrEIA" title="Permalink to this headline">¶</a></h1>
 <p>Framework for Easily Invertible Architectures.
 Module to construct invertible networks with pytorch, based on a graph
 structure of operations.</p>
+<section id="tutorial">
+<h2>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/quickstart.html">Quickstart guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/tutorial.html">Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/basic_concepts.html">Basic concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/invertible_operations.html">Invertible Operations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorial/invertible_operations.html#coupling-blocks">Coupling blocks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial/invertible_operations.html#defining-custom-invertible-operations">Defining custom invertible operations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/sequential_inns.html">Sequential API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/graph_inns.html">Computation graph API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/tips_tricks_faq.html">Tips &amp; Tricks, FAQ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/examples.html#network-architectures">Network architectures</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorial/examples/fully_connected.html">Small fully-connected INNs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tutorial/examples/fully_connected.html#simple-inn-in-2-dimensions">Simple INN in 2 dimensions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorial/examples/fully_connected.html#conditional-inn-for-mnist">Conditional INN for MNIST</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial/examples/convolutional.html">Convolutional INN with invertible downsampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial/examples/bayes_flow.html">Bayes-flow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial/examples/inv_unet.html">Invertible U-Net</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/examples.html#full-training-loops">Full training loops</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorial/examples/training_loop_cinn.html">Training: MNIST conditional normalizing flow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial/examples/training_loop_inn.html">Training: CelebA normalizing flow</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
 </section>
-<section id="subpackages">
-<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<section id="package-documentation">
+<h2>Package Documentation<a class="headerlink" href="#package-documentation" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="FrEIA.framework.html">FrEIA.framework package</a><ul>
@@ -201,14 +248,14 @@ structure of operations.</p>
 </ul>
 </div>
 </section>
-</section>
 <section id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
+</section>
 </section>
 
 
@@ -217,10 +264,10 @@ structure of operations.</p>
               
               <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='right-next' id="next-link" href="FrEIA.framework.html" title="next page">
+    <a class='right-next' id="next-link" href="tutorial/quickstart.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">FrEIA.framework package</p>
+        <p class="prev-next-title">Quickstart guide</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>
@@ -244,7 +291,7 @@ structure of operations.</p>
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.0.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.2.<br>
 </p>
     </div>
     

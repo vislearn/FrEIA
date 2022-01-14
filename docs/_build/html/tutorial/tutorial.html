@@ -4,8 +4,9 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Overview: module code &#8212; FrEIA v0.2 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Tutorial &#8212; FrEIA v0.2 documentation</title>
     
   <link href="../_static/css/theme.css" rel="stylesheet">
   <link href="../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
@@ -33,6 +34,8 @@
     <script src="../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Basic concepts" href="basic_concepts.html" />
+    <link rel="prev" title="Quickstart guide" href="quickstart.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -68,19 +71,19 @@
       <div class="navbar-center-item">
         <ul id="navbar-main-elements" class="navbar-nav">
     <li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../tutorial/quickstart.html">
+ <a class="reference internal nav-link" href="quickstart.html">
   Quickstart guide
  </a>
 </li>
 
-<li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../tutorial/tutorial.html">
+<li class="toctree-l1 current active nav-item">
+ <a class="current reference internal nav-link" href="#">
   Tutorial
  </a>
 </li>
 
 <li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../tutorial/examples.html">
+ <a class="reference internal nav-link" href="examples.html">
   Examples
  </a>
 </li>
@@ -126,7 +129,34 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
   <div class="bd-toc-item active">
-    
+    <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="basic_concepts.html">
+   Basic concepts
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="invertible_operations.html">
+   Invertible Operations
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sequential_inns.html">
+   Sequential API
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="graph_inns.html">
+   Computation graph API
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tips_tricks_faq.html">
+   Tips &amp; Tricks, FAQ
+  </a>
+ </li>
+</ul>
+
   </div>
 </nav>
             </div>
@@ -135,6 +165,20 @@
 
           
           <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+
+<nav id="bd-toc-nav">
+    
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
+              </div>
+              
             
           </div>
           
@@ -147,28 +191,43 @@
               
               <div>
                 
-  <h1>All modules for which code is available</h1>
-<ul><li><a href="FrEIA/framework/graph_inn.html">FrEIA.framework.graph_inn</a></li>
-<li><a href="FrEIA/framework/reversible_graph_net.html">FrEIA.framework.reversible_graph_net</a></li>
-<li><a href="FrEIA/framework/reversible_sequential_net.html">FrEIA.framework.reversible_sequential_net</a></li>
-<li><a href="FrEIA/framework/sequence_inn.html">FrEIA.framework.sequence_inn</a></li>
-<li><a href="FrEIA/modules/all_in_one_block.html">FrEIA.modules.all_in_one_block</a></li>
-<li><a href="FrEIA/modules/base.html">FrEIA.modules.base</a></li>
-<li><a href="FrEIA/modules/coupling_layers.html">FrEIA.modules.coupling_layers</a></li>
-<li><a href="FrEIA/modules/fixed_transforms.html">FrEIA.modules.fixed_transforms</a></li>
-<li><a href="FrEIA/modules/gaussian_mixture.html">FrEIA.modules.gaussian_mixture</a></li>
-<li><a href="FrEIA/modules/graph_topology.html">FrEIA.modules.graph_topology</a></li>
-<li><a href="FrEIA/modules/inv_auto_layers.html">FrEIA.modules.inv_auto_layers</a></li>
-<li><a href="FrEIA/modules/invertible_resnet.html">FrEIA.modules.invertible_resnet</a></li>
-<li><a href="FrEIA/modules/orthogonal.html">FrEIA.modules.orthogonal</a></li>
-<li><a href="FrEIA/modules/reshapes.html">FrEIA.modules.reshapes</a></li>
+  <section id="tutorial">
+<h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="basic_concepts.html">Basic concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="invertible_operations.html">Invertible Operations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="invertible_operations.html#coupling-blocks">Coupling blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="invertible_operations.html#defining-custom-invertible-operations">Defining custom invertible operations</a></li>
 </ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sequential_inns.html">Sequential API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph_inns.html">Computation graph API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tips_tricks_faq.html">Tips &amp; Tricks, FAQ</a></li>
+</ul>
+</div>
+</section>
+
 
               </div>
               
               
               <!-- Previous / next buttons -->
-<div class='prev-next-area'>
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="quickstart.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Quickstart guide</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="basic_concepts.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Basic concepts</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
 </div>
               
           </main>

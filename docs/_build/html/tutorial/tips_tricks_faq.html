@@ -4,8 +4,9 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Overview: module code &#8212; FrEIA v0.2 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Tips &amp; Tricks, FAQ &#8212; FrEIA v0.2 documentation</title>
     
   <link href="../_static/css/theme.css" rel="stylesheet">
   <link href="../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
@@ -33,6 +34,8 @@
     <script src="../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="prev" title="Computation graph API" href="graph_inns.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -68,19 +71,19 @@
       <div class="navbar-center-item">
         <ul id="navbar-main-elements" class="navbar-nav">
     <li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../tutorial/quickstart.html">
+ <a class="reference internal nav-link" href="quickstart.html">
   Quickstart guide
  </a>
 </li>
 
-<li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../tutorial/tutorial.html">
+<li class="toctree-l1 current active nav-item">
+ <a class="reference internal nav-link" href="tutorial.html">
   Tutorial
  </a>
 </li>
 
 <li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../tutorial/examples.html">
+ <a class="reference internal nav-link" href="examples.html">
   Examples
  </a>
 </li>
@@ -126,7 +129,34 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
   <div class="bd-toc-item active">
-    
+    <ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="basic_concepts.html">
+   Basic concepts
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="invertible_operations.html">
+   Invertible Operations
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sequential_inns.html">
+   Sequential API
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="graph_inns.html">
+   Computation graph API
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Tips &amp; Tricks, FAQ
+  </a>
+ </li>
+</ul>
+
   </div>
 </nav>
             </div>
@@ -135,6 +165,20 @@
 
           
           <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+
+<nav id="bd-toc-nav">
+    
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
+              </div>
+              
             
           </div>
           
@@ -147,28 +191,55 @@
               
               <div>
                 
-  <h1>All modules for which code is available</h1>
-<ul><li><a href="FrEIA/framework/graph_inn.html">FrEIA.framework.graph_inn</a></li>
-<li><a href="FrEIA/framework/reversible_graph_net.html">FrEIA.framework.reversible_graph_net</a></li>
-<li><a href="FrEIA/framework/reversible_sequential_net.html">FrEIA.framework.reversible_sequential_net</a></li>
-<li><a href="FrEIA/framework/sequence_inn.html">FrEIA.framework.sequence_inn</a></li>
-<li><a href="FrEIA/modules/all_in_one_block.html">FrEIA.modules.all_in_one_block</a></li>
-<li><a href="FrEIA/modules/base.html">FrEIA.modules.base</a></li>
-<li><a href="FrEIA/modules/coupling_layers.html">FrEIA.modules.coupling_layers</a></li>
-<li><a href="FrEIA/modules/fixed_transforms.html">FrEIA.modules.fixed_transforms</a></li>
-<li><a href="FrEIA/modules/gaussian_mixture.html">FrEIA.modules.gaussian_mixture</a></li>
-<li><a href="FrEIA/modules/graph_topology.html">FrEIA.modules.graph_topology</a></li>
-<li><a href="FrEIA/modules/inv_auto_layers.html">FrEIA.modules.inv_auto_layers</a></li>
-<li><a href="FrEIA/modules/invertible_resnet.html">FrEIA.modules.invertible_resnet</a></li>
-<li><a href="FrEIA/modules/orthogonal.html">FrEIA.modules.orthogonal</a></li>
-<li><a href="FrEIA/modules/reshapes.html">FrEIA.modules.reshapes</a></li>
+  <section id="tips-tricks-faq">
+<h1>Tips &amp; Tricks, FAQ<a class="headerlink" href="#tips-tricks-faq" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p>Stochastic gradient descent will not work (well) for INNs. Use e.g. Adam instead.</p></li>
+<li><p>Gradient clipping can be useful if you are experiencing training instabilities, e.g. use <code class="docutils literal notranslate"><span class="pre">torch.nn.utils.clip_grad_norm_</span></code></p></li>
+<li><p>Add some slight noise to the inputs (order of 1E-2). This stabilizes training and prevents sparse gradients,
+if there are some quantized or perfectly correlated input dimenions</p></li>
 </ul>
+<p>For coupling blocks in particular:</p>
+<ul class="simple">
+<li><p>Use Xavier initialization for the weights. This prevents unstable training at the start.</p></li>
+<li><p>If your network is very deep (&gt;30 coupling blocks), initialize the last layer in the subnetworks to zero.
+This means the INN as a whole is initialized to the identity, and you will not get NaNs at the first iteration.</p></li>
+<li><p>Do not forget permutations/orthogonal transforms between coupling blocks.</p></li>
+<li><p>Keep the subnetworks shallow (2-3 layers only), but wide (&gt;= 128 neurons/ &gt;= 64 conv. channels)</p></li>
+<li><p>Keep in mind that one coupling block contains between 4 and 12 individual convolutions or fully connected layers.
+So you may not have to use as many as you think, else the number of parameters will be huge.</p></li>
+<li><p>This being said, as the coupling blocks initialize to roughly the identity transform,
+it is hard to have too many coupling blocks and break the training completely
+(as opposed to a standard feed-forward NN).</p></li>
+</ul>
+<p>For convolutional INNs in particular:</p>
+<ul class="simple">
+<li><p>Perform some kind of reshaping early, so the INN has &gt;3 channels to work with</p></li>
+<li><p>Coupling blocks using 1x1 convolutions in the subnets seem important for the quality,
+they should constitute every other, or every third coupling block</p></li>
+</ul>
+</section>
+
 
               </div>
               
               
               <!-- Previous / next buttons -->
-<div class='prev-next-area'>
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="graph_inns.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Computation graph API</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="examples.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Examples</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
 </div>
               
           </main>

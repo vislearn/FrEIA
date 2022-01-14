@@ -35,7 +35,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="FrEIA.modules package" href="FrEIA.modules.html" />
-    <link rel="prev" title="Welcome to FrEIA’s documentation!" href="index.html" />
+    <link rel="prev" title="Training: CelebA normalizing flow" href="tutorial/examples/training_loop_inn.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -70,7 +70,25 @@
       
       <div class="navbar-center-item">
         <ul id="navbar-main-elements" class="navbar-nav">
-    <li class="toctree-l1 current active nav-item">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="tutorial/quickstart.html">
+  Quickstart guide
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="tutorial/tutorial.html">
+  Tutorial
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="tutorial/examples.html">
+  Examples
+ </a>
+</li>
+
+<li class="toctree-l1 current active nav-item">
  <a class="current reference internal nav-link" href="#">
   FrEIA.framework package
  </a>
@@ -354,15 +372,14 @@ Only supports a sequential series of modules (no splitting, merging,
 branching off).
 Has an append() method, to add new blocks in a more simple way than the
 computation-graph based approach of GraphINN. For example:</p>
-<p><a href="#id1"><span class="problematic" id="id2">``</span></a>`
-inn = SequenceINN(channels, dims_H, dims_W)</p>
-<dl class="simple">
-<dt>for i in range(n_blocks):</dt><dd><p>inn.append(FrEIA.modules.AllInOneBlock, clamp=2.0, permute_soft=True)</p>
-</dd>
-</dl>
-<p>inn.append(FrEIA.modules.HaarDownsampling)
-# and so on
-<a href="#id3"><span class="problematic" id="id4">``</span></a><a href="#id5"><span class="problematic" id="id6">`</span></a></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">inn</span> <span class="o">=</span> <span class="n">SequenceINN</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">dims_H</span><span class="p">,</span> <span class="n">dims_W</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_blocks</span><span class="p">):</span>
+    <span class="n">inn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FrEIA</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">AllInOneBlock</span><span class="p">,</span> <span class="n">clamp</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">permute_soft</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">inn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FrEIA</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">HaarDownsampling</span><span class="p">)</span>
+<span class="c1"># and so on</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="FrEIA.framework.SequenceINN.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_tuple_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/sequence_inn.html#SequenceINN.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.SequenceINN.__init__" title="Permalink to this definition">¶</a></dt>
@@ -381,14 +398,18 @@ this operator.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="FrEIA.framework.SequenceINN.append">
 <span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cond</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cond_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FrEIA/framework/sequence_inn.html#SequenceINN.append"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FrEIA.framework.SequenceINN.append" title="Permalink to this definition">¶</a></dt>
-<dd><p>Append a reversible block from FrEIA.modules to the network.
-module_class: Class from FrEIA.modules.
-cond (int): index of which condition to use (conditions will be passed as list to forward()).</p>
-<blockquote>
-<div><p>Conditioning nodes are not needed for SequenceINN.</p>
-</div></blockquote>
-<p>cond_shape (tuple[int]): the shape of the condition tensor.
-<a href="#id7"><span class="problematic" id="id8">**</span></a>kwargs: Further keyword arguments that are passed to the constructor of module_class (see example).</p>
+<dd><p>Append a reversible block from FrEIA.modules to the network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module_class</strong> – Class from FrEIA.modules.</p></li>
+<li><p><strong>cond</strong> (<em>int</em>) – index of which condition to use (conditions will be passed as list to forward()).
+Conditioning nodes are not needed for SequenceINN.</p></li>
+<li><p><strong>cond_shape</strong> (<em>tuple</em><em>[</em><em>int</em><em>]</em>) – the shape of the condition tensor.</p></li>
+<li><p><strong>**kwargs</strong> – Further keyword arguments that are passed to the constructor of module_class (see example).</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -402,11 +423,11 @@ cond (int): index of which condition to use (conditions will be passed as list t
               
               <!-- Previous / next buttons -->
 <div class='prev-next-area'> 
-    <a class='left-prev' id="prev-link" href="index.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="tutorial/examples/training_loop_inn.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Welcome to FrEIA’s documentation!</p>
+            <p class="prev-next-title">Training: CelebA normalizing flow</p>
         </div>
     </a>
     <a class='right-next' id="next-link" href="FrEIA.modules.html" title="next page">
@@ -436,7 +457,7 @@ cond (int): index of which condition to use (conditions will be passed as list t
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.0.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.2.<br>
 </p>
     </div>
     

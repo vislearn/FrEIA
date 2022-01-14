@@ -4,8 +4,9 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Overview: module code &#8212; FrEIA v0.2 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Examples &#8212; FrEIA v0.2 documentation</title>
     
   <link href="../_static/css/theme.css" rel="stylesheet">
   <link href="../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
@@ -33,6 +34,8 @@
     <script src="../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Small fully-connected INNs" href="examples/fully_connected.html" />
+    <link rel="prev" title="Tips &amp; Tricks, FAQ" href="tips_tricks_faq.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -68,19 +71,19 @@
       <div class="navbar-center-item">
         <ul id="navbar-main-elements" class="navbar-nav">
     <li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../tutorial/quickstart.html">
+ <a class="reference internal nav-link" href="quickstart.html">
   Quickstart guide
  </a>
 </li>
 
 <li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../tutorial/tutorial.html">
+ <a class="reference internal nav-link" href="tutorial.html">
   Tutorial
  </a>
 </li>
 
-<li class="toctree-l1 nav-item">
- <a class="reference internal nav-link" href="../tutorial/examples.html">
+<li class="toctree-l1 current active nav-item">
+ <a class="current reference internal nav-link" href="#">
   Examples
  </a>
 </li>
@@ -126,7 +129,41 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
   <div class="bd-toc-item active">
-    
+    <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="examples/fully_connected.html">
+   Small fully-connected INNs
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="examples/convolutional.html">
+   Convolutional INN with invertible downsampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="examples/bayes_flow.html">
+   Bayes-flow
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="examples/inv_unet.html">
+   Invertible U-Net
+  </a>
+ </li>
+</ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="examples/training_loop_cinn.html">
+   Training: MNIST conditional normalizing flow
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="examples/training_loop_inn.html">
+   Training: CelebA normalizing flow
+  </a>
+ </li>
+</ul>
+
   </div>
 </nav>
             </div>
@@ -135,6 +172,35 @@
 
           
           <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#network-architectures">
+   Network architectures
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#full-training-loops">
+   Full training loops
+  </a>
+ </li>
+</ul>
+
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
+              </div>
+              
             
           </div>
           
@@ -147,28 +213,54 @@
               
               <div>
                 
-  <h1>All modules for which code is available</h1>
-<ul><li><a href="FrEIA/framework/graph_inn.html">FrEIA.framework.graph_inn</a></li>
-<li><a href="FrEIA/framework/reversible_graph_net.html">FrEIA.framework.reversible_graph_net</a></li>
-<li><a href="FrEIA/framework/reversible_sequential_net.html">FrEIA.framework.reversible_sequential_net</a></li>
-<li><a href="FrEIA/framework/sequence_inn.html">FrEIA.framework.sequence_inn</a></li>
-<li><a href="FrEIA/modules/all_in_one_block.html">FrEIA.modules.all_in_one_block</a></li>
-<li><a href="FrEIA/modules/base.html">FrEIA.modules.base</a></li>
-<li><a href="FrEIA/modules/coupling_layers.html">FrEIA.modules.coupling_layers</a></li>
-<li><a href="FrEIA/modules/fixed_transforms.html">FrEIA.modules.fixed_transforms</a></li>
-<li><a href="FrEIA/modules/gaussian_mixture.html">FrEIA.modules.gaussian_mixture</a></li>
-<li><a href="FrEIA/modules/graph_topology.html">FrEIA.modules.graph_topology</a></li>
-<li><a href="FrEIA/modules/inv_auto_layers.html">FrEIA.modules.inv_auto_layers</a></li>
-<li><a href="FrEIA/modules/invertible_resnet.html">FrEIA.modules.invertible_resnet</a></li>
-<li><a href="FrEIA/modules/orthogonal.html">FrEIA.modules.orthogonal</a></li>
-<li><a href="FrEIA/modules/reshapes.html">FrEIA.modules.reshapes</a></li>
+  <section id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
+<section id="network-architectures">
+<h2>Network architectures<a class="headerlink" href="#network-architectures" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="examples/fully_connected.html">Small fully-connected INNs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/fully_connected.html#simple-inn-in-2-dimensions">Simple INN in 2 dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/fully_connected.html#conditional-inn-for-mnist">Conditional INN for MNIST</a></li>
 </ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples/convolutional.html">Convolutional INN with invertible downsampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/bayes_flow.html">Bayes-flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/inv_unet.html">Invertible U-Net</a></li>
+</ul>
+</div>
+</section>
+<section id="full-training-loops">
+<h2>Full training loops<a class="headerlink" href="#full-training-loops" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="examples/training_loop_cinn.html">Training: MNIST conditional normalizing flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/training_loop_inn.html">Training: CelebA normalizing flow</a></li>
+</ul>
+</div>
+</section>
+</section>
+
 
               </div>
               
               
               <!-- Previous / next buttons -->
-<div class='prev-next-area'>
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="tips_tricks_faq.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Tips &amp; Tricks, FAQ</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="examples/fully_connected.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Small fully-connected INNs</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
 </div>
               
           </main>
