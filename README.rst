@@ -99,4 +99,4 @@ including
 * `Examples <https://vll-hd.github.io/FrEIA/_build/html/tutorial/examples.html>`_
 * `API documentation <https://vll-hd.github.io/FrEIA/_build/html/index.html#package-documentation>`_
 
-.. |Logo| image:: docs/freia_logo.png
+.. |Logo| image:: docs/freia_logo_invertible.svg
