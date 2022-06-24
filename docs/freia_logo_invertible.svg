@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="97.991pt" height="82.529pt" viewBox="0 0 97.991 82.529">
+<g enable-background="new">
+<path transform="matrix(1,0,0,-1,48.995,41.264)" stroke-width="2.98883" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#464646" d="M -42.5202 0 L 42.5202 0 "/>
+<path transform="matrix(1,0,0,-1,48.995,41.264)" stroke-width="2.98883" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#464646" d="M 0 28.3468 C -27.7169 28.3468 -42.5202 -.62988 -42.5202 -28.3468 L -42.5202 28.3468 L 0 28.3468 L 0 -28.3468 L 42.5202 -28.3468 L 42.5202 28.3468 C 42.5202 .62988 27.7169 -28.3468 0 -28.3468 "/>
+<path transform="matrix(1,0,0,-1,48.995,41.264)" stroke-width="2.98883" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#464646" d="M -28.3468 -28.3468 L -28.3468 0 C -28.3468 -15.69603 -15.69603 -28.3468 0 -28.3468 "/>
+<path transform="matrix(1,0,0,-1,48.995,41.264)" stroke-width="2.98883" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#464646" d="M -28.3468 0 L -17.85861 0 C -12.06607 0 -7.37042 4.69563 -7.37042 10.48817 C -7.37042 16.2807 -12.06607 20.97635 -17.85861 20.97635 C -23.65114 20.97635 -28.34679 16.2807 -28.34679 10.48817 L -28.3468 0 "/>
+<path transform="matrix(1,0,0,-1,48.995,41.264)" stroke-width="2.98883" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#464646" d="M 28.3468 28.3468 L 28.3468 0 C 28.3468 15.69603 15.69603 28.3468 0 28.3468 "/>
+<path transform="matrix(1,0,0,-1,48.995,41.264)" stroke-width="2.98883" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#464646" d="M 28.3468 0 L 28.3468 -10.48817 C 28.3468 -16.2807 23.65115 -20.97635 17.85863 -20.97635 C 12.06609 -20.97635 7.37044 -16.2807 7.37044 -10.48817 C 7.37044 -4.69563 12.06609 0 17.85863 0 L 28.3468 0 "/>
+<path transform="matrix(1,0,0,-1,48.995,41.264)" d="M 30.6146 34.01608 C 30.6146 35.26855 29.59927 36.28386 28.3468 36.28386 C 27.09433 36.28386 26.07901 35.26855 26.07901 34.01608 C 26.07901 32.7636 27.09433 31.74829 28.3468 31.74829 C 29.59927 31.74829 30.6146 32.7636 30.6146 34.01608 Z M 28.3468 34.01608 " fill="#464646"/>
+<path transform="matrix(1,0,0,-1,48.995,41.264)" d="M -26.07901 -34.01608 C -26.07901 -32.7636 -27.09433 -31.74829 -28.3468 -31.74829 C -29.59927 -31.74829 -30.6146 -32.7636 -30.6146 -34.01608 C -30.6146 -35.26855 -29.59927 -36.28386 -28.3468 -36.28386 C -27.09433 -36.28386 -26.07901 -35.26855 -26.07901 -34.01608 Z M -28.3468 -34.01608 " fill="#464646"/>
+</g>
+</svg>
