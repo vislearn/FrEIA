@@ -69,7 +69,7 @@ Through pip
 
 .. code:: sh
 
-   pip install git+https://github.com/VLL-HD/FrEIA.git
+   pip install FrEIA
 
 Manually
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
