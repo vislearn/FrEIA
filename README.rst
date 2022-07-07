@@ -88,7 +88,7 @@ For development:
 
 
 Documentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------
 
 The full manual can be found at
 https://vll-hd.github.io/FrEIA
@@ -98,5 +98,20 @@ including
 * `Tutorial <https://vll-hd.github.io/FrEIA/_build/html/tutorial/tutorial.html>`_
 * `Examples <https://vll-hd.github.io/FrEIA/_build/html/tutorial/examples.html>`_
 * `API documentation <https://vll-hd.github.io/FrEIA/_build/html/index.html#package-documentation>`_
+
+
+How to cite this repository
+-------------------------------
+
+If you used this repository in your work, please cite it as below:
+
+.. code-block:: 
+   
+   @software{freia,
+     author = {Ardizzone, Lynton and Bungert, Till and Draxler, Felix and Köthe, Ullrich and Kruse, Jakob and Schmier, Robert and Sorrenson, Peter},
+     title = {{Framework for Easily Invertible Architectures (FrEIA)}},
+     year = {2018-2022},
+     url = {https://github.com/VLL-HD/FrEIA}
+   }
 
 .. |Logo| image:: docs/freia_logo_invertible.svg
