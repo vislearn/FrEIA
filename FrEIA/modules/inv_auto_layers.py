@@ -145,7 +145,7 @@ class LearnedElementwiseScaling(InvertibleModule):
             i.e. :math:`\\exp(s) =` ``init_scale``.
         '''
         super().__init__(dims_in, dims_c)
-        self.s = nn.Parameter(np.log(init_scale) * torch.zeros(1, *dims_in[0]))
+        self.s = nn.Parameter(np.log(init_scale) * torch.ones(1, *dims_in[0]))
 
     def forward(self, x, rev=False, jac=True):
 
