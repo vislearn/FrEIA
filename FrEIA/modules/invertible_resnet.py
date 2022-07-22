@@ -56,8 +56,14 @@ class ActNorm(InvertibleModule):
         # 'data' expected to be of shape (batch, channels[, ...])
         assert all([data.shape[i+1] == self.dims_in[i] for i in range(len(self.dims_in))]),\
             "Can't initialize ActNorm layer, provided data don't match input dimensions."
+        
+        std = data.transpose(0,1).contiguous().view(self.dims_in[0], -1).std(dim=-1)
+        
+        assert torch.all(std!=0,0), "Can't initialize the actNorm layer with the first batch because of zero std. Either add noise to the input data (recommended) or provide init_data before training"
+        
         self.scale.data.view(-1)[:] \
-            = torch.log(1 / data.transpose(0,1).contiguous().view(self.dims_in[0], -1).std(dim=-1))
+            = torch.log(1 / std)
+        
         data = data * self.scale.exp()
         self.bias.data.view(-1)[:] \
             = -data.transpose(0,1).contiguous().view(self.dims_in[0], -1).mean(dim=-1)
