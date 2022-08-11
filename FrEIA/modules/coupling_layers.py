@@ -3,6 +3,7 @@ from . import InvertibleModule
 from typing import Callable, Union
 
 import torch
+import warnings
 
 
 class _BaseCouplingBlock(InvertibleModule):
@@ -526,3 +527,312 @@ class ConditionalAffineTransform(_BaseCouplingBlock):
         else:
             y = torch.exp(s) * x[0] + t
             return (y,), j
+
+class RQNSFCouplingBlock(_BaseCouplingBlock):
+    ''' Rational-Quadratic Neural Spline Flows.
+        Transforming variables in [left, right) into variables in [bottom, top).
+        Uses `n_bins` spline nodes to define a inverse CDF transform on the interval.
+        Uses bayesiains/nflows under the hood.
+
+        wrapper stolen from bgflow
+
+
+            References
+        ----------
+        C. Durkan, A. Bekasov, I. Murray, G. Papamakarios, Neural Spline Flows, NeurIPS 2019,
+        https://arxiv.org/abs/1906.04032.
+    
+
+        The inputs are split in two halves. For 2D, 3D, 4D inputs, the split is
+        performed along the channel dimension. Then, spline widths, heights and slopes are
+        predicted by two subnetworks. Finally the splines are applied
+    '''
+
+    def __init__(self, dims_in, dims_c=[],
+                 subnet_constructor: callable = None,
+                 split_len: Union[float, int] = 0.5,
+                 n_bins=8,
+                 left=0.,
+                 right=1.,
+                 bottom=0.,
+                 top=1.):
+        '''
+        Additional args in docstring of base class.
+
+        Args:
+          subnet_constructor:
+            Callable function, class, or factory object, with signature
+            constructor(dims_in, dims_out). The result should be a torch
+            nn.Module, that takes dims_in input channels, and dims_out output
+            channels. See tutorial for examples.
+            Two of these subnetworks will be initialized inside the block.
+        '''
+        super().__init__(dims_in, dims_c,
+                         clamp=0., clamp_activation=(lambda u: u),
+                         split_len=split_len)
+
+
+        
+        self.F = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1*n_bins*3+1)
+        self.G = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2*n_bins*3+1)
+
+        self._left = left
+        self._right = right
+        self._bottom = bottom
+        self._top = top
+        self.n_bins=n_bins
+
+    def _coupling1(self, x1, u2, rev=False):
+        from nflows.transforms.splines import rational_quadratic_spline
+        from nflows.transforms.base import InputOutsideDomain
+        if rev:
+            x_dim = x1.shape[-1]
+            params = self.F(u2)
+            widths, heights, slopes = torch.split(params,
+                [self.n_bins * x_dim, self.n_bins * x_dim, self.n_bins+1 * x_dim],
+                dim=-1
+                )
+            widths = widths.reshape(-1, x_dim, self.n_bins)
+            heights = heights.reshape(-1, x_dim, self.n_bins)
+            slopes = slopes.reshape(-1, x_dim, self.n_bins+1)
+            rqs = lambda y: rational_quadratic_spline(
+                y,
+                widths,
+                heights,
+                slopes,
+                inverse=True,
+                left=self._left,
+                right=self._right,
+                top=self._top,
+                bottom=self._bottom,
+            )
+            try:
+                z, dlogp = rqs(x1)
+            except InputOutsideDomain:
+                exceeded_left = (x1 - self._left).min()
+                exceeded_right = (x1 - self._right).max()
+                warnings.warn(
+                    f"InputOutsideDomain: min {exceeded_left.item()}; "
+                    f"max {self._right} + {exceeded_right.item()}",
+                    UserWarning
+                )
+                z, dlogp = rqs(x1.clamp(self._left, self._right))
+
+            return z, dlogp.sum(dim=-1, keepdim=True)
+        else:
+            x_dim = x1.shape[-1]
+            params = self.F(x1)
+            widths, heights, slopes = torch.split(params,
+                [self.n_bins * x_dim, self.n_bins * x_dim, self.n_bins+1 * x_dim],
+                dim=-1
+                )
+
+            widths = widths.reshape(-1, x_dim, self.n_bins)
+            heights = heights.reshape(-1, x_dim, self.n_bins)
+            slopes = slopes.reshape(-1, x_dim, self.n_bins+1)
+            rqs = lambda y : rational_quadratic_spline(
+                    y,
+                    widths,
+                    heights,
+                    slopes,
+                    inverse=False,
+                    left=self._left,
+                    right=self._right,
+                    top=self._top,
+                    bottom=self._bottom,
+                )
+            try:
+                z, dlogp = rqs(x1)
+            except InputOutsideDomain:
+                exceeded_left = (x1 - self._left).min()
+                exceeded_right = (x1 - self._right).max()
+                warnings.warn(
+                    f"InputOutsideDomain: min {exceeded_left.item()}; "
+                    f"max {self._right} + {exceeded_right.item()}",
+                    UserWarning
+                )
+                z, dlogp = rqs(x1.clamp(self._left, self._right))
+
+            return z, dlogp.sum(dim=-1, keepdim=True)
+
+    def _coupling2(self, x2, u1, rev=False):
+        from nflows.transforms.splines import rational_quadratic_spline
+        from nflows.transforms.base import InputOutsideDomain
+
+        if rev:
+            x_dim = x2.shape[-1]
+            params = self.G(u1)
+            widths, heights, slopes = torch.split(params,
+                [self.n_bins * x_dim, self.n_bins * x_dim, self.n_bins+1 * x_dim],
+                dim=-1
+                )
+            widths = widths.reshape(-1, x_dim, self.n_bins)
+            heights = heights.reshape(-1, x_dim, self.n_bins)
+            slopes = slopes.reshape(-1, x_dim, self.n_bins+1)
+            rqs = lambda y: rational_quadratic_spline(
+                y,
+                widths,
+                heights,
+                slopes,
+                inverse=True,
+                left=self._left,
+                right=self._right,
+                top=self._top,
+                bottom=self._bottom,
+            )
+            try:
+                z, dlogp = rqs(x2)
+            except InputOutsideDomain:
+                exceeded_left = (x2 - self._left).min()
+                exceeded_right = (x2 - self._right).max()
+                warnings.warn(
+                    f"InputOutsideDomain: min {exceeded_left.item()}; "
+                    f"max {self._right} + {exceeded_right.item()}",
+                    UserWarning
+                )
+                z, dlogp = rqs(x2.clamp(self._left, self._right))
+
+            return z, dlogp.sum(dim=-1, keepdim=True)
+
+        else:
+            x_dim = x2.shape[-1]
+            params = self.G(u1)
+            widths, heights, slopes = torch.split(params,
+                [self.n_bins * x_dim, self.n_bins * x_dim, self.n_bins+1 * x_dim],
+                dim=-1
+                )
+            widths = widths.reshape(-1, x_dim, self.n_bins)
+            heights = heights.reshape(-1, x_dim, self.n_bins)
+            slopes = slopes.reshape(-1, x_dim, self.n_bins+1)
+            rqs = lambda y : rational_quadratic_spline(
+                    y,
+                    widths,
+                    heights,
+                    slopes,
+                    inverse=False,
+                    left=self._left,
+                    right=self._right,
+                    top=self._top,
+                    bottom=self._bottom,
+                )
+            try:
+                z, dlogp = rqs(x2)
+            except InputOutsideDomain:
+                exceeded_left = (x2 - self._left).min()
+                exceeded_right = (x2 - self._right).max()
+                warnings.warn(
+                    f"InputOutsideDomain: min {exceeded_left.item()}; "
+                    f"max {self._right} + {exceeded_right.item()}",
+                    UserWarning
+                )
+                z, dlogp = rqs(x2.clamp(self._left, self._right))
+
+            return z, dlogp.sum(dim=-1, keepdim=True)
+
+class RQNSFCouplingOneSided(_BaseCouplingBlock):
+    '''Half of a coupling block following the RQNSFCouplingBlock design.  This
+    means only one RQNSF transformation on half the inputs. Allows for more control in the coupling block design.
+    splits x into x1, x2.
+    x2 is transformed, 
+    x1 is conditioned on
+
+      '''
+
+    def __init__(self, dims_in, dims_c=[],
+                 subnet_constructor: Callable = None,
+                 split_len: Union[float, int] = 0.5,
+                 n_bins=8,
+                 left=0.,
+                 right=1.,
+                 bottom=0.,
+                 top=1.
+                 ):
+        '''
+        Additional args in docstring of base class.
+
+        Args:
+          subnet_constructor: function or class, with signature
+            constructor(dims_in, dims_out).  The result should be a torch
+            nn.Module, that takes dims_in input channels, and dims_out output
+            channels. See tutorial for examples. One subnetwork will be
+            initialized in the block.
+        '''
+
+        super().__init__(dims_in, dims_c, clamp=0., clamp_activation=(lambda u: u),
+                         split_len=split_len)
+        self.F = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1*n_bins*3+1)
+        self._left = left
+        self._right = right
+        self._bottom = bottom
+        self._top = top
+        self.n_bins=n_bins
+
+    def forward(self, x, c=[], rev=False, jac=True):
+
+        from nflows.transforms.splines import rational_quadratic_spline
+        from nflows.transforms.base import InputOutsideDomain
+
+        x1, x2 = torch.split(x[0], [self.split_len1, self.split_len2], dim=1)
+        x1_c = torch.cat([x1, *c], 1) if self.conditional else x1
+
+
+
+        params = self.F(x1_c)
+        x_dim = x2.shape[-1]
+        widths, heights, slopes = torch.split(params,
+        [self.n_bins * x_dim, self.n_bins * x_dim, self.n_bins+1 * x_dim],
+        dim=-1
+        )
+        widths = widths.reshape(-1, x_dim, self.n_bins)
+        heights = heights.reshape(-1, x_dim, self.n_bins)
+        slopes = slopes.reshape(-1, x_dim, self.n_bins+1)
+        if rev:
+            rqs = lambda y: rational_quadratic_spline(
+                y,
+                widths,
+                heights,
+                slopes,
+                inverse=True,
+                left=self._left,
+                right=self._right,
+                top=self._top,
+                bottom=self._bottom,
+            )
+            try:
+                z, dlogp = rqs(x2)
+            except InputOutsideDomain:
+                exceeded_left = (x2 - self._left).min()
+                exceeded_right = (x2 - self._right).max()
+                warnings.warn(
+                    f"InputOutsideDomain: min {exceeded_left.item()}; "
+                    f"max {self._right} + {exceeded_right.item()}",
+                    UserWarning
+                )
+                z, dlogp = rqs(x2.clamp(self._left, self._right))
+
+            return (torch.cat((x1, z), 1),), dlogp.sum(dim=-1, keepdim=True)
+        else:
+            rqs = lambda y : rational_quadratic_spline(
+                    y,
+                    widths,
+                    heights,
+                    slopes,
+                    inverse=False,
+                    left=self._left,
+                    right=self._right,
+                    top=self._top,
+                    bottom=self._bottom,
+                )
+            try:
+                z, dlogp = rqs(x2)
+            except InputOutsideDomain:
+                exceeded_left = (x2 - self._left).min()
+                exceeded_right = (x2 - self._right).max()
+                warnings.warn(
+                    f"InputOutsideDomain: min {exceeded_left.item()}; "
+                    f"max {self._right} + {exceeded_right.item()}",
+                    UserWarning
+                )
+                z, dlogp = rqs(x2.clamp(self._left, self._right))
+
+            return (torch.cat((x1, z), 1),), dlogp.sum(dim=-1, keepdim=True)
