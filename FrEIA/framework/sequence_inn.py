@@ -81,14 +81,23 @@ class SequenceINN(InvertibleModule):
     def __iter__(self):
         return self.module_list.__iter__()
 
-    @property
-    def next_in_shape(self):
-        return [self.shapes[-1]]
-
-    def output_dims(self, input_dims: List[Tuple[int]]) -> List[Tuple[int]]:
-        if not self.force_tuple_output:
-            raise ValueError("You can only call output_dims on a SequentialINN "
-                             "when setting force_tuple_output=True.")
+    def output_dims(self, input_dims: List[Tuple[int]] = None) \
+            -> List[Tuple[int]]:
+        """
+        Extends the definition in InvertibleModule to also return the output
+        dimension when
+        """
+        if input_dims is not None:
+            if self.force_tuple_output:
+                if input_dims != self.shapes[0]:
+                    raise ValueError(f"Passed input shapes {input_dims!r} do "
+                                     f"not match with those passed in the "
+                                     f"construction of the SequenceINN "
+                                     f"{self.shapes[0]}")
+            else:
+                raise ValueError("You can only call output_dims on a "
+                                 "SequenceINN when setting "
+                                 "force_tuple_output=True.")
         return [self.shapes[-1]]
 
     def forward(self, x_or_z: Tensor, c: Iterable[Tensor] = None,
@@ -121,7 +130,8 @@ class SequenceINN(InvertibleModule):
             if self.conditions[i] is None:
                 x_or_z, j = self.module_list[i](x_or_z, jac=jac, rev=rev)
             else:
-                x_or_z, j = self.module_list[i](x_or_z, c=[c[self.conditions[i]]],
+                x_or_z, j = self.module_list[i](x_or_z,
+                                                c=[c[self.conditions[i]]],
                                                 jac=jac, rev=rev)
             log_det_jac = j + log_det_jac
 

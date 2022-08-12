@@ -23,5 +23,5 @@ class SequenceINNTest(unittest.TestCase):
     def test_append_instance(self):
         input_shape = (2,)
         inn = SequenceINN(*input_shape)
-        inn.append(AllInOneBlock(inn.next_in_shape, subnet_constructor=subnet))
+        inn.append(AllInOneBlock(inn.output_dims(), subnet_constructor=subnet))
         self.assertEqual(inn.shapes[-1], input_shape)
