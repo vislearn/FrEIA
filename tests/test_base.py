@@ -16,7 +16,7 @@ class BaseLayerTest(unittest.TestCase):
         self.tol = 1e-4
 
         input_size = 8
-        cond_size = 32 #this could be 2D too
+        cond_size = 32  # this could be 2D too
 
         torch.manual_seed(self.batch_size)
 

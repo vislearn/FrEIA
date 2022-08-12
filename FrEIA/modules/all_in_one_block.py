@@ -162,7 +162,7 @@ class AllInOneBlock(InvertibleModule):
                                            requires_grad=False)
 
         if subnet_constructor is None:
-            raise ValueError("Please supply a callable subnet_constructor"
+            raise ValueError("Please supply a callable subnet_constructor "
                              "function or object (see docstring)")
         self.subnet = subnet_constructor(self.splits[0] + self.condition_channels, 2 * self.splits[1])
         self.last_jac = None
