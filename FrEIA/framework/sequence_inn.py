@@ -52,7 +52,17 @@ class SequenceINN(InvertibleModule):
         if cond is not None:
             kwargs['dims_c'] = [cond_shape]
 
-        module = module_class(dims_in, **kwargs)
+        if isinstance(module_class, InvertibleModule):
+            module = module_class
+            if module.dims_in != dims_in:
+                raise ValueError(
+                    f"You passed an instance of {module.__class__} to "
+                    f"SequenceINN which expects a {module.dims_in} input, "
+                    f"but the output of the previous layer is of shape "
+                    f"{dims_in}."
+                )
+        else:
+            module = module_class(dims_in, **kwargs)
         self.module_list.append(module)
         output_dims = module.output_dims(dims_in)
         if len(output_dims) != 1:
@@ -70,6 +80,10 @@ class SequenceINN(InvertibleModule):
 
     def __iter__(self):
         return self.module_list.__iter__()
+
+    @property
+    def next_in_shape(self):
+        return [self.shapes[-1]]
 
     def output_dims(self, input_dims: List[Tuple[int]]) -> List[Tuple[int]]:
         if not self.force_tuple_output:
