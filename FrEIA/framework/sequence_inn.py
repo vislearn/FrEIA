@@ -54,9 +54,13 @@ class SequenceINN(InvertibleModule):
 
         module = module_class(dims_in, **kwargs)
         self.module_list.append(module)
-        ouput_dims = module.output_dims(dims_in)
-        assert len(ouput_dims) == 1, "Module has more than one output"
-        self.shapes.append(ouput_dims[0])
+        output_dims = module.output_dims(dims_in)
+        if len(output_dims) != 1:
+            raise ValueError(
+                f"Module of type {module.__class__} has more than one output: "
+                f"{output_dims}"
+            )
+        self.shapes.append(output_dims[0])
 
     def __getitem__(self, item):
         return self.module_list.__getitem__(item)
@@ -71,7 +75,7 @@ class SequenceINN(InvertibleModule):
         if not self.force_tuple_output:
             raise ValueError("You can only call output_dims on a SequentialINN "
                              "when setting force_tuple_output=True.")
-        return input_dims
+        return [self.shapes[-1]]
 
     def forward(self, x_or_z: Tensor, c: Iterable[Tensor] = None,
                 rev: bool = False, jac: bool = True) -> Tuple[Tensor, Tensor]:

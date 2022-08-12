@@ -16,7 +16,7 @@ class BaseLayerTest(unittest.TestCase):
         self.tol = 1e-4
 
         input_size = 8
-        cond_size = 32 #this could be 2D too
+        cond_size = 32  # this could be 2D too
 
         torch.manual_seed(self.batch_size)
 
@@ -25,5 +25,5 @@ class BaseLayerTest(unittest.TestCase):
 
     def test_constructs(self):
 
-        b = InvertibleModule(self.x.shape, self.c.shape)
+        b = InvertibleModule([self.x.shape[1:]], [self.c.shape[1:]])
         self.assertTrue(isinstance(b, InvertibleModule))
