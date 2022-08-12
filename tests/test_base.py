@@ -25,5 +25,5 @@ class BaseLayerTest(unittest.TestCase):
 
     def test_constructs(self):
 
-        b = InvertibleModule(self.x.shape, self.c.shape)
+        b = InvertibleModule([self.x.shape[1:]], [self.c.shape[1:]])
         self.assertTrue(isinstance(b, InvertibleModule))
