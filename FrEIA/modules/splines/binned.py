@@ -142,9 +142,6 @@ class BinnedSpline(_BaseCouplingBlock):
 
         inside, left, right, bottom, top, *parameters = self.bin_parameters(x1, xs, ys, parameters, rev=rev)
 
-        assert isinstance(parameters, List)
-        assert all([isinstance(p, torch.Tensor) for p in parameters])
-
         return binned_spline(
             x1,
             inside=inside,
@@ -167,9 +164,6 @@ class BinnedSpline(_BaseCouplingBlock):
         xs, ys = make_knots(domain_width, bin_widths, bin_heights)
 
         inside, left, right, bottom, top, *parameters = self.bin_parameters(x2, xs, ys, parameters, rev=rev)
-
-        assert isinstance(parameters, List)
-        assert all([isinstance(p, torch.Tensor) for p in parameters])
 
         return binned_spline(
             x2,

@@ -32,8 +32,6 @@ class RationalQuadraticSpline(BinnedSpline):
 
     def spline1(self, x: torch.Tensor, left: torch.Tensor, right: torch.Tensor, bottom: torch.Tensor, top: torch.Tensor,
                 parameters: List[torch.Tensor], rev: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
-        assert isinstance(parameters, List)
-        assert all([isinstance(p, torch.Tensor) for p in parameters])
         delta_left, delta_right = parameters
         return rational_quadratic_spline(x, left, right, bottom, top, delta_left, delta_right, rev=rev)
 
