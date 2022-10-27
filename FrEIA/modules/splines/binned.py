@@ -55,15 +55,13 @@ class BinnedSpline(_BaseCouplingBlock):
         default_parameter_counts = dict(
             left=1,
             bottom=1,
-            widths=self.bins,
-            heights=self.bins,
+            widths=bins,
+            heights=bins,
         )
         # merge parameter counts with child classes
-        parameter_counts = default_parameter_counts | parameter_counts
+        self.parameter_counts = {**default_parameter_counts, **parameter_counts}
 
-        self.parameter_counts = parameter_counts
-
-        num_params = sum(parameter_counts.values())
+        num_params = sum(self.parameter_counts.values())
         self.subnet1 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1 * num_params)
         self.subnet2 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2 * num_params)
 
