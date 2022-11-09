@@ -1,3 +1,3 @@
 
-from .base import Distribution
 from .normal import NormalDistribution, StandardNormalDistribution
+from .transformed import PushForwardDistribution, PullBackDistribution
