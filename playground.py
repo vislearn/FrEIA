@@ -14,9 +14,15 @@ class Transform:
         print(f"{self.__class__.__name__} __call__")
 
 
+from typing import Callable, Union
+
 class Parameter:
-    def __init__(self, count: int):
+    def __init__(self, count: Union[int, Callable[[Transform], int]]):
         self.count = count
+
+    def initialize(self, transform: Transform):
+        if isinstance(self.count, Callable):
+            self.count = self.count(transform)
 
     def constrain(self, unconstrained: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError
@@ -93,9 +99,14 @@ def parameterize(**parameters):
     def wrap(cls):
         def construct(*args, split=EvenSplit(), subnet_constructor, **kwargs):
             transform = cls(*args, **kwargs)
+            for p in parameters.values():
+                # initialize dynamic parameters
+                p.initialize(transform)
+
             dims_in = ...
             dims_out = ...
             subnet = subnet_constructor(dims_in, dims_out)
+
 
             return Coupling(split=split, transform=transform, subnet=subnet, **parameters)
         return construct
@@ -112,10 +123,17 @@ class AffineTransform(Transform):
         return (x - shift) / scale
 
 
-# TODO: runtime parameter counts? spline is kinda the only coupling that needs this
-@parameterize(x_edges=Increasing(10), y_edges=Increasing(10), deltas=Positive(8))
+@parameterize(x_edges=Increasing(lambda t: t.bins), y_edges=Increasing(lambda t: t.bins), deltas=Increasing(lambda t: t.bins - 1))
 class RQSpline(Transform):
-    pass
+    def __init__(self, bins: int):
+        super().__init__()
+        self.bins = bins
+
+    def forward(self, x: torch.Tensor, x_edges: torch.Tensor, y_edges: torch.Tensor, deltas: torch.Tensor) -> torch.Tensor:
+        return torch.zeros(*x.shape)
+
+    def inverse(self):
+        pass
 
 
 def subnet_constructor(dims_in, dims_out):
@@ -133,4 +151,11 @@ print(type(t))
 x = None
 
 t(x)
+
+
+t = RQSpline(bins=8, subnet_constructor=subnet_constructor)
+
+t(x)
+
+print(t.parameter_counts)
 
