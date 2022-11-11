@@ -1,3 +1,4 @@
+from functools import wraps
 
 import torch
 
@@ -51,6 +52,17 @@ class Coupling(Transform):
         self.transform = transform
         # TODO: 2 subnets? or just singular coupling?
         self.subnet = subnet
+
+        test_subnet(...)
+        try:
+            self.subnet[-1].weight.data.zero_()
+            self.subnet[-1].bias.data.zero_()
+        except Exception:
+            dummy_output = ...
+
+            if not zero:
+                warnings.warn(...)
+
         self._parameters = parameters
 
     @property
@@ -69,10 +81,16 @@ class Coupling(Transform):
 
         return parameters
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def transform_forward(self):
+        pass
+
+    def transform_inverse(self):
+        pass
+
+    def forward(self, x: torch.Tensor, rev: bool = False, jac: bool = True) -> torch.Tensor:
         x1, x2 = self.split.forward(x)
         parameters = self.get_parameters(x2)
-        z1 = self.transform.forward(x1, **parameters)
+        z1 = self.transform_forward(x1, **parameters)
         parameters = self.get_parameters(z1)
         z2 = self.transform.forward(x2, **parameters)
 
@@ -97,6 +115,7 @@ from FrEIA.splits import EvenSplit
 
 def parameterize(**parameters):
     def wrap(cls):
+        @wraps(cls)
         def construct(*args, split=EvenSplit(), subnet_constructor, **kwargs):
             transform = cls(*args, **kwargs)
             for p in parameters.values():
@@ -114,23 +133,28 @@ def parameterize(**parameters):
     return wrap
 
 
-@parameterize(scale=Positive(1), shift=Real(1))
-class AffineTransform(Transform):
-    def forward(self, x: torch.Tensor, scale: torch.Tensor, shift: torch.Tensor) -> torch.Tensor:
+# @parameterize(scale=Positive(1), shift=Real(1))
+class AffineTransform(Coupling):
+    def __init__(self):
+        super().__init__(scale=Positive(1), shift=Real(1))
+    def _forward(self, x: torch.Tensor, scale: torch.Tensor, shift: torch.Tensor, rev) -> torch.Tensor:
         return scale * x + shift
 
-    def inverse(self, x: torch.Tensor, scale: torch.Tensor, shift: torch.Tensor) -> torch.Tensor:
+    def _inverse(self, x: torch.Tensor, scale: torch.Tensor, shift: torch.Tensor) -> torch.Tensor:
         return (x - shift) / scale
 
 
 @parameterize(x_edges=Increasing(lambda t: t.bins), y_edges=Increasing(lambda t: t.bins), deltas=Increasing(lambda t: t.bins - 1))
 class RQSpline(Transform):
     def __init__(self, bins: int):
-        super().__init__()
+        super().__init__(x_edges=Increasing(bins))
         self.bins = bins
 
     def forward(self, x: torch.Tensor, x_edges: torch.Tensor, y_edges: torch.Tensor, deltas: torch.Tensor) -> torch.Tensor:
         return torch.zeros(*x.shape)
+
+    def blub(self):
+        pass
 
     def inverse(self):
         pass
@@ -145,8 +169,8 @@ def subnet_constructor(dims_in, dims_out):
 
 
 t = AffineTransform(subnet_constructor=subnet_constructor)
-
-print(type(t))
+t.blub()
+print(type(t.transform.blub()))
 
 x = None
 
