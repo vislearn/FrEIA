@@ -28,7 +28,7 @@ Our following papers use FrEIA, with links to code given below.
 **"Training Normalizing Flows with the Information Bottleneck for Competitive Generative Classification" (Neurips 2020)**
 
 * Paper: `arxiv.org/abs/2001.06448 <https://arxiv.org/abs/2001.06448>`_
-* Code: `github.com/vislearn/IB-INN` <https://github.com/vislearn/IB-INN>`_
+* Code: `github.com/vislearn/IB-INN <https://github.com/vislearn/IB-INN>`_
 
 **"Disentanglement by Nonlinear ICA with General Incompressible-flow Networks (GIN)" (ICLR 2020)**
 
