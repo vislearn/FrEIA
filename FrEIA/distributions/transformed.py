@@ -44,7 +44,17 @@ class PushForwardDistribution(Distribution):
         if data_shape != expected_shape:
             raise ValueError(f"Got input of trailing shape {data_shape}, but expected {expected_shape}.")
 
+        # For now, only SequenceINN and GraphINN take
+        # non-tuples as input and return non-tuples
+        tuple_convert = (
+                not hasattr(self.transform, "force_tuple_output")
+                or self.transform.force_tuple_output
+        )
+        if tuple_convert:
+        	value = (value,)
         latent, log_abs_det = self.transform(value, c=conditions, jac=True, rev=True)
+        if tuple_convert:
+        	latent = latent[0]
         return self.base_distribution.log_prob(latent) + log_abs_det
 
     def force_to(self, *args, **kwargs):
