@@ -51,10 +51,10 @@ class PushForwardDistribution(Distribution):
                 or self.transform.force_tuple_output
         )
         if tuple_convert:
-        	value = (value,)
+            value = (value,)
         latent, log_abs_det = self.transform(value, c=conditions, jac=True, rev=True)
         if tuple_convert:
-        	latent = latent[0]
+            latent = latent[0]
         return self.base_distribution.log_prob(latent) + log_abs_det
 
     def force_to(self, *args, **kwargs):
