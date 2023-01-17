@@ -32,7 +32,10 @@ class PushForwardDistribution(Distribution):
         if tuple_convert:
             base_samples = (base_samples,)
 
-        samples, _ = self.transform(base_samples, jac=False)
+        kwargs = dict()
+        if conditions is not None:
+            kwargs["c"] = conditions
+        samples, _ = self.transform(base_samples, jac=False, **kwargs)
 
         if tuple_convert:
             samples = samples[0]
@@ -52,7 +55,10 @@ class PushForwardDistribution(Distribution):
         )
         if tuple_convert:
             value = (value,)
-        latent, log_abs_det = self.transform(value, c=conditions, jac=True, rev=True)
+        kwargs = dict()
+        if conditions is not None:
+            kwargs["c"] = conditions
+        latent, log_abs_det = self.transform(value, **kwargs, jac=False, rev=True)
         if tuple_convert:
             latent = latent[0]
         return self.base_distribution.log_prob(latent) + log_abs_det
