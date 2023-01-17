@@ -13,7 +13,7 @@ class PushForwardDistribution(Distribution):
 
     def __init__(self, base_distribution: Distribution,
                  transform: InvertibleModule):
-        super().__init__((), transform.output_dims(transform.dims_in))
+        super().__init__(torch.Size(), transform.output_dims(transform.dims_in)[0])
         self.base_distribution = base_distribution
         self.transform = transform
 
