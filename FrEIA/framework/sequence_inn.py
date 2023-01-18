@@ -5,6 +5,7 @@ import torch
 from torch import Tensor
 
 from FrEIA.modules import InvertibleModule
+from FrEIA.modules.inverse import Inverse
 
 
 class SequenceINN(InvertibleModule):
@@ -49,9 +50,6 @@ class SequenceINN(InvertibleModule):
         dims_in = [self.shapes[-1]]
         self.conditions.append(cond)
 
-        if cond is not None:
-            kwargs['dims_c'] = [cond_shape]
-
         if isinstance(module_class, InvertibleModule):
             module = module_class
             if module.dims_in != dims_in:
@@ -61,7 +59,15 @@ class SequenceINN(InvertibleModule):
                     f"but the output of the previous layer is of shape "
                     f"{dims_in}."
                 )
+            if len(kwargs) > 0:
+                raise ValueError(
+                    "You try to append an instanciated "
+                    "InvertibleModule to SequenceINN, but also provided "
+                    "constructor kwargs."
+                )
         else:
+            if cond is not None:
+                kwargs['dims_c'] = [cond_shape]
             module = module_class(dims_in, **kwargs)
         self.module_list.append(module)
         output_dims = module.output_dims(dims_in)
@@ -73,6 +79,26 @@ class SequenceINN(InvertibleModule):
         self.shapes.append(output_dims[0])
 
     def __getitem__(self, item):
+        if isinstance(item, slice):
+            # Zero-length
+            in_dims = self.shapes[item]
+            start, stop, stride = item.indices(len(self))
+            sub_inn = SequenceINN(*self.shapes[start], force_tuple_output=self.force_tuple_output)
+            if len(in_dims) == 0:
+                return sub_inn
+            cond_map = {None: None}
+            cond_counter = 0
+            for idx in range(start, stop, stride):
+                module = self.module_list[idx]
+                module_condition = self.conditions[idx]
+                if stride < 0:
+                    module = Inverse(module)
+                if module_condition not in cond_map:
+                    cond_map[module_condition] = cond_counter
+                    cond_counter += 1
+                sub_inn.append(module, cond_map[module_condition])
+            return sub_inn
+
         return self.module_list.__getitem__(item)
 
     def __len__(self):

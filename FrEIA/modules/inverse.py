@@ -2,7 +2,6 @@ from typing import List, Tuple
 
 from torch import Tensor
 
-from FrEIA.framework import SequenceINN
 from FrEIA.modules import InvertibleModule
 
 
@@ -18,10 +17,11 @@ class Inverse(InvertibleModule):
         )
         if not no_output_dims:
             input_dims = module.output_dims(module.dims_in)
-        elif isinstance(module, SequenceINN):
-            input_dims = (module.shapes[-1],)
         else:
-            raise NotImplementedError(f"Can't determine output dimensions for {module.__class__}.")
+            try:
+                input_dims = module.output_dims(None)
+            except TypeError:
+                raise NotImplementedError(f"Can't determine output dimensions for {module.__class__}.")
         super().__init__(input_dims, module.dims_c)
         self.module = module
 
