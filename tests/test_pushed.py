@@ -26,7 +26,7 @@ class PushedDistributionTest(unittest.TestCase):
         self.create_distribution().log_prob(torch.randn(16, 2))
 
     def test_log_prob_shape_mismatch(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(RuntimeError):
             self.create_distribution().log_prob(torch.randn(16, 3))
 
     def test_sample(self):
