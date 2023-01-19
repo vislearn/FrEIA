@@ -126,14 +126,14 @@ class AllInOneBlock(InvertibleModule):
         # a sensible range.
         if global_affine_type == 'SIGMOID':
             global_scale = 2. - np.log(10. / global_affine_init - 1.)
-            self.global_scale_activation = (lambda a: 10 * torch.sigmoid(a - 2.))
+            self.global_scale_activation = self._sigmoid_global_scale_activation
         elif global_affine_type == 'SOFTPLUS':
             global_scale = 2. * np.log(np.exp(0.5 * 10. * global_affine_init) - 1)
             self.softplus = nn.Softplus(beta=0.5)
-            self.global_scale_activation = (lambda a: 0.1 * self.softplus(a))
+            self.global_scale_activation = self._softplus_global_scale_activation
         elif global_affine_type == 'EXP':
             global_scale = np.log(global_affine_init)
-            self.global_scale_activation = (lambda a: torch.exp(a))
+            self.global_scale_activation = self._exp_global_scale_activation
         else:
             raise ValueError('Global affine activation must be "SIGMOID", "SOFTPLUS" or "EXP"')
 
@@ -166,6 +166,15 @@ class AllInOneBlock(InvertibleModule):
                              "function or object (see docstring)")
         self.subnet = subnet_constructor(self.splits[0] + self.condition_channels, 2 * self.splits[1])
         self.last_jac = None
+
+    def _sigmoid_global_scale_activation(self, a):
+        return 10 * torch.sigmoid(a - 2.)
+
+    def _softplus_global_scale_activation(self, a):
+        return 0.1 * self.softplus(a)
+
+    def _exp_global_scale_activation(self, a):
+        return torch.exp(a)
 
     def _construct_householder_permutation(self):
         '''Computes a permutation matrix from the reflection vectors that are
