@@ -42,10 +42,10 @@ class PushForwardDistribution(Distribution):
         return samples
 
     def log_prob(self, value: torch.Tensor, conditions: List[torch.Tensor] = None):
-        expected_shape = self.transform.dims_in[0]
-        data_shape = value.shape[-len(expected_shape):]
-        if data_shape != expected_shape:
-            raise ValueError(f"Got input of trailing shape {data_shape}, but expected {expected_shape}.")
+        # expected_shape = self.transform.output_dims(self.transform.dims_in)[0]
+        # data_shape = value.shape[-len(expected_shape):]
+        # if data_shape != expected_shape:
+        # raise ValueError(f"Got input of trailing shape {data_shape}, but expected {expected_shape}.")
 
         # For now, only SequenceINN and GraphINN take
         # non-tuples as input and return non-tuples
