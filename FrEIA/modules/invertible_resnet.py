@@ -39,7 +39,7 @@ class ActNorm(InvertibleModule):
         self.scale = nn.Parameter(torch.zeros(*param_dims))
         self.bias = nn.Parameter(torch.zeros(*param_dims))
 
-        if init_data:
+        if init_data is not None:
             self._initialize_with_data(init_data)
         else:
             self.init_on_next_batch = True
