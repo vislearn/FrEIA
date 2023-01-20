@@ -67,15 +67,15 @@ class FixedLinearTransform(InvertibleModule):
         if M is None:
             raise ValueError("Need to specify the M argument, the matrix to be multiplied.")
 
-        self.M = nn.Parameter(M.t(), requires_grad=False)
-        self.M_inv = nn.Parameter(M.t().inverse(), requires_grad=False)
+        self.register_buffer("M", M.t())
+        self.register_buffer("M_inv", M.t().inverse())
 
         if b is None:
-            self.b = 0.
+            self.register_buffer("b", torch.tensor(0.))
         else:
-            self.b = nn.Parameter(b.unsqueeze(0), requires_grad=False)
+            self.register_buffer("b", b.unsqueeze(0))
 
-        self.logDetM = nn.Parameter(torch.slogdet(M)[1], requires_grad=False)
+        self.register_buffer("logDetM", torch.slogdet(M)[1])
 
     def forward(self, x, rev=False, jac=True):
         j = self.logDetM.expand(x[0].shape[0])
