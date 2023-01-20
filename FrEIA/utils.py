@@ -47,13 +47,14 @@ def force_to(obj: Any, *args, **kwargs) -> Any:
     Applies `.to()` on all tensors in the object structure of obj.
     Use this as long as https://github.com/pytorch/pytorch/issues/7795 is unresolved.
     """
-    applied_cache = set()
+    applied_stack = set()
 
     def _deep_to(obj):
         """ Applies `fn` to all tensors referenced in `obj` """
-        if id(obj) in applied_cache:
+        obj_id = id(obj)
+        if obj_id in applied_stack:
             raise ValueError(f"Cannot call deep_to(...) on self-referential structure.")
-        applied_cache.add(id(obj))
+        applied_stack.add(obj_id)
 
         if torch.is_tensor(obj):
             obj = obj.to(*args, **kwargs)
@@ -71,6 +72,7 @@ def force_to(obj: Any, *args, **kwargs) -> Any:
         elif hasattr(obj, '__dict__'):
             obj = _deep_to(obj.__dict__)
 
+        applied_stack.remove(obj_id)
         return obj
 
     return _deep_to(obj)
