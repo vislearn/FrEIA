@@ -5,7 +5,7 @@ from torch.distributions import Distribution
 
 from FrEIA.modules import InvertibleModule
 from FrEIA.modules.inverse import Inverse
-from FrEIA.utils import force_to
+from FrEIA.utils import force_to, output_dims_compatible
 
 
 class PushForwardDistribution(Distribution):
@@ -13,7 +13,9 @@ class PushForwardDistribution(Distribution):
 
     def __init__(self, base_distribution: Distribution,
                  transform: InvertibleModule):
-        super().__init__(torch.Size(), transform.output_dims(transform.dims_in)[0])
+        # Hack as SequenceINN and GraphINN do not work with input/output shape API
+        event_shape = output_dims_compatible(transform)
+        super().__init__(torch.Size(), event_shape)
         self.base_distribution = base_distribution
         self.transform = transform
 

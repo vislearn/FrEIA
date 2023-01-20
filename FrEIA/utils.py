@@ -3,6 +3,24 @@ import torch
 from typing import Callable, Any
 
 
+def output_dims_compatible(invertible_module):
+    """
+    Hack to get output dimensions from any module as
+    SequenceINN and GraphINN do not work with input/output shape API.
+    """
+    no_output_dims = (
+            hasattr(invertible_module, "force_tuple_output")
+            and not invertible_module.force_tuple_output
+    )
+    if not no_output_dims:
+        return invertible_module.output_dims(invertible_module.dims_in)
+    else:
+        try:
+            return invertible_module.output_dims(None)
+        except TypeError:
+            raise NotImplementedError(f"Can't determine output dimensions for {invertible_module.__class__}.")
+
+
 def f_except(f: Callable, x: torch.Tensor, *dim, **kwargs):
     """ Apply f on all dimensions except those specified in dim """
     result = x
