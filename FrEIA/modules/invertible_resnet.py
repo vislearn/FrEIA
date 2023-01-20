@@ -1,91 +1,88 @@
+import FrEIA.utils as utils
 from . import InvertibleModule
 
-from typing import Union
-
-import numpy as np
 import torch
 import torch.nn as nn
 from torch.nn.functional import conv2d, conv_transpose2d
 
+import warnings
+
 
 class ActNorm(InvertibleModule):
-    '''A technique to achieve a stable initlization.
+    """
+    A technique to achieve stable flow initialization.
 
-    First introduced in Kingma et al 2018: https://arxiv.org/abs/1807.03039
+    First introduced in Kingma et al. 2018: https://arxiv.org/abs/1807.03039
     The module is similar to a traditional batch normalization layer, but the
-    data mean and standard deviation is only computed for the first batch of
-    data. To ensure invertibility, the mean and standard devation are kept
-    fixed from that point on.
+    data mean and standard deviation are initialized from the first batch that
+    is passed through the module. They are treated as learnable parameters from
+    there on.
+
     Using ActNorm layers interspersed throughout an INN ensures that
     intermediate outputs of the INN have standard deviation 1 and mean 0, so
     that the training is stable at the start, avoiding exploding or zeroed
     outputs.
     Just as with standard batch normalization layers, ActNorm contains
     additional channel-wise scaling and bias parameters.
-    '''
-
-    def __init__(self, dims_in, dims_c=None, init_data: Union[torch.Tensor, None] = None):
-        '''
-        Args:
-          init_data: If ``None``, use the first batch of data passed through this
-            module to initialize the mean and standard deviation.
-            If ``torch.Tensor``, use this as data to initialize instead of the
-            first real batch.
-        '''
-
+    """
+    def __init__(self, dims_in, dims_c=None, init_data: torch.Tensor = None):
         super().__init__(dims_in, dims_c)
-        self.dims_in = dims_in[0]
-        param_dims = [1, self.dims_in[0]] + [1 for i in range(len(self.dims_in) - 1)]
-        self.scale = nn.Parameter(torch.zeros(*param_dims))
-        self.bias = nn.Parameter(torch.zeros(*param_dims))
 
-        if init_data:
-            self._initialize_with_data(init_data)
-        else:
-            self.init_on_next_batch = True
+        self.register_buffer("is_initialized", torch.tensor(False))
 
-        def on_load_state_dict(*args):
-            # when this module is loading state dict, we SHOULDN'T init with data,
-            # because that will reset the trained parameters. Registering a hook
-            # that disable this initialisation.
-            self.init_on_next_batch = False
-        self._register_load_state_dict_pre_hook(on_load_state_dict)
+        dim = next(iter(dims_in))[0]
+        self.log_scale = nn.Parameter(torch.empty(1, dim))
+        self.loc = nn.Parameter(torch.empty(1, dim))
 
-    def _initialize_with_data(self, data):
-        # Initialize to mean 0 and std 1 with sample batch
-        # 'data' expected to be of shape (batch, channels[, ...])
-        assert all([data.shape[i+1] == self.dims_in[i] for i in range(len(self.dims_in))]),\
-            "Can't initialize ActNorm layer, provided data don't match input dimensions."
-        
-        std = data.transpose(0,1).contiguous().view(self.dims_in[0], -1).std(dim=-1)
-        
-        assert torch.all(std!=0,0), "Can't initialize the actNorm layer with the first batch because of zero std. Either add noise to the input data (recommended) or provide init_data before training"
-        
-        self.scale.data.view(-1)[:] \
-            = torch.log(1 / std)
-        
-        data = data * self.scale.exp()
-        self.bias.data.view(-1)[:] \
-            = -data.transpose(0,1).contiguous().view(self.dims_in[0], -1).mean(dim=-1)
-        self.init_on_next_batch = False
+        if init_data is not None:
+            self.initialize(init_data)
 
-    def forward(self, x, rev=False, jac=True):
-        if self.init_on_next_batch:
-            self._initialize_with_data(x[0])
+    @property
+    def scale(self):
+        return torch.exp(self.log_scale)
 
-        jac = (self.scale.sum() * np.prod(self.dims_in[1:])).repeat(x[0].shape[0])
-        if rev:
-            jac = -jac
-
-        if not rev:
-            return [x[0] * self.scale.exp() + self.bias], jac
-        else:
-            return [(x[0] - self.bias) / self.scale.exp()], jac
+    def initialize(self, batch: torch.Tensor):
+        self.is_initialized.data = torch.tensor(True)
+        self.log_scale.data = torch.log(torch.std(batch, dim=0, keepdim=True))
+        self.loc.data = torch.mean(batch, dim=0, keepdim=True)
 
     def output_dims(self, input_dims):
-        assert len(input_dims) == 1, "Can only use 1 input"
+        assert len(input_dims) == 1, "Can only use one input"
         return input_dims
 
+    def forward(self, x, c=None, rev=False, jac=True):
+        if c is not None:
+            raise ValueError(f"{self.__class__.__name__} is unconditional.")
+
+        x = x[0]
+
+        if not self.is_initialized:
+            self.initialize(x)
+
+        if not rev:
+            out = (x - self.loc) / self.scale
+            log_jac_det = utils.sum_except_batch(self.log_scale)
+        else:
+            out = self.scale * x + self.loc
+            log_jac_det = utils.sum_except_batch(self.log_scale)
+
+        return (out,), log_jac_det
+
+    def load_state_dict(self, state_dict, strict=True):
+        if list(state_dict.keys()) == ["scale", "bias"]:
+            if strict:
+                warnings.warn(DeprecationWarning(f"Parameter names in {self.__class__.__name__} have changed. "
+                                                 f"Converting state_dict to new format. "
+                                                 f"Please overwrite your old state_dicts."))
+
+            # compatibiliy with old ActNorm
+            state_dict = {
+                "log_scale": -state_dict["scale"],
+                "loc": -(torch.exp(-state_dict["scale"]) * state_dict["bias"]),
+                "is_initialized": torch.tensor(True),
+            }
+
+        return super().load_state_dict(state_dict, strict)
 
 
 class IResNetLayer(InvertibleModule):
