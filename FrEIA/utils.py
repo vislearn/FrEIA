@@ -70,7 +70,7 @@ def force_to(obj: Any, *args, **kwargs) -> Any:
                 for value in obj
             )
         elif hasattr(obj, '__dict__'):
-            obj = _deep_to(obj.__dict__)
+            _deep_to(obj.__dict__)
 
         applied_stack.remove(obj_id)
         return obj
