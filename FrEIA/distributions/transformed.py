@@ -24,7 +24,10 @@ class PushForwardDistribution(Distribution):
             return self.rsample(sample_shape, conditions)
 
     def rsample(self, sample_shape: torch.Size = torch.Size(), conditions: List[torch.Tensor] = None) -> torch.Tensor:
-        base_samples = self.base_distribution.rsample(sample_shape)
+        try:
+            base_samples = self.base_distribution.rsample(sample_shape)
+        except NotImplementedError:
+            base_samples = self.base_distribution.sample(sample_shape)
         # For now, only SequenceINN and GraphINN take
         # non-tuples as input and return non-tuples
         tuple_convert = (
