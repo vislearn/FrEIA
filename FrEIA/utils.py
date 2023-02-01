@@ -2,6 +2,8 @@ import torch
 
 from typing import Callable, Any, Tuple, Union
 
+from torch.utils.data import TensorDataset, DataLoader
+
 
 def output_dims_compatible(invertible_module):
     """
@@ -91,3 +93,39 @@ def tuple_free_forward(module, data: torch.Tensor, *args, **kwargs) -> Tuple[tor
     if is_tuple_module:
         out, = out
     return out, jac
+
+
+def tuple_free_batch_forward(module, data: torch.Tensor, batch_size, loader_kwargs, device=None, **forward_kwargs) -> \
+        Tuple[torch.Tensor, Union[torch.Tensor, None]]:
+    """
+    Executes a module on the passed data in batches.
+
+    A dataloader is used to push the data to cuda if the data is on the cpu.
+    You can specify workers etc. via loader_kwargs.
+    """
+    target_device = data.device
+    outs = []
+    jacs = []
+
+    if data.device == torch.device("cpu"):
+        dataset = TensorDataset(data)
+        dataloader = DataLoader(dataset, batch_size=batch_size, **loader_kwargs)
+    else:
+        if len(loader_kwargs) == 0:
+            raise ValueError("Can't use loader_kwargs with non-cpu data.")
+        dataloader = data.split(batch_size)
+
+    for (batch,) in dataloader:
+        out, jac = tuple_free_forward(module, batch.to(device), **forward_kwargs)
+        outs.append(out.to(target_device))
+        if jac is None:
+            jacs.append(None)
+        else:
+            jacs.append(jac.to(target_device))
+
+    out_cat = torch.cat(outs)
+    if all(jac is not None for jac in jacs):
+        jac_cat = torch.cat(jacs)
+    else:
+        jac_cat = None
+    return out_cat, jac_cat
