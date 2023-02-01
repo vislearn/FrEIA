@@ -78,7 +78,7 @@ def force_to(obj: Any, *args, **kwargs) -> Any:
     return _deep_to(obj)
 
 
-def tuple_free_forward(module, data: torch.Tensor, *args, **kwargs) -> Tuple[torch.Tensor, torch.Tensor | None]:
+def tuple_free_forward(module, data: torch.Tensor, *args, **kwargs) -> Tuple[torch.Tensor, Union[torch.Tensor, None]]:
     try:
         is_tuple_module = module.force_tuple_output
     except AttributeError:
