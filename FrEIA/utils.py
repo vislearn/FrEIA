@@ -1,6 +1,6 @@
 import torch
 
-from typing import Callable, Any
+from typing import Callable, Any, Tuple
 
 
 def output_dims_compatible(invertible_module):
