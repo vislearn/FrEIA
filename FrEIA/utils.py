@@ -1,6 +1,6 @@
 import torch
 
-from typing import Callable, Any
+from typing import Callable, Any, Tuple
 
 
 def output_dims_compatible(invertible_module):
@@ -76,3 +76,18 @@ def force_to(obj: Any, *args, **kwargs) -> Any:
         return obj
 
     return _deep_to(obj)
+
+
+def tuple_free_forward(module, data: torch.Tensor, *args, **kwargs) -> Tuple[torch.Tensor, Union[torch.Tensor, None]]:
+    try:
+        is_tuple_module = module.force_tuple_output
+    except AttributeError:
+        is_tuple_module = True
+
+    if is_tuple_module:
+        data = data,
+    out, jac = module(data, *args, **kwargs)
+
+    if is_tuple_module:
+        out, = out
+    return out, jac
