@@ -1,4 +1,4 @@
-from typing import Iterable, Tuple, List
+from typing import Iterable, Tuple, List, Union
 
 import torch.nn as nn
 import torch
@@ -78,7 +78,42 @@ class SequenceINN(InvertibleModule):
             )
         self.shapes.append(output_dims[0])
 
-    def __getitem__(self, item):
+    def __setitem__(self, key, value: InvertibleModule):
+        """
+        Replaces the module at position key with value.
+        """
+        if isinstance(key, slice):
+            raise NotImplementedError("Setting sequence_inn[...] with slices as index is not supported.")
+        existing_module = self.module_list[key]
+        assert isinstance(existing_module, InvertibleModule)
+
+        # Input dims
+        if existing_module.dims_in != value.dims_in:
+            raise ValueError(
+                f"Module at position {key} must have input shape {existing_module.dims_in}, "
+                f"but the replacement has input shape {value.dims_in}."
+            )
+
+        # Output dims
+        existing_dims_out = existing_module.output_dims(existing_module.dims_in)
+        target_dims_out = value.output_dims(value.dims_in)
+        if existing_dims_out != target_dims_out:
+            raise ValueError(
+                f"Module at position {key} must have input shape {existing_dims_out}, "
+                f"but the replacement has input shape {target_dims_out}."
+            )
+
+        # Condition
+        if existing_module.dims_c != value.dims_c:
+            raise ValueError(
+                f"Module at position {key} must have condition shape {existing_dims_out}, "
+                f"but the replacement has condition shape {target_dims_out}."
+            )
+
+        # Actually replace
+        self.module_list[key] = value
+
+    def __getitem__(self, item) -> Union[InvertibleModule, "SequenceINN"]:
         if isinstance(item, slice):
             # Zero-length
             in_dims = self.shapes[item]
