@@ -88,7 +88,7 @@ class PushForwardDistribution(Distribution):
 
     def force_to(self, *args, **kwargs):
         force_to(self.base_distribution, *args, **kwargs)
-        self.transform.to(*args, **kwargs)
+        self.transform = self.transform.to(*args, **kwargs)
 
 
 class PullBackDistribution(PushForwardDistribution):
