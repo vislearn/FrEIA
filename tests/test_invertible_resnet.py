@@ -1,8 +1,5 @@
 import unittest
-import numpy as np
 
-import torch
-import torch.nn as nn
 import torch.optim
 
 import sys
@@ -12,48 +9,35 @@ from FrEIA.framework import *
 
 
 class ActNormTest(unittest.TestCase):
+    batch_size = 256
 
-    def __init__(self, *args):
-        super().__init__(*args)
-
-        self.batch_size = 256
-        self.inp_size_linear = (20,)
-        self.inp_size_conv = (3, 10, 10)
+    def test_linear(self):
         torch.manual_seed(0)
-
-        nodes = [InputNode(*self.inp_size_linear, name='input')]
-        nodes.append(Node(nodes[-1], ActNorm, {},
-                          name=f'actnorm'))
-        nodes.append(OutputNode(nodes[-1], name='output'))
-        self.net_linear = GraphINN(nodes, verbose=False)
-
-        nodes = [InputNode(*self.inp_size_conv, name='input')]
-        nodes.append(Node(nodes[-1], ActNorm, {},
-                          name=f'actnorm'))
-        nodes.append(OutputNode(nodes[-1], name='output'))
-        self.net_conv = GraphINN(nodes, verbose=False)
-
-
-    def test_init(self):
-        x = torch.randn(self.batch_size, *self.inp_size_linear)
+        inp_size_linear = (20,)
+        
+        act_norm = ActNorm([inp_size_linear])
+        
+        x = torch.randn(self.batch_size, *inp_size_linear)
         x = x * torch.rand_like(x) + torch.randn_like(x)
-        y = self.net_linear(x, jac=False)[0]
-        # Channel-wise mean should be zero
-        self.assertTrue(torch.allclose(y.transpose(0,1).contiguous().view(self.inp_size_linear[0], -1).mean(dim=-1),
-                                       torch.zeros(self.inp_size_linear[0]), atol=1e-06))
-        # Channel-wise std should be one
-        self.assertTrue(torch.allclose(y.transpose(0,1).contiguous().view(self.inp_size_linear[0], -1).std(dim=-1),
-                                       torch.ones(self.inp_size_linear[0]), atol=1e-06))
+        y, = act_norm([x], jac=False)[0]
+        self.assertStandardMoments(y)
 
-        x = torch.randn(self.batch_size, *self.inp_size_conv)
+    def test_conv(self):
+        torch.manual_seed(0)
+        
+        inp_size_conv = (3, 10, 10)
+        act_norm = ActNorm([inp_size_conv])
+
+        x = torch.randn(self.batch_size, *inp_size_conv)
         x = x * torch.rand_like(x) + torch.randn_like(x)
-        y = self.net_conv(x, jac=False)[0]
-        # Channel-wise mean should be zero
-        self.assertTrue(torch.allclose(y.transpose(0,1).contiguous().view(self.inp_size_conv[0], -1).mean(dim=-1),
-                                       torch.zeros(self.inp_size_conv[0]), atol=1e-06))
-        # Channel-wise std should be one
-        self.assertTrue(torch.allclose(y.transpose(0,1).contiguous().view(self.inp_size_conv[0], -1).std(dim=-1),
-                                       torch.ones(self.inp_size_conv[0]), atol=1e-06))
+        y, = act_norm([x], jac=False)[0]
+
+        y_ = y.reshape(self.batch_size, inp_size_conv[0], -1)
+        self.assertStandardMoments(y_)
+
+    def assertStandardMoments(self, data):
+        self.assertTrue(torch.allclose(torch.mean(data, dim=0), torch.zeros(data.shape[-1]), atol=1e-7))
+        self.assertTrue(torch.allclose(torch.std(data, dim=0), torch.ones(data.shape[-1])))
 
 
 class IResNetTest(unittest.TestCase):
