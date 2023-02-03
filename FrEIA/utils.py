@@ -95,7 +95,7 @@ def tuple_free_forward(module, data: torch.Tensor, *args, **kwargs) -> Tuple[tor
     return out, jac
 
 
-def tuple_free_batch_forward(module, data: torch.Tensor, batch_size, loader_kwargs, device=None, **forward_kwargs) -> \
+def tuple_free_batch_forward(module, data: torch.Tensor, batch_size, loader_kwargs=None, device=None, **forward_kwargs) -> \
         Tuple[torch.Tensor, Union[torch.Tensor, None]]:
     """
     Executes a module on the passed data in batches.
@@ -103,6 +103,9 @@ def tuple_free_batch_forward(module, data: torch.Tensor, batch_size, loader_kwar
     A dataloader is used to push the data to cuda if the data is on the cpu.
     You can specify workers etc. via loader_kwargs.
     """
+    if loader_kwargs is None:
+        loader_kwargs = dict()
+
     target_device = data.device
     outs = []
     jacs = []

@@ -180,7 +180,7 @@ class SequenceINN(InvertibleModule):
         """
 
         iterator = range(len(self.module_list))
-        log_det_jac = 0
+        log_det_jac = torch.zeros(x_or_z.shape[0], device=x_or_z.device)
 
         if rev:
             iterator = reversed(iterator)
