@@ -6,5 +6,6 @@ structure of operations.
 from . import framework
 from . import modules
 from . import distributions
+from . import utils
 
-__all__ = ["framework", "modules", "distributions"]
+__all__ = ["framework", "modules", "distributions", "utils"]
