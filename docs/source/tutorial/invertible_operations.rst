@@ -2,7 +2,7 @@ Invertible Operations
 =======================
 
 A number of commonly used invertible operations are provided in the ``FrEIA.modules`` submodule.
-They are documented in detail `here <https://vll-hd.github.io/FrEIA/_build/html/FrEIA.modules.html>`.
+They are documented in detail `here <https://vislearn.github.io/FrEIA/_build/html/FrEIA.modules.html>`.
 
 Coupling blocks
 **************************
