@@ -130,6 +130,8 @@ class BinnedSpline(_BaseCouplingBlock):
         """
         Compute the spline for given bin and spline parameters
         """
+        x = x.movedim(1, -1)
+
         # find bin knots
         knot_x = parameters["left"] + torch.cumsum(parameters["widths"], dim=-1)
         knot_y = parameters["bottom"] + torch.cumsum(parameters["heights"], dim=-1)
@@ -193,6 +195,8 @@ class BinnedSpline(_BaseCouplingBlock):
 
             log_jac_det = utils.sum_except_batch(log_jac)
 
+            y = y.movedim(-1, 1)
+
             return y, log_jac_det
         else:
             y = x
@@ -206,5 +210,7 @@ class BinnedSpline(_BaseCouplingBlock):
             x[~inside], log_jac[~inside] = (y_out - shift) / scale, torch.log(scale)
 
             log_jac_det = -utils.sum_except_batch(log_jac)
+
+            x = x.movedim(-1, 1)
 
             return x, log_jac_det
