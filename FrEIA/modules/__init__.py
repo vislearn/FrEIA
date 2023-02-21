@@ -106,4 +106,5 @@ __all__ = [
             'GaussianMixtureModel',
             'LinearSpline',
             'RationalQuadraticSpline',
+            'RationalQuadraticSpline_1D',
             ]
