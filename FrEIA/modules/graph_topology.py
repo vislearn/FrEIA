@@ -61,13 +61,14 @@ class Split(InvertibleModule):
         else:
             if isinstance(section_sizes, int):
                 assert section_sizes < l_dim, "'section_sizes' too large"
-            else:
-                assert isinstance(section_sizes, (list, tuple)), \
-                    "'section_sizes' must be either int or list/tuple of int"
-                assert sum(section_sizes) <= l_dim, "'section_sizes' too large"
-                if sum(section_sizes) < l_dim:
-                    warnings.warn("'section_sizes' too small, adding additional section")
-                    section_sizes = list(section_sizes).append(l_dim - sum(section_sizes))
+                section_sizes = (section_sizes,)
+
+            assert isinstance(section_sizes, (list, tuple)), \
+                "'section_sizes' must be either int or list/tuple of int"
+            assert sum(section_sizes) <= l_dim, "'section_sizes' too large"
+            if sum(section_sizes) < l_dim:
+                warnings.warn("'section_sizes' too small, adding additional section")
+                section_sizes = list(section_sizes) + [l_dim - sum(section_sizes)]
             self.split_size_or_sections = section_sizes
 
     def forward(self, x, rev=False, jac=True):

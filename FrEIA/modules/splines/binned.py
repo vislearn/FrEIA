@@ -41,18 +41,19 @@ class BinnedSplineCoupling(_BaseCouplingBlock):
         """
         parameters = self.subnet1(u2)
         parameters = self.spline_base.split_parameters(parameters, self.split_len1)
-        parameters = self.spline_base.constrain_parameters(parameters)
+        parameters = self.constrain_parameters(parameters)
 
         return self.spline_base.binned_spline(x=x1, parameters=parameters, spline=self._spline1, rev=rev)
 
     def _coupling2(self, x2: torch.Tensor, u1: torch.Tensor, rev: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
         parameters = self.subnet2(u1)
         parameters = self.spline_base.split_parameters(parameters, self.split_len2)
-        parameters = self.spline_base.constrain_parameters(parameters)
+        parameters = self.constrain_parameters(parameters)
 
         return self.spline_base.binned_spline(x=x2, parameters=parameters, spline=self._spline2, rev=rev)
 
-
+    def constrain_parameters(self, parameters: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+        return self.spline_base.constrain_parameters(parameters)
 
 class BinnedSpline(InvertibleModule):
     """
