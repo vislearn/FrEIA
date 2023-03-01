@@ -54,7 +54,7 @@ class SequenceINN(InvertibleModule):
             module = module_class
             if module.dims_in != dims_in:
                 raise ValueError(
-                    f"You passed an instance of {module.__class__} to "
+                    f"You passed an instance of {module.__class__.__name__} to "
                     f"SequenceINN which expects a {module.dims_in} input, "
                     f"but the output of the previous layer is of shape "
                     f"{dims_in}."

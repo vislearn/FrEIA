@@ -21,7 +21,7 @@ class Node:
 
     def __init__(self, inputs: Union["Node", Tuple["Node", int],
                                      Iterable[Tuple["Node", int]]],
-                 module_type, module_args: dict, conditions=None, name=None):
+                 module_type, module_args: dict | None = None, conditions=None, name=None):
         if conditions is None:
             conditions = []
 
@@ -66,7 +66,21 @@ class Node:
         Instantiates the module and determines the output dimension by
         calling InvertibleModule#output_dims.
         """
-        if len(self.conditions) > 0:
+        if isinstance(self.module_type, InvertibleModule):
+            if self.module_args is not None:
+                raise ValueError(
+                    f"You passed an instance of {self.module_type.__class__.__name__}, "
+                    f"but also provided argument to its constructor (module_args != None)."
+                )
+            module = self.module_type
+            self.module_type = type(module)
+            if module.dims_in != input_shapes:
+                raise ValueError(
+                    f"You passed an instance of {self.module_type.__class__.__name__} "
+                    f"which expects {self.module.dims_in} input shape, "
+                    f"but the input shape to the Node is {input_shapes}."
+                )
+        elif len(self.conditions) > 0:
             module = self.module_type(input_shapes, dims_c=condition_shapes,
                                       **self.module_args)
         else:
