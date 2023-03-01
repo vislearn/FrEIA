@@ -20,43 +20,38 @@ class SubnetFactory:
         self.dropout = dropout
 
     def layer(self, dims_in, dims_out):
-        match self.kind.lower():
-            case "dense":
+        kind = self.kind.lower()
+        if kind == "dense":
                 return nn.Linear(dims_in, dims_out, **self.kwargs)
-            case "conv":
-                return nn.Conv2d(dims_in, dims_out, padding="same", **self.kwargs)
-            case other:
-                raise NotImplementedError(f"{self.__class__.__name__} does not support layer kind {other}.")
+        if kind == "conv":
+            return nn.Conv2d(dims_in, dims_out, padding="same", **self.kwargs)
+        raise NotImplementedError(f"{self.__class__.__name__} does not support layer kind {kind}.")
 
     def activation_layer(self, **kwargs):
-        match self.activation:
-            case nn.Module() as module:
-                return module(**kwargs)
-            case str() as name:
-                match name.lower():
-                    case "relu":
-                        return nn.ReLU(**kwargs)
-                    case "elu":
-                        return nn.ELU(**kwargs)
-                    case "selu":
-                        return nn.SELU(**kwargs)
-                    case "leakyrelu":
-                        return nn.LeakyReLU(**kwargs)
-                    case "tanh":
-                        return nn.Tanh(**kwargs)
-                    case other:
-                        raise NotImplementedError(f"{self.__class__.__name__} does not support activation with name {other}.")
-            case other:
-                raise NotImplementedError(f"{self.__class__.__name__} does not support activation type {other}.")
+        if isinstance(self.activation, nn.Module):
+            return self.activation(**kwargs)
+        if isinstance(self.activation, str):
+            name = self.activation.lower()
+            if name == "relu":
+                return nn.ReLU(**kwargs)
+            elif name == "elu":
+                return nn.ELU(**kwargs)
+            elif name == "selu":
+                return nn.SELU(**kwargs)
+            elif name == "leakyrelu":
+                return nn.LeakyReLU(**kwargs)
+            elif name == "tanh":
+                return nn.Tanh(**kwargs)
+            raise NotImplementedError(f"{self.__class__.__name__} does not support activation with name {name}.")
+        raise NotImplementedError(f"{self.__class__.__name__} does not support activation type {self.activation}.")
 
     def dropout_layer(self, **kwargs):
-        match self.kind.lower():
-            case "dense":
-                return nn.Dropout1d(p=self.dropout, **kwargs)
-            case "conv":
-                return nn.Dropout2d(p=self.dropout, **kwargs)
-            case other:
-                raise NotImplementedError(f"{self.__class__.__name__} does not support layer kind {other}.")
+        kind = self.kind.lower()
+        if kind == "dense":
+            return nn.Dropout1d(p=self.dropout, **kwargs)
+        elif kind == "conv":
+            return nn.Dropout2d(p=self.dropout, **kwargs)
+        raise NotImplementedError(f"{self.__class__.__name__} does not support layer kind {kind}.")
 
     def __call__(self, dims_in, dims_out):
         network = nn.Sequential()
