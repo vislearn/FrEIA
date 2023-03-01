@@ -1,14 +1,10 @@
 
-import pytest
-
 import FrEIA.framework as ff
 import FrEIA.modules as fm
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-import numpy as np
 
 
 class SubnetFactory:
@@ -91,22 +87,24 @@ class TestUnconditionalCoupling:
         ((8, 3, 8, 8), "conv", [4, 6, 4], dict(kernel_size=3)),
     ]
 
-    @pytest.mark.parametrize("coupling_type", couplings)
-    @pytest.mark.parametrize("batch_shape,network_kind,network_widths,network_kwargs", scenarios)
-    def test_forward_backward(self, coupling_type, batch_shape, network_kind, network_widths, network_kwargs):
-        subnet_constructor = SubnetFactory(kind=network_kind, widths=network_widths, **network_kwargs)
-        inn = ff.SequenceINN(*batch_shape[1:])
-        inn.append(coupling_type, subnet_constructor=subnet_constructor)
+    def test_forward_backward(self):
+        for coupling_type in self.couplings:
+            for batch_shape, network_kind, network_widths, network_kwargs in self.scenarios:
+                subnet_constructor = SubnetFactory(kind=network_kind, widths=network_widths, **network_kwargs)
+                inn = ff.SequenceINN(*batch_shape[1:])
+                inn.append(coupling_type, subnet_constructor=subnet_constructor)
 
-        sample_data = torch.randn(*batch_shape)
+                sample_data = torch.randn(*batch_shape)
 
-        latent, forward_logdet = inn(sample_data)
-        assert latent.shape == sample_data.shape
-        assert forward_logdet.dim() == 1
+                latent, forward_logdet = inn(sample_data)
+                assert latent.shape == sample_data.shape
+                assert forward_logdet.dim() == 1
 
-        reconstruction, backward_logdet = inn(latent, rev=True)
-        assert reconstruction.shape == sample_data.shape
-        assert backward_logdet.dim() == 1
+                reconstruction, backward_logdet = inn(latent, rev=True)
+                assert reconstruction.shape == sample_data.shape
+                assert backward_logdet.dim() == 1
 
-        assert torch.allclose(sample_data, reconstruction, atol=1e-5, rtol=1e-3), f"MSE: {F.mse_loss(sample_data, reconstruction)}"
-        assert torch.allclose(forward_logdet, -backward_logdet, atol=1e-5, rtol=1e-3), f"MSE: {F.mse_loss(forward_logdet, -backward_logdet)}"
+                assert torch.allclose(sample_data, reconstruction, atol=1e-5,
+                                      rtol=1e-3), f"MSE: {F.mse_loss(sample_data, reconstruction)}"
+                assert torch.allclose(forward_logdet, -backward_logdet, atol=1e-5,
+                                      rtol=1e-3), f"MSE: {F.mse_loss(forward_logdet, -backward_logdet)}"
