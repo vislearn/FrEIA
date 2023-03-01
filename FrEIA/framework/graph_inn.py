@@ -21,7 +21,7 @@ class Node:
 
     def __init__(self, inputs: Union["Node", Tuple["Node", int],
                                      Iterable[Tuple["Node", int]]],
-                 module_type, module_args: dict | None = None, conditions=None, name=None):
+                 module_type, module_args: Optional[dict] = None, conditions=None, name=None):
         if conditions is None:
             conditions = []
 
