@@ -89,7 +89,8 @@ class TestUnconditionalCoupling:
         fm.GINCouplingBlock,
         fm.AffineCouplingOneSided,
         fm.RationalQuadraticSpline,
-        fm.RationalQuadraticSpline_1D,
+        fm.ElementwiseRationalQuadraticSpline,
+        fm.LinearSpline,
     ]
     scenarios = [
         ((32, 3), "dense", [16, 32, 16], dict()),
@@ -128,7 +129,8 @@ class TestConditionalCoupling:
         fm.GINCouplingBlock,
         fm.AffineCouplingOneSided,
         fm.RationalQuadraticSpline,
-        fm.RationalQuadraticSpline_1D,
+        fm.ElementwiseRationalQuadraticSpline,
+        fm.LinearSpline,
     ]
     scenarios = [
         ((32, 3), (32, 4), "dense", [16, 32, 16], dict()),
