@@ -52,8 +52,7 @@ class GMMTest(unittest.TestCase):
         if torch.max(torch.abs(x - x_re)) > self.tol:
             print(torch.max(torch.abs(x - x_re)).item(), end='   ')
             print(torch.mean(torch.abs(x - x_re)).item())
-        self.assertTrue(torch.max(torch.abs(x - x_re)) < self.tol)
-
+        self.assertLess(torch.max(torch.abs(x - x_re)), self.tol)
 
         z = test_net(x, c=[w, mu, U, 12345], jac=False)[0]
         x_re = test_net(z, c=[w, mu, U, 12345], rev=True, jac=False)[0]
@@ -61,7 +60,7 @@ class GMMTest(unittest.TestCase):
         if torch.max(torch.abs(x - x_re)) > self.tol:
             print(torch.max(torch.abs(x - x_re)).item(), end='   ')
             print(torch.mean(torch.abs(x - x_re)).item())
-        self.assertTrue(torch.max(torch.abs(x - x_re)) < self.tol)
+        self.assertLess(torch.max(torch.abs(x - x_re)), self.tol)
 
     def test_inverse_all_components(self):
         # TODO: check what is going on here.
@@ -81,7 +80,7 @@ class GMMTest(unittest.TestCase):
             if torch.max(torch.abs(x - x_re[:,comp_idx,:])) > self.tol:
                 print(torch.max(torch.abs(x - x_re[:,comp_idx,:])).item(), end='   ')
                 print(torch.mean(torch.abs(x - x_re[:,comp_idx,:])).item())
-            self.assertTrue(torch.max(torch.abs(x - x_re[:,comp_idx,:])) < self.tol)
+            self.assertLess(torch.max(torch.abs(x - x_re[:,comp_idx,:])), self.tol)
 
         # Check that nll losses don't throw errors
         #nll = GaussianMixtureModel.nll_loss(w, z, jac)

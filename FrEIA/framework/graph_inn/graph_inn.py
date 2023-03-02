@@ -69,7 +69,6 @@ class GraphINN(InvertibleModule):
             print(self)
 
     @property
-    @deprecated
     def node_list(self):
         return self.node_list_fwd
 
