@@ -1,6 +1,4 @@
 
-import pytest
-
 import FrEIA.framework as ff
 import FrEIA.modules as fm
 
@@ -8,11 +6,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import numpy as np
+from typing import Union
 
 
 class SubnetFactory:
-    def __init__(self, kind: str, widths: list, activation: str | type(nn.Module) = "relu", dropout: float = None, **kwargs):
+    def __init__(self, kind: str, widths: list, activation: Union[str, type(nn.Module)] = "relu", dropout: float = None, **kwargs):
         self.kind = kind
         self.kwargs = kwargs
         self.widths = widths
@@ -20,43 +18,38 @@ class SubnetFactory:
         self.dropout = dropout
 
     def layer(self, dims_in, dims_out):
-        match self.kind.lower():
-            case "dense":
+        kind = self.kind.lower()
+        if kind == "dense":
                 return nn.Linear(dims_in, dims_out, **self.kwargs)
-            case "conv":
-                return nn.Conv2d(dims_in, dims_out, padding="same", **self.kwargs)
-            case other:
-                raise NotImplementedError(f"{self.__class__.__name__} does not support layer kind {other}.")
+        if kind == "conv":
+            return nn.Conv2d(dims_in, dims_out, padding="same", **self.kwargs)
+        raise NotImplementedError(f"{self.__class__.__name__} does not support layer kind {kind}.")
 
     def activation_layer(self, **kwargs):
-        match self.activation:
-            case nn.Module() as module:
-                return module(**kwargs)
-            case str() as name:
-                match name.lower():
-                    case "relu":
-                        return nn.ReLU(**kwargs)
-                    case "elu":
-                        return nn.ELU(**kwargs)
-                    case "selu":
-                        return nn.SELU(**kwargs)
-                    case "leakyrelu":
-                        return nn.LeakyReLU(**kwargs)
-                    case "tanh":
-                        return nn.Tanh(**kwargs)
-                    case other:
-                        raise NotImplementedError(f"{self.__class__.__name__} does not support activation with name {other}.")
-            case other:
-                raise NotImplementedError(f"{self.__class__.__name__} does not support activation type {other}.")
+        if isinstance(self.activation, nn.Module):
+            return self.activation(**kwargs)
+        if isinstance(self.activation, str):
+            name = self.activation.lower()
+            if name == "relu":
+                return nn.ReLU(**kwargs)
+            elif name == "elu":
+                return nn.ELU(**kwargs)
+            elif name == "selu":
+                return nn.SELU(**kwargs)
+            elif name == "leakyrelu":
+                return nn.LeakyReLU(**kwargs)
+            elif name == "tanh":
+                return nn.Tanh(**kwargs)
+            raise NotImplementedError(f"{self.__class__.__name__} does not support activation with name {name}.")
+        raise NotImplementedError(f"{self.__class__.__name__} does not support activation type {self.activation}.")
 
     def dropout_layer(self, **kwargs):
-        match self.kind.lower():
-            case "dense":
-                return nn.Dropout1d(p=self.dropout, **kwargs)
-            case "conv":
-                return nn.Dropout2d(p=self.dropout, **kwargs)
-            case other:
-                raise NotImplementedError(f"{self.__class__.__name__} does not support layer kind {other}.")
+        kind = self.kind.lower()
+        if kind == "dense":
+            return nn.Dropout1d(p=self.dropout, **kwargs)
+        elif kind == "conv":
+            return nn.Dropout2d(p=self.dropout, **kwargs)
+        raise NotImplementedError(f"{self.__class__.__name__} does not support layer kind {kind}.")
 
     def __call__(self, dims_in, dims_out):
         network = nn.Sequential()
@@ -98,26 +91,26 @@ class TestUnconditionalCoupling:
         ((8, 3, 8, 8), "conv", [4, 6, 4], dict(kernel_size=3)),
     ]
 
-    @pytest.mark.parametrize("coupling_type", couplings)
-    @pytest.mark.parametrize("batch_shape,network_kind,network_widths,network_kwargs", scenarios)
-    def test_forward_backward(self, coupling_type, batch_shape, network_kind, network_widths, network_kwargs):
-        subnet_constructor = SubnetFactory(kind=network_kind, widths=network_widths, **network_kwargs)
-        inn = ff.SequenceINN(*batch_shape[1:])
-        inn.append(coupling_type, subnet_constructor=subnet_constructor)
+    def test_forward_backward(self):
+        for coupling_type in self.couplings:
+            for batch_shape, network_kind, network_widths, network_kwargs in self.scenarios:
+                subnet_constructor = SubnetFactory(kind=network_kind, widths=network_widths, **network_kwargs)
+                inn = ff.SequenceINN(*batch_shape[1:])
+                inn.append(coupling_type, subnet_constructor=subnet_constructor)
 
-        sample_data = torch.randn(*batch_shape)
+                sample_data = torch.randn(*batch_shape)
 
-        latent, forward_logdet = inn(sample_data)
-        assert latent.shape == sample_data.shape
-        assert forward_logdet.dim() == 1
+                latent, forward_logdet = inn(sample_data)
+                assert latent.shape == sample_data.shape
+                assert forward_logdet.dim() == 1
 
-        reconstruction, backward_logdet = inn(latent, rev=True)
-        assert reconstruction.shape == sample_data.shape
-        assert backward_logdet.dim() == 1
-
-        assert torch.allclose(sample_data, reconstruction, atol=1e-5, rtol=1e-3), f"MSE: {F.mse_loss(sample_data, reconstruction)}"
-        assert torch.allclose(forward_logdet, -backward_logdet, atol=1e-5, rtol=1e-3), f"MSE: {F.mse_loss(forward_logdet, -backward_logdet)}"
-
+                reconstruction, backward_logdet = inn(latent, rev=True)
+                assert reconstruction.shape == sample_data.shape
+                assert backward_logdet.dim() == 1
+                assert torch.allclose(sample_data, reconstruction, atol=1e-5,
+                                      rtol=1e-3), f"MSE: {F.mse_loss(sample_data, reconstruction)}"
+                assert torch.allclose(forward_logdet, -backward_logdet, atol=1e-5,
+                                      rtol=1e-3), f"MSE: {F.mse_loss(forward_logdet, -backward_logdet)}"
 
 class TestConditionalCoupling:
 
@@ -138,26 +131,28 @@ class TestConditionalCoupling:
         ((8, 3, 8, 8), (8, 4, 8, 8), "conv", [4, 6, 4], dict(kernel_size=3)),
     ]
 
-    @pytest.mark.parametrize("coupling_type", couplings)
-    @pytest.mark.parametrize("batch_shape,condition_shape,network_kind,network_widths,network_kwargs", scenarios)
-    def test_forward_backward(self, coupling_type, batch_shape, condition_shape, network_kind, network_widths, network_kwargs):
-        subnet_constructor = SubnetFactory(kind=network_kind, widths=network_widths, **network_kwargs)
-        inn = ff.SequenceINN(*batch_shape[1:])
-        inn.append(coupling_type, 
-                   subnet_constructor=subnet_constructor, 
-                   cond_shape=condition_shape[1:],
-                   cond=0)
+    def test_forward_backward(self):
+        for coupling_type in self.couplings:
+            for batch_shape, condition_shape, network_kind, network_widths, network_kwargs in self.scenarios:
+                subnet_constructor = SubnetFactory(kind=network_kind, widths=network_widths, **network_kwargs)
+                inn = ff.SequenceINN(*batch_shape[1:])
+                inn.append(coupling_type, 
+                        subnet_constructor=subnet_constructor, 
+                        cond_shape=condition_shape[1:],
+                        cond=0)
 
-        sample_data = torch.randn(*batch_shape)
-        sample_cond = torch.randn(*condition_shape)
+                sample_data = torch.randn(*batch_shape)
+                sample_cond = torch.randn(*condition_shape)
 
-        latent, forward_logdet = inn(sample_data, (sample_cond,))
-        assert latent.shape == sample_data.shape
-        assert forward_logdet.dim() == 1
+                latent, forward_logdet = inn(sample_data, (sample_cond,))
+                assert latent.shape == sample_data.shape
+                assert forward_logdet.dim() == 1
 
-        reconstruction, backward_logdet = inn(latent, (sample_cond,), rev=True)
-        assert reconstruction.shape == sample_data.shape
-        assert backward_logdet.dim() == 1
+                reconstruction, backward_logdet = inn(latent, (sample_cond,), rev=True)
+                assert reconstruction.shape == sample_data.shape
+                assert backward_logdet.dim() == 1
 
-        assert torch.allclose(sample_data, reconstruction, atol=1e-5, rtol=1e-3), f"MSE: {F.mse_loss(sample_data, reconstruction)}"
-        assert torch.allclose(forward_logdet, -backward_logdet, atol=1e-5, rtol=1e-3), f"MSE: {F.mse_loss(forward_logdet, -backward_logdet)}"
+                assert torch.allclose(sample_data, reconstruction, atol=1e-5,
+                                      rtol=1e-3), f"MSE: {F.mse_loss(sample_data, reconstruction)}"
+                assert torch.allclose(forward_logdet, -backward_logdet, atol=1e-5,
+                                      rtol=1e-3), f"MSE: {F.mse_loss(forward_logdet, -backward_logdet)}"
