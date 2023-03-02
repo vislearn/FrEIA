@@ -10,7 +10,7 @@ from FrEIA.modules.coupling_layers import _BaseCouplingBlock
 from FrEIA.modules.base import InvertibleModule
 from FrEIA import utils
 
-class BinnedSplineCoupling(_BaseCouplingBlock):
+class BinnedSpline(_BaseCouplingBlock):
     def __init__(self, dims_in, dims_c=None, subnet_constructor: callable = None, 
                  split_len: Union[float, int] = 0.5, **kwargs) -> None:
         if dims_c is None:
@@ -19,7 +19,7 @@ class BinnedSplineCoupling(_BaseCouplingBlock):
         super().__init__(dims_in, dims_c, clamp=0.0, clamp_activation=lambda u: u, split_len=split_len)
 
         
-        self.spline_base = BinnedSpline(dims_in, dims_c, **kwargs)
+        self.spline_base = BinnedSplineBase(dims_in, dims_c, **kwargs)
         
         num_params = sum(self.spline_base.parameter_counts.values())
         self.subnet1 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1 * num_params)
@@ -55,7 +55,7 @@ class BinnedSplineCoupling(_BaseCouplingBlock):
     def constrain_parameters(self, parameters: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         return self.spline_base.constrain_parameters(parameters)
 
-class BinnedSpline(InvertibleModule):
+class BinnedSplineBase(InvertibleModule):
     """
     Base Class for Splines
     Implements input-binning, where bin knots are jointly predicted along with spline parameters

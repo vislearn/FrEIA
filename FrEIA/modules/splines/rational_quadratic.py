@@ -5,10 +5,10 @@ from torch import nn
 import torch.nn.functional as F
 import numpy as np
 
-from .binned import BinnedSplineCoupling, BinnedSpline
+from .binned import BinnedSplineBase, BinnedSpline
 
 
-class RationalQuadraticSpline(BinnedSplineCoupling):
+class RationalQuadraticSpline(BinnedSpline):
     def __init__(self, *args, bins: int = 10, **kwargs):
         #       parameter                                       constraints             count
         # 1.    the derivative at the edge of each inner bin    positive                #bins - 1
@@ -45,7 +45,7 @@ class RationalQuadraticSpline(BinnedSplineCoupling):
         return rational_quadratic_spline(x, left, right, bottom, top, deltas_left, deltas_right, rev=rev)
 
 
-class RationalQuadraticSpline_1D(BinnedSpline):
+class ElementwiseRationalQuadraticSpline(BinnedSplineBase):
     def __init__(self, dims_in, dims_c=[], subnet_constructor: Callable = None, 
                  bins: int = 10, **kwargs) -> None:
         super().__init__(dims_in, dims_c, bins=bins, parameter_counts={"deltas": bins - 1}, **kwargs)
