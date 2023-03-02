@@ -29,12 +29,16 @@ def parse_flexible_inputs(inputs: FlexibleInputs) -> ConnectionList:
     if isinstance(inputs, (list, tuple)):
         if len(inputs) == 0:
             return inputs
-        elif isinstance(inputs[0], (list, tuple)):
-            return inputs
-        elif len(inputs) == 2:
-            return [inputs, ]
-        else:
-            raise ValueError(f"Cannot parse inputs provided: {inputs}")
+        if len(inputs) == 2 and isinstance(inputs[1], int):
+            return [inputs]
+        parsed_inputs = []
+        for inp in inputs:
+            if isinstance(inp, AbstractNode):
+                inp = inp.out0
+            elif not (isinstance(inp[0], AbstractNode) and isinstance(inp[1], int)):
+                raise ValueError(f"Cannot parse {inp}")
+            parsed_inputs.append(inp)
+        return parsed_inputs
     else:
         if not isinstance(inputs, AbstractNode):
             raise TypeError(f"Received object of invalid type "

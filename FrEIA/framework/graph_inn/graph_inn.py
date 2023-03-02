@@ -5,6 +5,7 @@ from typing import List, Tuple, Iterable, Union, Optional
 import numpy as np
 import torch
 import torch.nn as nn
+from deprecate import deprecated
 from torch import Tensor
 
 from ...modules.base import InvertibleModule
@@ -66,6 +67,11 @@ class GraphINN(InvertibleModule):
 
         if verbose:
             print(self)
+
+    @property
+    @deprecated
+    def node_list(self):
+        return self.node_list_fwd
 
     def output_dims(self, input_dims: List[Tuple[int]]) -> List[Tuple[int]]:
         if len(self.global_out_shapes) == 1 and not self.force_tuple_output:
