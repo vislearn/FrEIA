@@ -1,7 +1,8 @@
 from typing import List, Tuple, Iterable, Union, Optional, Type
 
 import torch
-from torch import Tensor, Module
+from torch import Tensor
+from torch.nn import Module
 
 from ...modules.base import InvertibleModule
 
@@ -25,7 +26,7 @@ def parse_flexible_inputs(inputs: FlexibleInputs) -> ConnectionList:
 
     All such formats are converted to the last format.
     """
-    if not isinstance(inputs, (list, tuple)):
+    if isinstance(inputs, (list, tuple)):
         if len(inputs) == 0:
             return inputs
         elif isinstance(inputs[0], (list, tuple)):
@@ -35,9 +36,9 @@ def parse_flexible_inputs(inputs: FlexibleInputs) -> ConnectionList:
         else:
             raise ValueError(f"Cannot parse inputs provided: {inputs}")
     else:
-        if not isinstance(inputs, Node):
+        if not isinstance(inputs, AbstractNode):
             raise TypeError(f"Received object of invalid type "
-                            f"({type(inputs)}) as input.")
+                            f"{type(inputs)} as input.")
         return [(inputs, 0), ]
 
 
@@ -51,7 +52,7 @@ class AbstractNode:
             self.name = name
         else:
             self.name = hex(id(self))[-6:]
-        self.inputs = self.parse_inputs(inputs)
+        self.inputs = parse_flexible_inputs(inputs)
         if isinstance(conditions, (list, tuple)):
             self.conditions = conditions
         else:
@@ -73,10 +74,8 @@ class AbstractNode:
         # Notify preceding nodes that their output ends up here
         # Entry at position co -> (n, ci) means:
         # My output co goes to input channel ci of n.
-        for in_idx, (in_node, out_idx) in inputs:
-            in_node.consume_output(out_idx, self, in_idx)
         for in_idx, (in_node, out_idx) in enumerate(self.inputs):
-            in_node.outputs[out_idx] = (self, in_idx)
+            in_node.consume_output(out_idx, self, in_idx)
 
         # Enable .outX access
         for i in range(len(self.output_dims)):
@@ -305,4 +304,4 @@ class FeedForwardNode(AbstractNode):
 
     def forward(self, x_or_z: Iterable[Tensor],
                 c: Iterable[Tensor] = None, rev: bool = False, jac: bool = True) -> Tuple[Tuple[Tensor], None]:
-        return [self.module(*c)], None
+        return (self.module(*c),), None

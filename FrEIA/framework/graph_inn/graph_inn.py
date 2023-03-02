@@ -234,9 +234,13 @@ def topological_order(all_nodes: List[AbstractNode], in_nodes: List[InputNode],
     if not rev:
         edges_out_to_in = {node_b: {node_a for node_a, out_idx in node_b.inputs + node_b.conditions} for
                            node_b in all_nodes + out_nodes}
+        start_nodes = in_nodes
+        end_nodes = out_nodes
     else:
         edges_out_to_in = {node_b: {node_a for node_a, out_idx in node_b.outputs + node_b.conditions} for
                            node_b in all_nodes + in_nodes}
+        start_nodes = out_nodes
+        end_nodes = in_nodes
     # Reverse dict
     edges_in_to_out = defaultdict(set)
     for node_out, node_ins in edges_out_to_in.items():
@@ -245,7 +249,7 @@ def topological_order(all_nodes: List[AbstractNode], in_nodes: List[InputNode],
 
     # Kahn's algorithm starting from the output nodes
     sorted_nodes = []
-    no_pending_edges = deque(out_nodes)
+    no_pending_edges = deque(end_nodes)
 
     while len(no_pending_edges) > 0:
         node = no_pending_edges.popleft()
@@ -257,7 +261,7 @@ def topological_order(all_nodes: List[AbstractNode], in_nodes: List[InputNode],
             if len(edges_in_to_out[in_node]) == 0:
                 no_pending_edges.append(in_node)
 
-    for in_node in in_nodes:
+    for in_node in start_nodes:
         if in_node not in sorted_nodes:
             raise ValueError(f"Error in graph: {in_node} is not connected "
                              f"to any output.")
