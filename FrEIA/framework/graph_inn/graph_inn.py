@@ -8,6 +8,7 @@ import torch.nn as nn
 from torch import Tensor
 
 from ...modules.base import InvertibleModule
+from .nodes import AbstractNode, Node, ConditionNode, InputNode, OutputNode, FeedForwardNode
 
 
 class GraphINN(InvertibleModule):
@@ -23,12 +24,10 @@ class GraphINN(InvertibleModule):
 
     def __init__(self, node_list, force_tuple_output=False, verbose=False):
         # Gather lists of input, output and condition nodes
-        in_nodes = [node_list[i] for i in range(len(node_list))
-                    if isinstance(node_list[i], InputNode)]
-        out_nodes = [node_list[i] for i in range(len(node_list))
-                     if isinstance(node_list[i], OutputNode)]
-        condition_nodes = [node_list[i] for i in range(len(node_list)) if
-                           isinstance(node_list[i], ConditionNode)]
+        in_nodes = [node for node in node_list if isinstance(node, InputNode)]
+        out_nodes = [node for node in node_list if isinstance(node, OutputNode)]
+        condition_nodes = [node for node in node_list if isinstance(node, ConditionNode)]
+        ff_nodes = [node for node in node_list if isinstance(node, FeedForwardNode)]
 
         # Check that all nodes are in the list
         for node in node_list:
@@ -43,9 +42,7 @@ class GraphINN(InvertibleModule):
                                      f"but the it's not in the node_list "
                                      f"passed to GraphINN.")
 
-        # Build the graph and tell nodes about their dimensions so that they can
-        # build the modules
-        node_list = topological_order(node_list, in_nodes, out_nodes)
+        # Global in- and output
         global_in_shapes = [node.output_dims[0] for node in in_nodes]
         global_out_shapes = [node.input_dims[0] for node in out_nodes]
         global_cond_shapes = [node.output_dims[0] for node in condition_nodes]
@@ -60,10 +57,11 @@ class GraphINN(InvertibleModule):
         self.in_nodes = in_nodes
         self.condition_nodes = condition_nodes
         self.out_nodes = out_nodes
+        self.ff_nodes = ff_nodes
 
         self.global_out_shapes = global_out_shapes
         self.force_tuple_output = force_tuple_output
-        self.module_list = nn.ModuleList([n.module for n in node_list
+        self.module_list = nn.ModuleList([n.module for n in self.node_list_fwd
                                           if n.module is not None])
 
         if verbose:
@@ -116,12 +114,11 @@ class GraphINN(InvertibleModule):
         # Go backwards through nodes if rev=True
         node_list = self.node_list_bwd if rev else self.node_list_fwd
         for node in node_list:
-            # Skip all special nodes
+            # Skip input/condition/output nodes, they are handled above
             if node in self.in_nodes + self.out_nodes + self.condition_nodes:
                 continue
 
-            has_condition = len(node.conditions) > 0
-
+            # Collect inputs to node
             mod_in = []
             mod_c = []
             for prev_node, channel in (node.outputs if rev else node.inputs):
@@ -132,21 +129,16 @@ class GraphINN(InvertibleModule):
             mod_c = tuple(mod_c)
 
             try:
-                if has_condition:
-                    mod_out = node.module(mod_in, c=mod_c, rev=rev, jac=jac)
-                else:
-                    mod_out = node.module(mod_in, rev=rev, jac=jac)
+                # Execute node
+                out, mod_jac = node.forward(x_or_z=mod_in, c=mod_c, rev=rev, jac=jac)
+                if jac and mod_jac is not None:
+                    jacobian = jacobian + mod_jac
+                    jacobian_dict[node] = mod_jac
             except Exception as e:
                 raise RuntimeError(f"{node} encountered an error.") from e
 
-            out, mod_jac = self._check_output(node, mod_out, jac, rev)
-
             for out_idx, out_value in enumerate(out):
                 outs[node, out_idx] = out_value
-
-            if jac:
-                jacobian = jacobian + mod_jac
-                jacobian_dict[node] = mod_jac
 
         for out_node in (self.in_nodes if rev else self.out_nodes):
             # This copies the one input of the out node
@@ -162,45 +154,6 @@ class GraphINN(InvertibleModule):
                 return out_list[0], jacobian
             else:
                 return tuple(out_list), jacobian
-
-    def _check_output(self, node, mod_out, jac, rev):
-        if torch.is_tensor(mod_out):
-            raise ValueError(
-                f"The node {node}'s module returned a tensor only. This "
-                f"is deprecated without fallback. Please follow the "
-                f"signature of InvertibleOperator#forward in your module "
-                f"if you want to use it in a GraphINN.")
-
-        if len(mod_out) != 2:
-            raise ValueError(
-                f"The node {node}'s module returned a tuple of length "
-                f"{len(mod_out)}, but should return a tuple `z_or_x, jac`.")
-
-        out, mod_jac = mod_out
-
-        if torch.is_tensor(out):
-            raise ValueError(f"The node {node}'s module returns a tensor. "
-                             f"This is deprecated.")
-
-        if len(out) != len(node.inputs if rev else node.outputs):
-            raise ValueError(
-                f"The node {node}'s module returned {len(out)} output "
-                f"variables, but should return "
-                f"{len(node.inputs if rev else node.outputs)}.")
-
-        if not torch.is_tensor(mod_jac):
-            if isinstance(mod_jac, (float, int)):
-                mod_jac = torch.zeros(out[0].shape[0]).to(out[0].device) \
-                          + mod_jac
-            elif jac:
-                raise ValueError(
-                    f"The node {node}'s module returned a non-tensor as "
-                    f"Jacobian: {mod_jac}")
-            elif not jac and mod_jac is not None:
-                raise ValueError(
-                    f"The node {node}'s module returned neither None nor a "
-                    f"Jacobian: {mod_jac}")
-        return out, mod_jac
 
     def log_jacobian_numerical(self, x, c=None, rev=False, h=1e-04):
         """
