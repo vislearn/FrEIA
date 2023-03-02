@@ -52,7 +52,8 @@ class GraphINN(InvertibleModule):
 
         # Only now we can set out shapes
         super().__init__(global_in_shapes, global_cond_shapes)
-        self.node_list = node_list
+        self.node_list_fwd = topological_order(node_list, in_nodes, out_nodes, rev=False)
+        self.node_list_rev = topological_order(node_list, in_nodes, out_nodes, rev=True)
 
         # Now we can store everything -- before calling super constructor,
         # nn.Module doesn't allow assigning anything
@@ -113,7 +114,8 @@ class GraphINN(InvertibleModule):
             outs[condition_node, 0] = tensor
 
         # Go backwards through nodes if rev=True
-        for node in self.node_list[::-1 if rev else 1]:
+        node_list = self.node_list_bwd if rev else self.node_list_fwd
+        for node in node_list:
             # Skip all special nodes
             if node in self.in_nodes + self.out_nodes + self.condition_nodes:
                 continue
@@ -260,8 +262,8 @@ class GraphINN(InvertibleModule):
             return None
 
 
-def topological_order(all_nodes: List[Node], in_nodes: List[InputNode],
-                      out_nodes: List[OutputNode]) -> List[Node]:
+def topological_order(all_nodes: List[AbstractNode], in_nodes: List[InputNode],
+                      out_nodes: List[OutputNode], rev: bool) -> List[AbstractNode]:
     """
     Computes the topological order of nodes.
 
@@ -269,14 +271,20 @@ def topological_order(all_nodes: List[Node], in_nodes: List[InputNode],
         all_nodes: All nodes in the computation graph.
         in_nodes: Input nodes (must also be present in `all_nodes`)
         out_nodes: Output nodes (must also be present in `all_nodes`)
+        rev: Forward or backward topological order (differs because of conditioning)
 
     Returns:
         A sorted list of nodes, where the inputs to some node in the list
         are available when all previous nodes in the list have been executed.
     """
-    # Edge dicts in both directions
-    edges_out_to_in = {node_b: {node_a for node_a, out_idx in node_b.inputs} for
-                       node_b in all_nodes + out_nodes}
+    # Topological order differs depending on computation direction
+    if not rev:
+        edges_out_to_in = {node_b: {node_a for node_a, out_idx in node_b.inputs + node_b.conditions} for
+                           node_b in all_nodes + out_nodes}
+    else:
+        edges_out_to_in = {node_b: {node_a for node_a, out_idx in node_b.outputs + node_b.conditions} for
+                           node_b in all_nodes + in_nodes}
+    # Reverse dict
     edges_in_to_out = defaultdict(set)
     for node_out, node_ins in edges_out_to_in.items():
         for node_in in node_ins:
