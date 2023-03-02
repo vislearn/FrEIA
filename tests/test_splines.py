@@ -6,9 +6,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from typing import Union
+
 
 class SubnetFactory:
-    def __init__(self, kind: str, widths: list, activation: str | type(nn.Module) = "relu", dropout: float = None, **kwargs):
+    def __init__(self, kind: str, widths: list, activation: Union[str, type(nn.Module)] = "relu", dropout: float = None, **kwargs):
         self.kind = kind
         self.kwargs = kwargs
         self.widths = widths
