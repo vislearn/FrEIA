@@ -112,7 +112,7 @@ class GraphINN(InvertibleModule):
             outs[condition_node, 0] = tensor
 
         # Go backwards through nodes if rev=True
-        node_list = self.node_list_bwd if rev else self.node_list_fwd
+        node_list = self.node_list_rev if rev else self.node_list_fwd
         for node in node_list:
             # Skip input/condition/output nodes, they are handled above
             if node in self.in_nodes + self.out_nodes + self.condition_nodes:
@@ -123,8 +123,8 @@ class GraphINN(InvertibleModule):
             mod_c = []
             for prev_node, channel in (node.outputs if rev else node.inputs):
                 mod_in.append(outs[prev_node, channel])
-            for cond_node in node.conditions:
-                mod_c.append(outs[cond_node, 0])
+            for cond_node, channel in node.conditions:
+                mod_c.append(outs[cond_node, channel])
             mod_in = tuple(mod_in)
             mod_c = tuple(mod_c)
 

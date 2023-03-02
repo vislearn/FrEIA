@@ -53,18 +53,16 @@ class AbstractNode:
         else:
             self.name = hex(id(self))[-6:]
         self.inputs = parse_flexible_inputs(inputs)
-        if isinstance(conditions, (list, tuple)):
-            self.conditions = conditions
-        else:
-            self.conditions = [conditions, ]
+        if conditions is not None:
+            self.conditions = parse_flexible_inputs(conditions)
 
         self.module_type = module_type
         self.module_args = module_args
 
         input_shapes = [input_node.output_dims[node_out_idx]
                         for input_node, node_out_idx in self.inputs]
-        condition_shapes = [cond_node.output_dims[0]
-                            for cond_node in self.conditions]
+        condition_shapes = [cond_node.output_dims[cond_node_out_idx]
+                            for cond_node, cond_node_out_idx in self.conditions]
 
         self.input_dims = input_shapes
         self.condition_dims = condition_shapes
@@ -231,6 +229,8 @@ class ConditionNode(AbstractNode):
 
         self.dims = dims
         super().__init__([], None, {}, name=name)
+        # This node does not have consumable outputs
+        self.outputs = []
 
     def consume_output(self, out_idx: int, by_node: AbstractNode, in_idx: int):
         raise TypeError(f"{self.__class__.__name__}'s outputs cannot be consumed as "
@@ -283,6 +283,8 @@ class FeedForwardNode(AbstractNode):
                  module_type: ModuleType, module_args: Optional[dict] = None, name=None):
         self.output_dims = output_dims
         super().__init__([], module_type, module_args, conditions=conditions, name=name)
+        # This node does not have consumable outputs
+        self.outputs = []
 
     def build_module(self, condition_shapes: List[Tuple[int]], input_shapes: List[Tuple[int]]) \
             -> Tuple[Module, List[Tuple[int]]]:
