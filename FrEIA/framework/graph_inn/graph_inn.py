@@ -5,7 +5,6 @@ from typing import List, Tuple, Iterable, Union, Optional
 import numpy as np
 import torch
 import torch.nn as nn
-from deprecate import deprecated
 from torch import Tensor
 
 from ...modules.base import InvertibleModule
@@ -40,7 +39,12 @@ class GraphINN(InvertibleModule):
             for out_node, idx in node.outputs:
                 if out_node not in node_list:
                     raise ValueError(f"{out_node} gets input from {node}, "
-                                     f"but the it's not in the node_list "
+                                     f"but it's not in the node_list "
+                                     f"passed to GraphINN.")
+            for cond_node, idx in node.conditions:
+                if cond_node not in node_list:
+                    raise ValueError(f"{node} is conditioned on {cond_node}, "
+                                     f"but the latter not in the node_list "
                                      f"passed to GraphINN.")
 
         # Global in- and output
