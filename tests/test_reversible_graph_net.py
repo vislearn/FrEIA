@@ -150,5 +150,51 @@ class ComplexComputeGraphCuda(ComplexComputeGraph):
         else:
             self.skip_all = True
 
+
+class GraphTopology(unittest.TestCase):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.inp1_size = (4, 10, 10)
+        self.inp2_size = (10, 4, 10)
+        self.batch_size = 32
+        self.inv_tol = 1e-4
+        torch.manual_seed(self.batch_size)
+
+        self.inp1 = torch.randn(self.batch_size, *self.inp1_size)
+        self.inp2 = torch.randn(self.batch_size, *self.inp2_size)
+
+    def test_simple_wavelet_graph(self):
+        input = Ff.InputNode(*self.inp1_size, name="input")
+        wavelet = Ff.Node(input, Fm.RNVPCouplingBlock,
+                       {'subnet_constructor': F_fully_connected, 'clamp': 1.0},
+                       name='wavelet')
+        split = Ff.Node(wavelet, Fm.Split, {"n_sections": 2, "dim": 0}, name="split")
+        core_cond = Ff.FeedForwardNode(conditions=[split.out1], output_dims=(2, 10, 10), module_type=Fm.Reshape, module_args={"dims_in": [(2, 10, 10)], 'output_dims': (2, 10, 10)}, name="core_cond")
+        detail_inn = Ff.Node(split.out0, Fm.RNVPCouplingBlock, {'subnet_constructor': F_fully_connected, 'clamp': 1.0}, conditions=core_cond, name='detail_inn')
+        core_inn = Ff.Node(split.out1, Fm.RNVPCouplingBlock, {'subnet_constructor': F_fully_connected, 'clamp': 1.0}, name='core_inn')
+        merge = Ff.Node([detail_inn, core_inn], Fm.Concat, {'dim': 0}, name='concat')
+        out = Ff.OutputNode(merge, name="out")
+
+        inn = Ff.GraphINN([input, wavelet, split, core_cond, detail_inn, core_inn, merge, out])
+
+        # the input node should not have any graph edges going in
+        self.assertEqual(input.input_dims, [])
+        # the output node should not have any graph edges going out
+        self.assertEqual(out.output_dims, [])
+
+        # dimensions should match
+        self.assertEqual(input.output_dims, out.input_dims)
+        self.assertEqual(inn.dims_in, input.output_dims)
+
+    # def test_simple_case(self):
+    #     in_node1 = Ff.InputNode(3, 10, 10)
+    #     in_node2 = Ff.InputNode(10, 3, 10)
+    #     ff_node = Ff.FeedForwardNode(in_node1,Fm.Reshape,{'output_dims': (10, 3, 10)}, name="feedforward0")
+    #     cond_coupling = Ff.Node(in_node2, Fm.RNVPCouplingBlock, {'subnet_constructor': F_fully_connected, 'clamp': 1.0}, conditions=ff_node, name="fully::ff")
+    #     out_node = Ff.OutputNode(in_node2, cond_coupling)
+    #     graph = Ff.GraphINN([in_node1, in_node2, ff_node, cond_coupling, out_node])
+    #     y = graph(self.x, c=[self.cond])[0]
+    #     self.assertTrue(isinstance(y, type(self.x) ), f"{type(y)}")
+
 if __name__ == '__main__':
     unittest.main()
