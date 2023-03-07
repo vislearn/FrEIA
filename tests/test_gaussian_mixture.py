@@ -35,15 +35,15 @@ class GMMTest(unittest.TestCase):
 
     def __init__(self, *args):
         super().__init__(*args)
-        torch.manual_seed(0)
         self.tol = 2e-3
 
     def test_inverse_fixed_components(self):
-        x = torch.randn(batch_size, *x_size)
-        w = torch.randn(batch_size, *w_size)
+        torch.manual_seed(0)
+        x = torch.randn(batch_size, *x_size).double()
+        w = torch.randn(batch_size, *w_size).double()
         w = GaussianMixtureModel.normalize_weights(w)
-        mu = torch.randn(batch_size, *mu_size)
-        U = torch.randn(batch_size, *U_size)
+        mu = torch.randn(batch_size, *mu_size).double()
+        U = torch.randn(batch_size, *U_size).double()
         i = torch.randint(0, n_components, (batch_size,))
 
         z = test_net(x, c=[w, mu, U, i], jac=False)[0]
@@ -63,15 +63,16 @@ class GMMTest(unittest.TestCase):
         self.assertLess(torch.max(torch.abs(x - x_re)), self.tol)
 
     def test_inverse_all_components(self):
+        torch.manual_seed(10)
         # TODO: check what is going on here.
         # jac has shape n_components, not batchsize,
         # and it crashes the reversible graph net.
 
-        x = torch.randn(batch_size, *x_size)
-        w = torch.randn(batch_size, *w_size)
+        x = torch.randn(batch_size, *x_size).double()
+        w = torch.randn(batch_size, *w_size).double()
         w = GaussianMixtureModel.normalize_weights(w)
-        mu = torch.randn(batch_size, *mu_size)
-        U = torch.randn(batch_size, *U_size)
+        mu = torch.randn(batch_size, *mu_size).double()
+        U = torch.randn(batch_size, *U_size).double()
 
         z, _ = test_net(x, c=[w, mu, U, None], jac=False)
         x_re, _ = test_net(z, c=[w, mu, U, None], rev=True, jac=False)
