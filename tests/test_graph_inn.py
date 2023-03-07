@@ -70,6 +70,7 @@ class PlotGraphINNTest(unittest.TestCase):
         graph = GraphINN([in_node, out_node])
         graph.plot(path=self.plotdir, filename=self.plot_name)
 
+
         self.assertTrue(os.path.exists(self.file_path))
         self.assertTrue(os.path.exists(self.file_path + ".pdf"))
 
@@ -117,6 +118,7 @@ class PlotGraphINNTest(unittest.TestCase):
 
         graph = GraphINN([inp, cond, split, flatten1, perm, unflatten1, conv, flatten2, linear, unflatten2, concat, haar, out])
         graph.plot(path=self.plotdir, filename=self.plot_name)
+
 
         self.assertTrue(os.path.exists(self.file_path))
         self.assertTrue(os.path.exists(self.file_path + ".pdf"))
