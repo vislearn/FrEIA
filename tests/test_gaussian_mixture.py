@@ -21,7 +21,7 @@ inp = InputNode(*x_size, name='input')
 w = ConditionNode(*w_size, name='w')
 mu = ConditionNode(*mu_size, name='mu')
 U = ConditionNode(*U_size, name='U')
-i = ConditionNode(*i_size, name='U')
+i = ConditionNode(*i_size, name='i')
 gmm = Node(inp,
            GaussianMixtureModel,
            {},
