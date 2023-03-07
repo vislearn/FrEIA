@@ -1,3 +1,4 @@
+from collections import deque
 from typing import List, Tuple, Iterable, Union, Optional, Type
 
 import torch
@@ -83,6 +84,24 @@ class AbstractNode:
         for i in range(len(self.output_dims)):
             self.__dict__[f"out{i}"] = self, i
 
+    def rev_input(self, out_idx):
+        """
+        Compute which value should be read in reverse mode.
+        """
+        raise NotImplementedError
+
+    def rev_conditions(self):
+        """
+        Compute the conditioning for reverse mode -- they move from the
+        forward output node of the conditioning node to the reverse output
+        this output is fed to.
+        """
+        return [
+            cond_node.rev_input(out_idx)
+            for cond_node, out_idx
+            in self.conditions
+        ]
+
     def build_module(self, condition_shapes: List[Tuple[int]], input_shapes: List[Tuple[int]]):
         """
         Instantiates the module and determines the output dimension.
@@ -120,6 +139,9 @@ class Node(AbstractNode):
     The user specifies the input, and the underlying module computes the
     number of outputs.
     """
+    def rev_input(self, out_idx):
+        # Conditioning on InputNode means conditioning on the node that consumes this input
+        return self.outputs[out_idx]
 
     def build_module(self, condition_shapes: List[Tuple[int]], input_shapes: List[Tuple[int]]) \
             -> Tuple[InvertibleModule, List[Tuple[int]]]:
@@ -209,6 +231,10 @@ class InputNode(AbstractNode):
         self.dims = dims
         super().__init__([], None, {}, name=name)
 
+    def rev_input(self, out_idx):
+        # Conditioning on InputNode means conditioning on the node that consumes this input
+        return self.outputs[out_idx]
+
     def build_module(self, condition_shapes: List[Tuple[int]], input_shapes: List[Tuple[int]]) \
             -> Tuple[None, List[Tuple[int]]]:
         if len(condition_shapes) > 0:
@@ -236,6 +262,10 @@ class ConditionNode(AbstractNode):
         # This node does not have consumable outputs
         self.outputs = []
 
+    def rev_input(self, out_idx):
+        # No change between forward and backward
+        return self, out_idx
+
     def consume_output(self, out_idx: int, by_node: AbstractNode, in_idx: int):
         raise TypeError(f"{self.__class__.__name__}'s outputs cannot be consumed as "
                         f"inputs to another node, only as conditions.")
@@ -260,6 +290,9 @@ class OutputNode(AbstractNode):
 
     def __init__(self, in_node: FlexibleInput, name=None):
         super().__init__(in_node, None, {}, name=name)
+
+    def rev_input(self, out_idx):
+        raise ValueError("The output of an output node cannot be accessed. (probably FrEIA bug)")
 
     def consume_output(self, out_idx: int, by_node: AbstractNode, in_idx: int):
         raise TypeError(f"{self.__class__.__name__}'s outputs cannot be consumed as "
@@ -290,6 +323,10 @@ class FeedForwardNode(AbstractNode):
         # This node does not have consumable outputs
         self.outputs = []
 
+    def rev_input(self, out_idx):
+        # No change between forward and backward
+        return self, out_idx
+
     def build_module(self, condition_shapes: List[Tuple[int]], input_shapes: List[Tuple[int]]) \
             -> Tuple[Module, List[Tuple[int]]]:
         """
@@ -311,3 +348,16 @@ class FeedForwardNode(AbstractNode):
     def forward(self, x_or_z: Iterable[Tensor],
                 c: Iterable[Tensor] = None, rev: bool = False, jac: bool = True) -> Tuple[Tuple[Tensor], None]:
         return (self.module(*c),), None
+
+
+def collect_nodes(*input_nodes: AbstractNode):
+    nodes = []
+    pending_nodes = deque(input_nodes)
+
+    while len(pending_nodes) > 0:
+        start_node = pending_nodes.popleft()
+        for node, _ in start_node.outputs, start_node.conditions:
+            if node not in nodes and node not in pending_nodes:
+                pending_nodes.append(node)
+
+    return nodes

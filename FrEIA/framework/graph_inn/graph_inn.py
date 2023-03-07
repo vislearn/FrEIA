@@ -22,7 +22,7 @@ class GraphINN(InvertibleModule):
     (backward) pass.
     """
 
-    def __init__(self, node_list, force_tuple_output=False, verbose=False):
+    def __init__(self, node_list: Iterable[AbstractNode], force_tuple_output=False, verbose=False):
         # Gather lists of input, output and condition nodes
         in_nodes = [node for node in node_list if isinstance(node, InputNode)]
         out_nodes = [node for node in node_list if isinstance(node, OutputNode)]
@@ -132,7 +132,7 @@ class GraphINN(InvertibleModule):
             mod_c = []
             for prev_node, channel in (node.outputs if rev else node.inputs):
                 mod_in.append(outs[prev_node, channel])
-            for cond_node, channel in node.conditions:
+            for cond_node, channel in (node.rev_conditions() if rev else node.conditions):
                 mod_c.append(outs[cond_node, channel])
             mod_in = tuple(mod_in)
             mod_c = tuple(mod_c)
@@ -241,13 +241,17 @@ def topological_order(all_nodes: List[AbstractNode], in_nodes: List[InputNode],
     """
     # Topological order differs depending on computation direction
     if not rev:
-        edges_out_to_in = {node_b: {node_a for node_a, out_idx in node_b.inputs + node_b.conditions} for
-                           node_b in all_nodes + out_nodes}
+        edges_out_to_in = {
+            node_b: {node_a for node_a, out_idx in node_b.inputs + node_b.conditions} for
+            node_b in all_nodes
+        }
         start_nodes = in_nodes
         end_nodes = out_nodes
     else:
-        edges_out_to_in = {node_b: {node_a for node_a, out_idx in node_b.outputs + node_b.conditions} for
-                           node_b in all_nodes + in_nodes}
+        edges_out_to_in = {
+            node_b: {node_a for node_a, out_idx in node_b.outputs + node_b.rev_conditions()} for
+            node_b in all_nodes
+        }
         start_nodes = out_nodes
         end_nodes = in_nodes
     # Reverse dict
@@ -264,16 +268,18 @@ def topological_order(all_nodes: List[AbstractNode], in_nodes: List[InputNode],
         node = no_pending_edges.popleft()
         sorted_nodes.append(node)
         for in_node in list(edges_out_to_in[node]):
+            # Mark edge as handled
             edges_out_to_in[node].remove(in_node)
             edges_in_to_out[in_node].remove(node)
 
+            # If this was the last edge to in_node, mark as ready to handle
             if len(edges_in_to_out[in_node]) == 0:
                 no_pending_edges.append(in_node)
 
     for in_node in start_nodes:
         if in_node not in sorted_nodes:
             raise ValueError(f"Error in graph: {in_node} is not connected "
-                             f"to any output.")
+                             f"to any {'out' if not rev else 'in'}put.")
 
     if sum(map(len, edges_in_to_out.values())) == 0:
         return sorted_nodes[::-1]

@@ -6,6 +6,7 @@ import numpy as np
 
 import FrEIA.modules as Fm
 import FrEIA.framework as Ff
+from FrEIA.framework.graph_inn.nodes import collect_nodes
 
 
 def F_conv(cin, cout):
@@ -163,19 +164,23 @@ class GraphTopology(unittest.TestCase):
         self.inp1 = torch.randn(self.batch_size, *self.inp1_size)
         self.inp2 = torch.randn(self.batch_size, *self.inp2_size)
 
-    def test_simple_wavelet_graph(self):
+    def test_split_condition_graph(self):
         input = Ff.InputNode(*self.inp1_size, name="input")
         wavelet = Ff.Node(input, Fm.RNVPCouplingBlock,
                        {'subnet_constructor': F_fully_connected, 'clamp': 1.0},
-                       name='wavelet')
+                       name='full')
         split = Ff.Node(wavelet, Fm.Split, {"n_sections": 2, "dim": 0}, name="split")
-        core_cond = Ff.FeedForwardNode(conditions=[split.out1], output_dims=(2, 10, 10), module_type=Fm.Reshape, module_args={"dims_in": [(2, 10, 10)], 'output_dims': (2, 10, 10)}, name="core_cond")
-        detail_inn = Ff.Node(split.out0, Fm.RNVPCouplingBlock, {'subnet_constructor': F_fully_connected, 'clamp': 1.0}, conditions=core_cond, name='detail_inn')
-        core_inn = Ff.Node(split.out1, Fm.RNVPCouplingBlock, {'subnet_constructor': F_fully_connected, 'clamp': 1.0}, name='core_inn')
+        core_cond = Ff.FeedForwardNode(conditions=[split.out1], output_dims=(2, 10, 10), module_type=Fm.Reshape, module_args={"dims_in": [(2, 10, 10)], 'output_dims': (2, 10, 10)}, name="fake_reshape_for_conditioned")
+        detail_inn = Ff.Node(split.out0, Fm.RNVPCouplingBlock, {'subnet_constructor': F_fully_connected, 'clamp': 1.0}, conditions=core_cond, name='conditioned_inn')
+        core_inn = Ff.Node(split.out1, Fm.RNVPCouplingBlock, {'subnet_constructor': F_fully_connected, 'clamp': 1.0}, name='unconditioned_inn')
         merge = Ff.Node([detail_inn, core_inn], Fm.Concat, {'dim': 0}, name='concat')
         out = Ff.OutputNode(merge, name="out")
 
-        inn = Ff.GraphINN([input, wavelet, split, core_cond, detail_inn, core_inn, merge, out])
+        manual_node_list = [input, wavelet, split, core_cond, detail_inn, core_inn, merge, out]
+        auto_node_list = collect_nodes(input)
+        self.assertEqual(set(node_list), set(auto_node_list))
+
+        inn = Ff.GraphINN(auto_node_list)
 
         # the input node should not have any graph edges going in
         self.assertEqual(input.input_dims, [])
