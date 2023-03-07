@@ -1,4 +1,4 @@
-import warnings
+import warnings, os
 from collections import deque, defaultdict
 from typing import List, Tuple, Iterable, Union, Optional
 
@@ -6,6 +6,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch import Tensor
+
+import graphviz as g
 
 from ..modules.base import InvertibleModule
 
@@ -436,6 +438,72 @@ class GraphINN(InvertibleModule):
             return node.module
         except AttributeError:
             return None
+        
+    def _get_node_type(self, n):
+        node_type = n.module
+        if node_type == None:
+            node_type = n.__repr__().split(" ")[0]
+        else:
+            node_type = node_type._get_name()
+        return node_type
+    
+    def _reverse_edges(self, edges):
+        rev_edges = {}
+        for node_out, node_ins in edges.items():
+            for node_in in node_ins:
+                rev_edges[node_in] = node_out
+                
+        return rev_edges
+    
+    def _get_edges(self, nodes, rev=False):
+        edges = []
+        edges_out_to_in = {node_b: [node_a for node_a in node_b.inputs] for
+                            node_b in nodes if node_b.inputs}
+        
+        cond_edges_out_to_in = {node_b: [node_a for node_a in node_b.conditions] for
+                            node_b in nodes if node_b.conditions}
+
+        if not rev:
+            edges = self.reverse_edges(edges_out_to_in)
+            cond_edges = self.reverse_edges(cond_edges_out_to_in)
+        else:
+            edges = edges_out_to_in
+            cond_edges = cond_edges_out_to_in
+        
+        return edges, cond_edges
+    
+    def plot(self, path: str, filename: str) -> None:
+        """
+        Generates a plot of the GraphINN and stores it as pdf and dot file
+
+        Parameters:
+            path: Directory to store the plots in. Must exist previous to plotting
+            filename: Name of the newly generated plots
+        """
+
+        nodes = self.node_list
+
+        G = g.Digraph()
+        for idx, n in enumerate(nodes):
+            node_type = self._get_node_type(n)
+            G.node(n.name, node_type)
+
+        edges, cond_edges = self._get_edges(nodes, rev=True)
+
+        for key, value in edges.items():
+            for idx, v in enumerate(value):
+                dims = key.input_dims[idx]
+                label = '(' + ','.join(str(d) for d in dims) + ')'
+                G.edge(v[0].name, key.name, label=label)
+
+        for key, value in cond_edges.items():
+            for idx, v in enumerate(value):
+                dims = v.output_dims[0]
+                label = '(' + ','.join(str(d) for d in dims) + ')'
+                G.edge(v.name, key.name, label=label)
+
+        file_path = os.path.abspath(os.path.join(path, filename))
+        G.render(file_path)
 
 
 def topological_order(all_nodes: List[Node], in_nodes: List[InputNode],
