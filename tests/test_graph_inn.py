@@ -61,8 +61,10 @@ class PlotGraphINNTest(unittest.TestCase):
         os.rmdir(self.plotdir)
 
     def tearDown(self) -> None:
-        os.remove(os.path.join(os.getcwd(), self.file_path))
-        os.remove(os.path.join(os.getcwd(), self.file_path + ".pdf"))
+        if os.path.exists(self.file_path):
+            os.remove(self.file_path)
+        if os.path.exists(self.file_path + ".pdf"):
+            os.remove(self.file_path + ".pdf")
 
     def test_input_output_graph(self):
         in_node = InputNode(3, 10, 10)
@@ -73,6 +75,13 @@ class PlotGraphINNTest(unittest.TestCase):
 
         self.assertTrue(os.path.exists(self.file_path))
         self.assertTrue(os.path.exists(self.file_path + ".pdf"))
+
+    def test_raises_non_existing_path(self):
+        in_node = InputNode(3, 10, 10)
+        out_node = OutputNode(in_node)
+        graph = GraphINN([in_node, out_node])
+
+        self.assertRaises(Exception, graph.plot, "not_existing_path", self.plot_name)
 
     def test_one_layer_graph(self):
         nodes = []

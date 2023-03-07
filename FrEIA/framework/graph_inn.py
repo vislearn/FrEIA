@@ -480,6 +480,8 @@ class GraphINN(InvertibleModule):
             path: Directory to store the plots in. Must exist previous to plotting
             filename: Name of the newly generated plots
         """
+        if not os.path.exists(path):
+            raise Exception("Path %s does not exist." % path)
 
         nodes = self.node_list
 
