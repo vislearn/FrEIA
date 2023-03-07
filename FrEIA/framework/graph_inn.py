@@ -439,7 +439,7 @@ class GraphINN(InvertibleModule):
         except AttributeError:
             return None
         
-    def _get_node_type(self, n):
+    def _get_node_type_for_plotting(self, n):
         node_type = n.module
         if node_type == None:
             node_type = n.__repr__().split(" ")[0]
@@ -484,8 +484,8 @@ class GraphINN(InvertibleModule):
         nodes = self.node_list
 
         G = g.Digraph()
-        for idx, n in enumerate(nodes):
-            node_type = self._get_node_type(n)
+        for n in nodes:
+            node_type = self._get_node_type_for_plotting(n)
             G.node(n.name, node_type)
 
         edges, cond_edges = self._get_edges(nodes, rev=True)
