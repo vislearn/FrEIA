@@ -14,6 +14,7 @@ __all__ = [
     'ReversibleSequential',
     'GraphINN',
     'ReversibleGraphNet',
+    'collect_nodes',
     'FeedForwardNode',
     'Node',
     'InputNode',

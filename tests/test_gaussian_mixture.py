@@ -28,7 +28,7 @@ gmm = Node(inp,
            conditions=[w, mu, U, i],
            name='gmm')
 out = OutputNode(gmm, name='output')
-test_net = GraphINN([inp, w, mu, U, i, gmm, out], verbose=False)
+test_net = GraphINN(collect_nodes(inp), verbose=False)
 
 
 class GMMTest(unittest.TestCase):

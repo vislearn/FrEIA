@@ -356,7 +356,8 @@ def collect_nodes(*input_nodes: AbstractNode):
 
     while len(pending_nodes) > 0:
         start_node = pending_nodes.popleft()
-        for node, _ in start_node.outputs, start_node.conditions:
+        nodes.append(start_node)
+        for node, _ in start_node.outputs + start_node.conditions:
             if node not in nodes and node not in pending_nodes:
                 pending_nodes.append(node)
 
