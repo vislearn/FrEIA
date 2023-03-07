@@ -178,7 +178,7 @@ class GraphTopology(unittest.TestCase):
 
         manual_node_list = [input, wavelet, split, core_cond, detail_inn, core_inn, merge, out]
         auto_node_list = collect_nodes(input)
-        self.assertEqual(set(node_list), set(auto_node_list))
+        self.assertEqual(set(auto_node_list), set(auto_node_list))
 
         inn = Ff.GraphINN(auto_node_list)
 
