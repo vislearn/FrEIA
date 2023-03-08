@@ -488,7 +488,7 @@ class GraphINN(InvertibleModule):
         G = g.Digraph()
         for n in nodes:
             node_type = self._get_node_type_for_plotting(n)
-            G.node(n.name, node_type)
+            G.node(str(id(n)), node_type)
 
         edges, cond_edges = self._get_edges(nodes, rev=True)
 
@@ -496,13 +496,13 @@ class GraphINN(InvertibleModule):
             for idx, v in enumerate(value):
                 dims = key.input_dims[idx]
                 label = '(' + ','.join(str(d) for d in dims) + ')'
-                G.edge(v[0].name, key.name, label=label)
+                G.edge(str(id(v[0])), str(id(key)), label=label)
 
         for key, value in cond_edges.items():
             for idx, v in enumerate(value):
                 dims = v.output_dims[0]
                 label = '(' + ','.join(str(d) for d in dims) + ')'
-                G.edge(v.name, key.name, label=label)
+                G.edge(str(id(v)), str(id(key)), label=label)
 
         file_path = os.path.abspath(os.path.join(path, filename))
         try:
