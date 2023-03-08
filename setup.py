@@ -31,7 +31,7 @@ setup(
 
     ## dependencies
     packages=find_packages(),
-    install_requires=['numpy>=1.15.0','scipy>=1.5', 'torch>=1.0.0'],
+    install_requires=['numpy>=1.15.0','scipy>=1.5', 'torch>=1.0.0', 'graphviz>=0.20.1'],
     # extras_require={
     #     'testruns': ['pytest', 'pytest-benchmark'],
     # },
