@@ -8,6 +8,8 @@ from FrEIA.modules import AllInOneBlock, Split, Reshape, Flatten, RNVPCouplingBl
 
 import os
 
+import graphviz
+
 # the reason the subnet init is needed, is that with uninitalized
 # weights, the numerical jacobian check gives inf, nan, etc,
 def subnet_initialization(m):
@@ -52,19 +54,34 @@ class PlotGraphINNTest(unittest.TestCase):
     plot_name = "graph"
     file_path = os.path.join(plotdir, plot_name)
 
+    def cleanup_files(self):
+        if os.path.exists(self.file_path):
+                os.remove(self.file_path)
+        if os.path.exists(self.file_path + ".pdf"):
+            os.remove(self.file_path + ".pdf")
+
     @classmethod
     def setUpClass(self):
         os.mkdir(self.plotdir)
 
+        in_node = InputNode(3, 10, 10)
+        out_node = OutputNode(in_node)
+        graph = GraphINN([in_node, out_node])
+        try:
+            graph.plot(path=self.plotdir, filename=self.plot_name)
+        except Exception:
+            self.cleanup_files()
+            os.rmdir(self.plotdir)
+            self.skipTest(self, reason="Skipped plotting graph since no graphviz backend is installed.")
+
+        self.cleanup_files()
+        
     @classmethod
     def tearDownClass(self) -> None:
         os.rmdir(self.plotdir)
 
     def tearDown(self) -> None:
-        if os.path.exists(self.file_path):
-            os.remove(self.file_path)
-        if os.path.exists(self.file_path + ".pdf"):
-            os.remove(self.file_path + ".pdf")
+        self.cleanup_files()
 
     def test_input_output_graph(self):
         in_node = InputNode(3, 10, 10)
