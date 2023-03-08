@@ -6,7 +6,11 @@ from torch import Tensor
 __all__ = ["InvertibleModule"]
 
 
-def list_of_int_tuples(list_of_tuples):
+Shape = Tuple[int]
+ShapeList = List[Tuple[int]]
+
+
+def list_of_int_tuples(list_of_tuples: ShapeList) -> ShapeList:
     BASIC_ERROR = (
         f"Invalid dimension specification: You passed {list_of_tuples}, but a "
         f"list of int tuples was expected. Problem:"
@@ -74,8 +78,8 @@ class InvertibleModule(nn.Module):
     Then, ``torch.allclose(x, x_rev) == True`` and ``torch.allclose(jac, -jac_rev) == True``.
     """
 
-    def __init__(self, dims_in: Iterable[Tuple[int]],
-                 dims_c: Iterable[Tuple[int]] = None):
+    def __init__(self, dims_in: ShapeList,
+                 dims_c: ShapeList = None):
         """
         Args:
             dims_in: list of tuples specifying the shape of the inputs to this
@@ -128,7 +132,7 @@ class InvertibleModule(nn.Module):
                                  "module.forward(..., jac=True) returns a "
                                  "tuple (out, jacobian) now.")
 
-    def output_dims(self, input_dims: List[Tuple[int]]) -> List[Tuple[int]]:
+    def output_dims(self, input_dims: ShapeList) -> ShapeList:
         '''
         Used for shape inference during construction of the graph. MUST be
         implemented for each subclass of ``InvertibleModule``.
@@ -149,7 +153,6 @@ class InvertibleModule(nn.Module):
             ``[(3, 16, 32), (3, 16, 32)]``. It is up to the implementor of the
             subclass to ensure that the total number of elements in all inputs
             and all outputs is consistent.
-
         '''
         raise NotImplementedError(
             f"{self.__class__.__name__} does not provide output_dims(...)")
