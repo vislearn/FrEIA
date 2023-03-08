@@ -1,3 +1,5 @@
+import os
+
 import torch
 
 from typing import Callable, Any, Tuple, Union
@@ -132,3 +134,80 @@ def tuple_free_batch_forward(module, data: torch.Tensor, batch_size, loader_kwar
     else:
         jac_cat = None
     return out_cat, jac_cat
+
+
+def _get_node_type_for_plotting(n):
+    node_type = n.module
+    if node_type == None:
+        node_type = n.__repr__().split(" ")[0]
+    else:
+        node_type = node_type._get_name()
+    return node_type
+
+
+def _reverse_edges(edges):
+    rev_edges = {}
+    for node_out, node_ins in edges.items():
+        for node_in in node_ins:
+            rev_edges[node_in] = node_out
+
+    return rev_edges
+
+
+def _get_edges(nodes, rev=False):
+    edges_out_to_in = {node_b: [node_a for node_a in node_b.inputs] for
+                       node_b in nodes if node_b.inputs}
+
+    cond_edges_out_to_in = {node_b: [node_a for node_a in node_b.conditions] for
+                            node_b in nodes if node_b.conditions}
+
+    if not rev:
+        edges = _reverse_edges(edges_out_to_in)
+        cond_edges = _reverse_edges(cond_edges_out_to_in)
+    else:
+        edges = edges_out_to_in
+        cond_edges = cond_edges_out_to_in
+
+    return edges, cond_edges
+
+
+def plot_graph(nodes: Iterable, path: str, filename: str) -> None:
+    """
+    Generates a plot of the GraphINN and stores it as pdf and dot file
+
+    Parameters:
+        path: Directory to store the plots in. Must exist previous to plotting
+        filename: Name of the newly generated plots
+    """
+    if not os.path.exists(path):
+        raise Exception("Path %s does not exist." % path)
+
+    import graphviz as g
+
+    G = g.Digraph()
+    for n in nodes:
+        node_type = _get_node_type_for_plotting(n)
+        G.node(n.name, node_type)
+
+    edges, cond_edges = _get_edges(nodes, rev=True)
+
+    for key, value in edges.items():
+        for idx, v in enumerate(value):
+            dims = key.input_dims[idx]
+            label = '(' + ','.join(str(d) for d in dims) + ')'
+            G.edge(v[0].name, key.name, label=label)
+
+    for key, value in cond_edges.items():
+        for idx, v in enumerate(value):
+            dims = v.output_dims[0]
+            label = '(' + ','.join(str(d) for d in dims) + ')'
+            G.edge(v.name, key.name, label=label)
+
+    file_path = os.path.abspath(os.path.join(path, filename))
+    try:
+        G.render(file_path)
+    except g.backend.execute.ExecutableNotFound:
+        raise Exception(
+            "Skipped plotting graph since graphviz backend is not installed. "
+            "Try installing it via 'sudo apt-get install graphviz'"
+        )

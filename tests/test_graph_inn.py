@@ -3,12 +3,11 @@ import unittest
 import torch
 import torch.nn as nn
 
-from FrEIA.framework import GraphINN, InputNode, Node, OutputNode, ConditionNode
+from FrEIA.framework import GraphINN, InputNode, Node, OutputNode, ConditionNode, collect_nodes
 from FrEIA.modules import AllInOneBlock, Split, Reshape, Flatten, RNVPCouplingBlock, PermuteRandom, HaarDownsampling, Concat
+from FrEIA.utils import plot_graph
 
 import os
-
-import graphviz
 
 # the reason the subnet init is needed, is that with uninitalized
 # weights, the numerical jacobian check gives inf, nan, etc,
@@ -90,9 +89,8 @@ class PlotGraphINNTest(unittest.TestCase):
 
         in_node = InputNode(3, 10, 10)
         out_node = OutputNode(in_node)
-        graph = GraphINN([in_node, out_node])
         try:
-            graph.plot(path=self.plotdir, filename=self.plot_name)
+            plot_graph([in_node, out_node], path=self.plotdir, filename=self.plot_name)
         except Exception:
             self.cleanup_files(self)
             self.has_graphviz_backend = False
@@ -114,7 +112,6 @@ class PlotGraphINNTest(unittest.TestCase):
         out_node = OutputNode(in_node)
         graph = GraphINN([in_node, out_node])
         graph.plot(path=self.plotdir, filename=self.plot_name)
-
 
         self.assertTrue(os.path.exists(self.file_path))
         self.assertTrue(os.path.exists(self.file_path + ".pdf"))
@@ -151,26 +148,27 @@ class PlotGraphINNTest(unittest.TestCase):
         unflatten1 = Node(perm, Reshape, {'output_dims': (1, 10, 10)}, name='unflatten1')
 
         conv = Node(split.out1,
-                        RNVPCouplingBlock,
-                        {'subnet_constructor': F_conv, 'clamp': 1.0},
-                        conditions=cond,
-                        name='conv')
+                    RNVPCouplingBlock,
+                    {'subnet_constructor': F_conv, 'clamp': 1.0},
+                    conditions=cond,
+                    name='conv')
 
         flatten2 = Node(conv, Flatten, {}, name='flatten2')
 
         linear = Node(flatten2,
-                            RNVPCouplingBlock,
-                            {'subnet_constructor': F_fully_connected, 'clamp': 1.0},
-                            name='linear')
+                      RNVPCouplingBlock,
+                      {'subnet_constructor': F_fully_connected, 'clamp': 1.0},
+                      name='linear')
 
         unflatten2 = Node(linear, Reshape, {'output_dims': (2, 10, 10)}, name='unflatten2')
         concat = Node([unflatten1.out0, unflatten2.out0], Concat, {'dim': 0}, name='concat')
         haar = Node(concat, HaarDownsampling, {}, name='haar')
         out = OutputNode(haar, name='output')
 
-        graph = GraphINN([inp, cond, split, flatten1, perm, unflatten1, conv, flatten2, linear, unflatten2, concat, haar, out])
-        graph.plot(path=self.plotdir, filename=self.plot_name)
-
+        auto_node_list = collect_nodes(inp)
+        manual_node_list = [inp, cond, split, flatten1, perm, unflatten1, conv, flatten2, linear, unflatten2, concat, haar, out]
+        self.assertEquals(set(auto_node_list), set(manual_node_list))
+        plot_graph(auto_node_list, path=self.plotdir, filename=self.plot_name)
 
         self.assertTrue(os.path.exists(self.file_path))
         self.assertTrue(os.path.exists(self.file_path + ".pdf"))

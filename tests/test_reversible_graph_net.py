@@ -182,7 +182,7 @@ class GraphTopology(unittest.TestCase):
                             {'subnet_constructor': F_conv, 'clamp': 1.0},
                             name="uncoupled")
         cond1 = Ff.FeedForwardNode(split, split.output_dims[0], nn.Identity, name="cond1")
-        cond2 = Ff.FeedForwardNode(cond1, cond1.output_dims[0], nn.Identity, name="cond2")
+        cond2 = Ff.FeedForwardNode(split, split.output_dims[0], nn.Identity, name="cond2")
         coupled1 = Ff.Node(split.out1, Fm.RNVPCouplingBlock,
                           {'subnet_constructor': F_conv, 'clamp': 1.0},
                           cond1,
