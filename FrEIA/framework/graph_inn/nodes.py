@@ -62,7 +62,7 @@ class AbstractNode:
             self.conditions = parse_flexible_inputs(conditions)
 
         self.module_type = module_type
-        self.module_args = module_args
+        self.module_args = module_args if module_args is not None else dict()
 
         input_shapes = [input_node.output_dims[node_out_idx]
                         for input_node, node_out_idx in self.inputs]
@@ -318,7 +318,7 @@ class FeedForwardNode(AbstractNode):
 
     def __init__(self, conditions: FlexibleInputs, output_dims: Tuple[int],
                  module_type: ModuleType, module_args: Optional[dict] = None, name=None):
-        self.output_dims = output_dims
+        self.module_output_dims = output_dims
         super().__init__([], module_type, module_args, conditions=conditions, name=name)
         # This node does not have consumable outputs
         self.outputs = []
@@ -343,7 +343,7 @@ class FeedForwardNode(AbstractNode):
             self.module_type = type(module)
         else:
             module = self.module_type(**self.module_args)
-        return module, [self.output_dims]
+        return module, [self.module_output_dims]
 
     def forward(self, x_or_z: Iterable[Tensor],
                 c: Iterable[Tensor] = None, rev: bool = False, jac: bool = True) -> Tuple[Tuple[Tensor], None]:

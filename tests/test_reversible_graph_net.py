@@ -6,7 +6,7 @@ import numpy as np
 
 import FrEIA.modules as Fm
 import FrEIA.framework as Ff
-from FrEIA.framework.graph_inn.nodes import collect_nodes
+from FrEIA.framework import collect_nodes
 
 
 def F_conv(cin, cout):
@@ -163,28 +163,50 @@ class GraphTopology(unittest.TestCase):
         self.inp1 = torch.randn(self.batch_size, *self.inp1_size)
         self.inp2 = torch.randn(self.batch_size, *self.inp2_size)
 
-    def test_split_graph(self):
-        input = Ff.InputNode(*self.inp1_size, name="input")
-        core_cond = Ff.FeedForwardNode([input], (4,10,10), nn.Identity, {}, name="core_cond")
-        coupled = Ff.Node(input, Fm.RNVPCouplingBlock,
-                       {'subnet_constructor': F_conv, 'clamp': 1.0},
-                       core_cond,
-                       name='coupled')
-        
-        out = Ff.OutputNode(coupled, name="out")
-        inn = Ff.GraphINN([input, core_cond, coupled, coupled, out])
+    def test_cyclic_graph(self):
+        input_node = Ff.InputNode(*self.inp1_size, name="input")
+        core_cond = Ff.FeedForwardNode(input_node, (4, 10, 10), nn.Identity, name="core_cond")
+        coupled = Ff.Node(input_node, Fm.RNVPCouplingBlock,
+                          {'subnet_constructor': F_conv, 'clamp': 1.0},
+                          core_cond,
+                          name='coupled')
 
-        y = inn([self.inp1,self.inp2])[0]
-        self.assertTrue(isinstance(y, type(self.inp1) ), f"{type(y)}")
+        Ff.OutputNode(coupled, name="out")
+        with self.assertRaises(ValueError):
+            Ff.GraphINN(collect_nodes(input_node))
+
+    def test_double_ff_graph(self):
+        input_node = Ff.InputNode(*self.inp1_size, name="input1")
+        split = Ff.Node(input_node, Fm.Split, dict(section_sizes=2), name="split")
+        uncoupled = Ff.Node(split, Fm.RNVPCouplingBlock,
+                            {'subnet_constructor': F_conv, 'clamp': 1.0},
+                            name="uncoupled")
+        cond1 = Ff.FeedForwardNode(split, split.output_dims[0], nn.Identity, name="cond1")
+        cond2 = Ff.FeedForwardNode(cond1, cond1.output_dims[0], nn.Identity, name="cond2")
+        coupled1 = Ff.Node(split.out1, Fm.RNVPCouplingBlock,
+                          {'subnet_constructor': F_conv, 'clamp': 1.0},
+                          cond1,
+                          name='coupled1')
+        coupled2 = Ff.Node(coupled1, Fm.RNVPCouplingBlock,
+                          {'subnet_constructor': F_conv, 'clamp': 1.0},
+                          cond2,
+                          name='coupled2')
+        merge = Ff.Node([uncoupled.out0, coupled2], Fm.Concat, name="merge")
+        out = Ff.OutputNode(merge, name="out")
+
+        inn = Ff.GraphINN(collect_nodes(input_node))
+
+        y = inn(self.inp1)[0]
+        self.assertTrue(isinstance(y, type(self.inp1)), f"{type(y)}")
 
         # the input node should not have any graph edges going in
-        self.assertEqual(input.input_dims, [])
+        self.assertEqual(input_node.input_dims, [])
         # the output node should not have any graph edges going out
         self.assertEqual(out.output_dims, [])
 
-        # dimensions should match
-        self.assertEqual(input.output_dims, out.input_dims)
-        self.assertEqual(inn.dims_in, input.output_dims)
+        # dimension of output should match spec
+        self.assertEqual(y.shape[1:], out.input_dims[0])
+
 
 if __name__ == '__main__':
     unittest.main()
