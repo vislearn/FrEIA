@@ -61,8 +61,7 @@ class Split(InvertibleModule):
         else:
             if isinstance(section_sizes, int):
                 assert section_sizes < l_dim, "'section_sizes' too large"
-                section_sizes = [section_sizes]
-        
+                section_sizes = (section_sizes,)
             assert isinstance(section_sizes, (list, tuple)), \
                 "'section_sizes' must be either int or list/tuple of int"
             assert sum(section_sizes) <= l_dim, "'section_sizes' too large"
