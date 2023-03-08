@@ -508,7 +508,7 @@ class GraphINN(InvertibleModule):
         try:
             G.render(file_path)
         except g.backend.execute.ExecutableNotFound:
-            raise Exception("Skipped plotting graph since no graphviz backend is installed. Try installing it via 'sudo apt-get install graphviz'")
+            raise Exception("Skipped plotting graph since graphviz backend is not installed. Try installing it via 'sudo apt-get install graphviz'")
 
 def topological_order(all_nodes: List[Node], in_nodes: List[InputNode],
                       out_nodes: List[OutputNode]) -> List[Node]:

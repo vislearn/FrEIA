@@ -49,10 +49,34 @@ class GraphINNTest(unittest.TestCase):
         out, jac = graph_inn(torch.randn(batch_size, dim))
         assert out.shape == (batch_size, dim)
 
+# def has_graphviz_backend():
+#         plotdir = 'test_plots_graphviz'
+#         plot_name = 'graph'
+#         file_path = os.path.join(plotdir, plot_name)
+
+#         in_node = InputNode(3, 10, 10)
+#         out_node = OutputNode(in_node)
+#         graph = GraphINN([in_node, out_node])
+#         try:
+#             os.mkdir(plotdir)
+#             graph.plot(path=plotdir, filename=plot_name)
+#         except Exception:
+#             if os.path.exists(file_path):
+#                 os.remove(file_path)
+#             if os.path.exists(file_path + ".pdf"):
+#                 os.remove(file_path + ".pdf")
+#             os.rmdir(plotdir)
+#             return False
+
+#         file_path = os.path.join(plotdir, plot_name)
+#         os.rmdir(plotdir)
+#         return True
+
 class PlotGraphINNTest(unittest.TestCase):
     plotdir = os.path.join(os.getcwd(),"graphINN_test_plots")
     plot_name = "graph"
     file_path = os.path.join(plotdir, plot_name)
+    has_graphviz_backend = True
 
     def cleanup_files(self):
         if os.path.exists(self.file_path):
@@ -70,15 +94,17 @@ class PlotGraphINNTest(unittest.TestCase):
         try:
             graph.plot(path=self.plotdir, filename=self.plot_name)
         except Exception:
-            self.cleanup_files()
-            os.rmdir(self.plotdir)
-            self.skipTest(self, reason="Skipped plotting graph since no graphviz backend is installed.")
-
-        self.cleanup_files()
+            self.cleanup_files(self)
+            self.has_graphviz_backend = False
+        self.cleanup_files(self)
         
     @classmethod
     def tearDownClass(self) -> None:
         os.rmdir(self.plotdir)
+
+    def setUp(self):
+        if not self.has_graphviz_backend:
+            self.skipTest('Skipped testing graph plots since graphviz backend is not installed.')
 
     def tearDown(self) -> None:
         self.cleanup_files()
