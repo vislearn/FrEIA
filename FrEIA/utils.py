@@ -2,7 +2,7 @@ import os
 
 import torch
 
-from typing import Callable, Any, Tuple, Union
+from typing import Callable, Any, Tuple, Union, Iterable
 
 from torch.utils.data import TensorDataset, DataLoader
 

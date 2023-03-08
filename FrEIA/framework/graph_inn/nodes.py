@@ -62,7 +62,7 @@ class AbstractNode:
             self.conditions = parse_flexible_inputs(conditions)
 
         self.module_type = module_type
-        self.module_args = module_args if module_args is not None else dict()
+        self.module_args = module_args
 
         input_shapes = [input_node.output_dims[node_out_idx]
                         for input_node, node_out_idx in self.inputs]
@@ -163,11 +163,15 @@ class Node(AbstractNode):
                     f"which expects {self.module.dims_in} input shape, "
                     f"but the input shape to the Node is {input_shapes}."
                 )
-        elif len(self.conditions) > 0:
-            module = self.module_type(input_shapes, dims_c=condition_shapes,
-                                      **self.module_args)
         else:
-            module = self.module_type(input_shapes, **self.module_args)
+            module_args = self.module_args
+            if module_args is None:
+                module_args = {}
+            if len(self.conditions) > 0:
+                module = self.module_type(input_shapes, dims_c=condition_shapes,
+                                          **module_args)
+            else:
+                module = self.module_type(input_shapes, **module_args)
         return module, module.output_dims(input_shapes)
 
     def forward(self, x_or_z: Iterable[Tensor],
@@ -342,7 +346,10 @@ class FeedForwardNode(AbstractNode):
             module = self.module_type
             self.module_type = type(module)
         else:
-            module = self.module_type(**self.module_args)
+            module_args = self.module_args
+            if module_args is None:
+                module_args = {}
+            module = self.module_type(**module_args)
         return module, [self.module_output_dims]
 
     def forward(self, x_or_z: Iterable[Tensor],
