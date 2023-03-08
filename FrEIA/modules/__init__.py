@@ -16,6 +16,7 @@ Coupling blocks:
 * GINCouplingBlock
 * AffineCouplingOneSided
 * ConditionalAffineTransform
+* RationalQuadraticSpline
 
 Reshaping:
 
@@ -43,6 +44,7 @@ Other learned transforms:
 * LearnedElementwiseScaling
 * OrthogonalTransform
 * HouseholderPerm
+* ElementwiseRationalQuadraticSpline
 
 Fixed (non-learned) transforms:
 
@@ -106,4 +108,5 @@ __all__ = [
             'GaussianMixtureModel',
             'LinearSpline',
             'RationalQuadraticSpline',
+            'ElementwiseRationalQuadraticSpline',
             ]

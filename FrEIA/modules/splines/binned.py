@@ -7,19 +7,63 @@ import torch.nn.functional as F
 from itertools import chain
 
 from FrEIA.modules.coupling_layers import _BaseCouplingBlock
+from FrEIA.modules.base import InvertibleModule
 from FrEIA import utils
 
-
 class BinnedSpline(_BaseCouplingBlock):
+    def __init__(self, dims_in, dims_c=None, subnet_constructor: callable = None, 
+                 split_len: Union[float, int] = 0.5, **kwargs) -> None:
+        if dims_c is None:
+            dims_c = []
+
+        super().__init__(dims_in, dims_c, clamp=0.0, clamp_activation=lambda u: u, split_len=split_len)
+
+        
+        self.spline_base = BinnedSplineBase(dims_in, dims_c, **kwargs)
+        
+        num_params = sum(self.spline_base.parameter_counts.values())
+        self.subnet1 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1 * num_params)
+        self.subnet2 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2 * num_params)
+
+    def _spline1(self, x1: torch.Tensor, parameters: Dict[str, torch.Tensor], rev: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+        raise NotImplementedError
+
+    def _spline2(self, x2: torch.Tensor, parameters: Dict[str, torch.Tensor], rev: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+        raise NotImplementedError
+
+    def _coupling1(self, x1: torch.Tensor, u2: torch.Tensor, rev: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        The full coupling consists of:
+        1. Querying the parameter tensor from the subnetwork
+        2. Splitting this tensor into the semantic parameters
+        3. Constraining the parameters
+        4. Performing the actual spline for each bin, given the parameters
+        """
+        parameters = self.subnet1(u2)
+        parameters = self.spline_base.split_parameters(parameters, self.split_len1)
+        parameters = self.constrain_parameters(parameters)
+
+        return self.spline_base.binned_spline(x=x1, parameters=parameters, spline=self._spline1, rev=rev)
+
+    def _coupling2(self, x2: torch.Tensor, u1: torch.Tensor, rev: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+        parameters = self.subnet2(u1)
+        parameters = self.spline_base.split_parameters(parameters, self.split_len2)
+        parameters = self.constrain_parameters(parameters)
+
+        return self.spline_base.binned_spline(x=x2, parameters=parameters, spline=self._spline2, rev=rev)
+
+    def constrain_parameters(self, parameters: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+        return self.spline_base.constrain_parameters(parameters)
+
+class BinnedSplineBase(InvertibleModule):
     """
     Base Class for Splines
     Implements input-binning, where bin knots are jointly predicted along with spline parameters
     by a non-invertible coupling subnetwork
     """
 
-    def __init__(self, dims_in, dims_c=None, subnet_constructor: callable = None, split_len: Union[float, int] = 0.5,
-                 bins: int = 10, parameter_counts: Dict[str, int] = None, min_bin_sizes: Tuple[float] = (0.1, 0.1),
-                 default_domain: Tuple[float] = (-3.0, 3.0, -3.0, 3.0)) -> None:
+    def __init__(self, dims_in, dims_c=None, bins: int = 10, parameter_counts: Dict[str, int] = None, 
+                 min_bin_sizes: Tuple[float] = (0.1, 0.1), default_domain: Tuple[float] = (-3.0, 3.0, -3.0, 3.0)) -> None:
         """
         Args:
             bins: number of bins to use
@@ -35,7 +79,7 @@ class BinnedSpline(_BaseCouplingBlock):
         if parameter_counts is None:
             parameter_counts = {}
 
-        super().__init__(dims_in, dims_c, clamp=0.0, clamp_activation=lambda u: u, split_len=split_len)
+        super().__init__(dims_in, dims_c)
 
         assert bins >= 1, "need at least one bin"
         assert all(s >= 0 for s in min_bin_sizes), "minimum bin size cannot be negative"
@@ -61,40 +105,9 @@ class BinnedSpline(_BaseCouplingBlock):
         # merge parameter counts with child classes
         self.parameter_counts = {**default_parameter_counts, **parameter_counts}
 
-        num_params = sum(self.parameter_counts.values())
-        self.subnet1 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1 * num_params)
-        self.subnet2 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2 * num_params)
-
-    def _spline1(self, x1: torch.Tensor, parameters: Dict[str, torch.Tensor], rev: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
-        raise NotImplementedError
-
-    def _spline2(self, x2: torch.Tensor, parameters: Dict[str, torch.Tensor], rev: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
-        raise NotImplementedError
-
-    def _coupling1(self, x1: torch.Tensor, u2: torch.Tensor, rev: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        The full coupling consists of:
-        1. Querying the parameter tensor from the subnetwork
-        2. Splitting this tensor into the semantic parameters
-        3. Constraining the parameters
-        4. Performing the actual spline for each bin, given the parameters
-        """
-        parameters = self.subnet1(u2)
-        parameters = self.split_parameters(parameters, self.split_len1)
-        parameters = self.constrain_parameters(parameters)
-
-        return self.binned_spline(x=x1, parameters=parameters, spline=self._spline1, rev=rev)
-
-    def _coupling2(self, x2: torch.Tensor, u1: torch.Tensor, rev: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
-        parameters = self.subnet2(u1)
-        parameters = self.split_parameters(parameters, self.split_len2)
-        parameters = self.constrain_parameters(parameters)
-
-        return self.binned_spline(x=x2, parameters=parameters, spline=self._spline2, rev=rev)
-
     def split_parameters(self, parameters: torch.Tensor, split_len: int) -> Dict[str, torch.Tensor]:
         """
-        Split network output into semantic parameters, as given by self.parameter_counts
+        Split parameter tensor into semantic parameters, as given by self.parameter_counts
         """
         parameters = parameters.movedim(1, -1)
         parameters = parameters.reshape(*parameters.shape[:-1], split_len, -1)
