@@ -347,6 +347,8 @@ class FeedForwardNode(AbstractNode):
 
     def forward(self, x_or_z: Iterable[Tensor],
                 c: Iterable[Tensor] = None, rev: bool = False, jac: bool = True) -> Tuple[Tuple[Tensor], None]:
+        if isinstance(self.module, InvertibleModule):
+            return self.module(c)
         return (self.module(*c),), None
 
 
