@@ -122,7 +122,7 @@ class GaussianMixtureModel(InvertibleModule):
         batch_size, n_components = w.shape
 
         # Construct upper triangular Cholesky factors U of all precision matrices
-        U = torch.zeros(batch_size, n_components, self.x_dims, self.x_dims, device=x.device)
+        U = torch.zeros(batch_size, n_components, self.x_dims, self.x_dims, device=x.device, dtype=U_entries.dtype)
         # Fill everything above the diagonal as is
         U[self.mask_upper.expand(batch_size,n_components,-1,-1)] = U_entries[:,:,self.x_dims:].reshape(-1)
         # Diagonal entries must be positive
