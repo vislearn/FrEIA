@@ -368,6 +368,14 @@ structure of operations.</p>
 <li class="toctree-l3"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.ConditionNode"><code class="docutils literal notranslate"><span class="pre">ConditionNode</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.ConditionNode.__init__"><code class="docutils literal notranslate"><span class="pre">ConditionNode.__init__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.ConditionNode.build_module"><code class="docutils literal notranslate"><span class="pre">ConditionNode.build_module()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.ConditionNode.consume_output"><code class="docutils literal notranslate"><span class="pre">ConditionNode.consume_output()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.ConditionNode.rev_input"><code class="docutils literal notranslate"><span class="pre">ConditionNode.rev_input()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.FeedForwardNode"><code class="docutils literal notranslate"><span class="pre">FeedForwardNode</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.FeedForwardNode.__init__"><code class="docutils literal notranslate"><span class="pre">FeedForwardNode.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.FeedForwardNode.build_module"><code class="docutils literal notranslate"><span class="pre">FeedForwardNode.build_module()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.FeedForwardNode.rev_input"><code class="docutils literal notranslate"><span class="pre">FeedForwardNode.rev_input()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.GraphINN"><code class="docutils literal notranslate"><span class="pre">GraphINN</span></code></a><ul>
@@ -375,23 +383,25 @@ structure of operations.</p>
 <li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.GraphINN.get_module_by_name"><code class="docutils literal notranslate"><span class="pre">GraphINN.get_module_by_name()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.GraphINN.get_node_by_name"><code class="docutils literal notranslate"><span class="pre">GraphINN.get_node_by_name()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.GraphINN.log_jacobian_numerical"><code class="docutils literal notranslate"><span class="pre">GraphINN.log_jacobian_numerical()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.GraphINN.plot"><code class="docutils literal notranslate"><span class="pre">GraphINN.plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.GraphINN.node_list"><code class="docutils literal notranslate"><span class="pre">GraphINN.node_list</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.InputNode"><code class="docutils literal notranslate"><span class="pre">InputNode</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.InputNode.__init__"><code class="docutils literal notranslate"><span class="pre">InputNode.__init__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.InputNode.build_module"><code class="docutils literal notranslate"><span class="pre">InputNode.build_module()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.InputNode.rev_input"><code class="docutils literal notranslate"><span class="pre">InputNode.rev_input()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.Node"><code class="docutils literal notranslate"><span class="pre">Node</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.Node.__init__"><code class="docutils literal notranslate"><span class="pre">Node.__init__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.Node.build_module"><code class="docutils literal notranslate"><span class="pre">Node.build_module()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.Node.parse_inputs"><code class="docutils literal notranslate"><span class="pre">Node.parse_inputs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.Node.rev_input"><code class="docutils literal notranslate"><span class="pre">Node.rev_input()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.OutputNode"><code class="docutils literal notranslate"><span class="pre">OutputNode</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.OutputNode.__init__"><code class="docutils literal notranslate"><span class="pre">OutputNode.__init__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.OutputNode.build_module"><code class="docutils literal notranslate"><span class="pre">OutputNode.build_module()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.OutputNode.consume_output"><code class="docutils literal notranslate"><span class="pre">OutputNode.consume_output()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.OutputNode.rev_input"><code class="docutils literal notranslate"><span class="pre">OutputNode.rev_input()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.ReversibleGraphNet"><code class="docutils literal notranslate"><span class="pre">ReversibleGraphNet</span></code></a><ul>
@@ -407,6 +417,7 @@ structure of operations.</p>
 <li class="toctree-l4"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.SequenceINN.append"><code class="docutils literal notranslate"><span class="pre">SequenceINN.append()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="FrEIA.framework.html#FrEIA.framework.collect_nodes"><code class="docutils literal notranslate"><span class="pre">collect_nodes()</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -336,11 +336,11 @@ document.write(`
       <li><a href="FrEIA.framework.html#FrEIA.framework.ConditionNode.__init__">__init__() (FrEIA.framework.ConditionNode method)</a>
 
       <ul>
+        <li><a href="FrEIA.framework.html#FrEIA.framework.FeedForwardNode.__init__">(FrEIA.framework.FeedForwardNode method)</a>
+</li>
         <li><a href="FrEIA.framework.html#FrEIA.framework.GraphINN.__init__">(FrEIA.framework.GraphINN method)</a>
 </li>
         <li><a href="FrEIA.framework.html#FrEIA.framework.InputNode.__init__">(FrEIA.framework.InputNode method)</a>
-</li>
-        <li><a href="FrEIA.framework.html#FrEIA.framework.Node.__init__">(FrEIA.framework.Node method)</a>
 </li>
         <li><a href="FrEIA.framework.html#FrEIA.framework.OutputNode.__init__">(FrEIA.framework.OutputNode method)</a>
 </li>
@@ -436,6 +436,8 @@ document.write(`
       <li><a href="FrEIA.framework.html#FrEIA.framework.ConditionNode.build_module">build_module() (FrEIA.framework.ConditionNode method)</a>
 
       <ul>
+        <li><a href="FrEIA.framework.html#FrEIA.framework.FeedForwardNode.build_module">(FrEIA.framework.FeedForwardNode method)</a>
+</li>
         <li><a href="FrEIA.framework.html#FrEIA.framework.InputNode.build_module">(FrEIA.framework.InputNode method)</a>
 </li>
         <li><a href="FrEIA.framework.html#FrEIA.framework.Node.build_module">(FrEIA.framework.Node method)</a>
@@ -449,20 +451,30 @@ document.write(`
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="FrEIA.framework.html#FrEIA.framework.collect_nodes">collect_nodes() (in module FrEIA.framework)</a>
+</li>
       <li><a href="FrEIA.modules.html#FrEIA.modules.Concat">Concat (class in FrEIA.modules)</a>
+</li>
+      <li><a href="FrEIA.modules.html#FrEIA.modules.ConditionalAffineTransform">ConditionalAffineTransform (class in FrEIA.modules)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="FrEIA.modules.html#FrEIA.modules.ConditionalAffineTransform">ConditionalAffineTransform (class in FrEIA.modules)</a>
-</li>
       <li><a href="FrEIA.framework.html#FrEIA.framework.ConditionNode">ConditionNode (class in FrEIA.framework)</a>
 </li>
+      <li><a href="FrEIA.framework.html#FrEIA.framework.ConditionNode.consume_output">consume_output() (FrEIA.framework.ConditionNode method)</a>
+
+      <ul>
+        <li><a href="FrEIA.framework.html#FrEIA.framework.OutputNode.consume_output">(FrEIA.framework.OutputNode method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="FrEIA.framework.html#FrEIA.framework.FeedForwardNode">FeedForwardNode (class in FrEIA.framework)</a>
+</li>
       <li><a href="FrEIA.modules.html#FrEIA.modules.Fixed1x1Conv">Fixed1x1Conv (class in FrEIA.modules)</a>
 </li>
       <li><a href="FrEIA.modules.html#FrEIA.modules.FixedLinearTransform">FixedLinearTransform (class in FrEIA.modules)</a>
@@ -471,6 +483,8 @@ document.write(`
 </li>
       <li><a href="FrEIA.modules.html#FrEIA.modules.InvertibleModule.forward">forward() (FrEIA.modules.InvertibleModule method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     FrEIA
 
@@ -478,8 +492,6 @@ document.write(`
         <li><a href="index.html#module-FrEIA">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     FrEIA.framework
 
@@ -603,11 +615,13 @@ document.write(`
 </li>
       <li><a href="FrEIA.modules.html#FrEIA.modules.GaussianMixtureModel.nll_loss">nll_loss() (FrEIA.modules.GaussianMixtureModel static method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="FrEIA.modules.html#FrEIA.modules.GaussianMixtureModel.nll_upper_bound">nll_upper_bound() (FrEIA.modules.GaussianMixtureModel static method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="FrEIA.framework.html#FrEIA.framework.Node">Node (class in FrEIA.framework)</a>
+</li>
+      <li><a href="FrEIA.framework.html#FrEIA.framework.GraphINN.node_list">node_list (FrEIA.framework.GraphINN property)</a>
 </li>
       <li><a href="FrEIA.modules.html#FrEIA.modules.GaussianMixtureModel.normalize_weights">normalize_weights() (FrEIA.modules.GaussianMixtureModel static method)</a>
 </li>
@@ -631,15 +645,11 @@ document.write(`
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="FrEIA.framework.html#FrEIA.framework.Node.parse_inputs">parse_inputs() (FrEIA.framework.Node method)</a>
-</li>
       <li><a href="FrEIA.modules.html#FrEIA.modules.PermuteRandom">PermuteRandom (class in FrEIA.modules)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="FrEIA.modules.html#FrEIA.modules.GaussianMixtureModel.pick_mixture_component">pick_mixture_component() (FrEIA.modules.GaussianMixtureModel static method)</a>
-</li>
-      <li><a href="FrEIA.framework.html#FrEIA.framework.GraphINN.plot">plot() (FrEIA.framework.GraphINN method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -649,10 +659,22 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="FrEIA.modules.html#FrEIA.modules.Reshape">Reshape (class in FrEIA.modules)</a>
 </li>
-      <li><a href="FrEIA.framework.html#FrEIA.framework.ReversibleGraphNet">ReversibleGraphNet (class in FrEIA.framework)</a>
+      <li><a href="FrEIA.framework.html#FrEIA.framework.ConditionNode.rev_input">rev_input() (FrEIA.framework.ConditionNode method)</a>
+
+      <ul>
+        <li><a href="FrEIA.framework.html#FrEIA.framework.FeedForwardNode.rev_input">(FrEIA.framework.FeedForwardNode method)</a>
 </li>
+        <li><a href="FrEIA.framework.html#FrEIA.framework.InputNode.rev_input">(FrEIA.framework.InputNode method)</a>
+</li>
+        <li><a href="FrEIA.framework.html#FrEIA.framework.Node.rev_input">(FrEIA.framework.Node method)</a>
+</li>
+        <li><a href="FrEIA.framework.html#FrEIA.framework.OutputNode.rev_input">(FrEIA.framework.OutputNode method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="FrEIA.framework.html#FrEIA.framework.ReversibleGraphNet">ReversibleGraphNet (class in FrEIA.framework)</a>
+</li>
       <li><a href="FrEIA.framework.html#FrEIA.framework.ReversibleSequential">ReversibleSequential (class in FrEIA.framework)</a>
 </li>
       <li><a href="FrEIA.modules.html#FrEIA.modules.RNVPCouplingBlock">RNVPCouplingBlock (class in FrEIA.modules)</a>
