@@ -48,29 +48,6 @@ class GraphINNTest(unittest.TestCase):
         out, jac = graph_inn(torch.randn(batch_size, dim))
         assert out.shape == (batch_size, dim)
 
-# def has_graphviz_backend():
-#         plotdir = 'test_plots_graphviz'
-#         plot_name = 'graph'
-#         file_path = os.path.join(plotdir, plot_name)
-
-#         in_node = InputNode(3, 10, 10)
-#         out_node = OutputNode(in_node)
-#         graph = GraphINN([in_node, out_node])
-#         try:
-#             os.mkdir(plotdir)
-#             graph.plot(path=plotdir, filename=plot_name)
-#         except Exception:
-#             if os.path.exists(file_path):
-#                 os.remove(file_path)
-#             if os.path.exists(file_path + ".pdf"):
-#                 os.remove(file_path + ".pdf")
-#             os.rmdir(plotdir)
-#             return False
-
-#         file_path = os.path.join(plotdir, plot_name)
-#         os.rmdir(plotdir)
-#         return True
-
 class PlotGraphINNTest(unittest.TestCase):
     plotdir = os.path.join(os.getcwd(),"graphINN_test_plots")
     plot_name = "graph"
