@@ -87,6 +87,10 @@ class BinnedSplineBase(InvertibleModule):
         assert all(s >= 0 for s in min_bin_sizes), "minimum bin size cannot be negative"
         assert default_domain[1] > default_domain[0], "x domain must be increasing"
         assert default_domain[3] > default_domain[2], "y domain must be increasing"
+        assert default_domain[1] - default_domain[0] >= min_bin_sizes[0] * bins, \
+        "{bins} bins of size {min_bin_sizes[0]} are too large for domain {default_domain[0]} to {default_domain[1]}"
+        assert default_domain[3] - default_domain[2] >= min_bin_sizes[1] * bins, \
+        "{bins} bins of size {min_bin_sizes[1]} are too large for domain {default_domain[2]} to {default_domain[3]}"
 
         self.register_buffer("bins", torch.tensor(bins, dtype=torch.int32))
         self.register_buffer("min_bin_sizes", torch.as_tensor(min_bin_sizes, dtype=torch.float32))
@@ -157,6 +161,7 @@ class BinnedSplineBase(InvertibleModule):
 
             parameters["widths"] = self.min_bin_sizes[0] + F.softplus(parameters["widths"] + xshift)
             parameters["heights"] = self.min_bin_sizes[1] + F.softplus(parameters["heights"] + yshift)
+            
 
         return parameters
 
@@ -173,6 +178,8 @@ class BinnedSplineBase(InvertibleModule):
         # concatenate leftmost edge
         knot_x = torch.cat((parameters["left"], knot_x), dim=-1)
         knot_y = torch.cat((parameters["bottom"], knot_y), dim=-1)
+
+
 
         # find spline mask
         if not rev:
