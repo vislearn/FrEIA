@@ -144,18 +144,16 @@ class BinnedSplineBase(InvertibleModule):
 
             parameters["widths"] = total_width * F.softmax(parameters["widths"], dim=-1)
             parameters["heights"] = total_width * F.softmax(parameters["heights"], dim=-1)
-            parameters["widths"] = torch.log(parameters["widths"])
-            parameters["heights"] = torch.log(parameters["heights"])
 
         else:
             parameters["left"] = parameters["left"] + self.default_domain[0]
             parameters["bottom"] = parameters["bottom"] + self.default_domain[2]
 
-            default_width = self.default_domain[1] - self.default_domain[0]
-            default_height = self.default_domain[3] - self.default_domain[2]
+            default_bin_width = (self.default_domain[1] - self.default_domain[0]) / self.bins
+            default_bin_height = (self.default_domain[3] - self.default_domain[2]) / self.bins
 
-            xshift = torch.log(torch.exp(default_width - self.min_bin_sizes[0]) - 1)
-            yshift = torch.log(torch.exp(default_height - self.min_bin_sizes[1]) - 1)
+            xshift = torch.log(torch.exp(default_bin_width - self.min_bin_sizes[0]) - 1)
+            yshift = torch.log(torch.exp(default_bin_height - self.min_bin_sizes[1]) - 1)
 
             parameters["widths"] = self.min_bin_sizes[0] + F.softplus(parameters["widths"] + xshift)
             parameters["heights"] = self.min_bin_sizes[1] + F.softplus(parameters["heights"] + yshift)
@@ -214,7 +212,7 @@ class BinnedSplineBase(InvertibleModule):
 
         # gather all other parameter edges
         for key, value in parameters.items():
-            if key in ["left", "bottom", "widths", "heights"]:
+            if key in ["left", "bottom", "widths", "heights", "total_width"]:
                 continue
 
             v = value[inside]
