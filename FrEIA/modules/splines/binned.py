@@ -63,7 +63,8 @@ class BinnedSplineBase(InvertibleModule):
     """
 
     def __init__(self, dims_in, dims_c=None, bins: int = 10, parameter_counts: Dict[str, int] = None, 
-                 min_bin_sizes: Tuple[float] = (0.1, 0.1), default_domain: Tuple[float] = (-3.0, 3.0, -3.0, 3.0)) -> None:
+                 min_bin_sizes: Tuple[float] = (0.1, 0.1), default_domain: Tuple[float] = (-3.0, 3.0, -3.0, 3.0),
+                 identity_tails: bool = False) -> None:
         """
         Args:
             bins: number of bins to use
@@ -73,6 +74,7 @@ class BinnedSplineBase(InvertibleModule):
                 bins are scaled such that they never fall below this size
             default_domain: tuple of (left, right, bottom, top) default spline domain values
                 these values will be used as the starting domain (when the network outputs zero)
+            identity_tails: whether to use identity tails for the spline
         """
         if dims_c is None:
             dims_c = []
@@ -85,10 +87,16 @@ class BinnedSplineBase(InvertibleModule):
         assert all(s >= 0 for s in min_bin_sizes), "minimum bin size cannot be negative"
         assert default_domain[1] > default_domain[0], "x domain must be increasing"
         assert default_domain[3] > default_domain[2], "y domain must be increasing"
+        assert default_domain[1] - default_domain[0] >= min_bin_sizes[0] * bins, \
+        "{bins} bins of size {min_bin_sizes[0]} are too large for domain {default_domain[0]} to {default_domain[1]}"
+        assert default_domain[3] - default_domain[2] >= min_bin_sizes[1] * bins, \
+        "{bins} bins of size {min_bin_sizes[1]} are too large for domain {default_domain[2]} to {default_domain[3]}"
 
         self.register_buffer("bins", torch.tensor(bins, dtype=torch.int32))
         self.register_buffer("min_bin_sizes", torch.as_tensor(min_bin_sizes, dtype=torch.float32))
         self.register_buffer("default_domain", torch.as_tensor(default_domain, dtype=torch.float32))
+        self.register_buffer("identity_tails", torch.tensor(identity_tails, dtype=torch.bool))
+        self.register_buffer("default_width", torch.as_tensor(default_domain[1] - default_domain[0], dtype=torch.float32))
 
         # The default parameters are
         #       parameter                                       constraints             count
@@ -97,23 +105,29 @@ class BinnedSplineBase(InvertibleModule):
         # 3.    the widths of each bin                          positive                #bins
         # 4.    the heights of each bin                         positive                #bins
         default_parameter_counts = dict(
-            left=1,
-            bottom=1,
             widths=bins,
             heights=bins,
         )
+        if not identity_tails:
+            default_parameter_counts["bottom"] = 1
+            default_parameter_counts["left"] = 1
+        else:
+            default_parameter_counts["total_width"] = 1
         # merge parameter counts with child classes
         self.parameter_counts = {**default_parameter_counts, **parameter_counts}
+
 
     def split_parameters(self, parameters: torch.Tensor, split_len: int) -> Dict[str, torch.Tensor]:
         """
         Split parameter tensor into semantic parameters, as given by self.parameter_counts
         """
+        keys = list(self.parameter_counts.keys())
+        lengths = list(self.parameter_counts.values())
+
         parameters = parameters.movedim(1, -1)
         parameters = parameters.reshape(*parameters.shape[:-1], split_len, -1)
 
-        keys = list(self.parameter_counts.keys())
-        values = list(torch.split(parameters, list(self.parameter_counts.values()), dim=-1))
+        values = list(torch.split(parameters, lengths, dim=-1))
 
         return dict(zip(keys, values))
 
@@ -125,17 +139,29 @@ class BinnedSplineBase(InvertibleModule):
         # furthermore, to allow minimum bin widths, we add this outside the softplus
         # we also want to use the default domain when the network predicts zeros, so
         # shift the softplus such that this is true, even with nonzero minimum bin sizes.
-        parameters["left"] = parameters["left"] + self.default_domain[0]
-        parameters["bottom"] = parameters["bottom"] + self.default_domain[2]
+        if self.identity_tails:
+            total_width = parameters["total_width"]
+            shift = np.log(np.e - 1)
+            total_width = self.default_width * F.softplus(total_width + shift)
+            parameters["left"] = -total_width / 2
+            parameters["bottom"] = -total_width / 2
 
-        default_width = self.default_domain[1] - self.default_domain[0]
-        default_height = self.default_domain[3] - self.default_domain[2]
+            parameters["widths"] = total_width * F.softmax(parameters["widths"], dim=-1)
+            parameters["heights"] = total_width * F.softmax(parameters["heights"], dim=-1)
 
-        xshift = torch.log(torch.exp(default_width - self.min_bin_sizes[0]) - 1)
-        yshift = torch.log(torch.exp(default_height - self.min_bin_sizes[1]) - 1)
+        else:
+            parameters["left"] = parameters["left"] + self.default_domain[0]
+            parameters["bottom"] = parameters["bottom"] + self.default_domain[2]
 
-        parameters["widths"] = self.min_bin_sizes[0] + F.softplus(parameters["widths"] + xshift)
-        parameters["heights"] = self.min_bin_sizes[1] + F.softplus(parameters["heights"] + yshift)
+            default_bin_width = (self.default_domain[1] - self.default_domain[0]) / self.bins
+            default_bin_height = (self.default_domain[3] - self.default_domain[2]) / self.bins
+
+            xshift = torch.log(torch.exp(default_bin_width - self.min_bin_sizes[0]) - 1)
+            yshift = torch.log(torch.exp(default_bin_height - self.min_bin_sizes[1]) - 1)
+
+            parameters["widths"] = self.min_bin_sizes[0] + F.softplus(parameters["widths"] + xshift)
+            parameters["heights"] = self.min_bin_sizes[1] + F.softplus(parameters["heights"] + yshift)
+            
 
         return parameters
 
@@ -153,12 +179,13 @@ class BinnedSplineBase(InvertibleModule):
         knot_x = torch.cat((parameters["left"], knot_x), dim=-1)
         knot_y = torch.cat((parameters["bottom"], knot_y), dim=-1)
 
+
         # find spline mask
         if not rev:
             inside = (knot_x[..., 0] < x) & (x <= knot_x[..., -1])
         else:
             y = x
-            inside = (knot_y[..., 0] < y) & (y <= knot_x[..., -1])
+            inside = (knot_y[..., 0] < y) & (y <= knot_y[..., -1])
 
         knot_x = knot_x[inside]
         knot_y = knot_y[inside]
@@ -178,7 +205,6 @@ class BinnedSplineBase(InvertibleModule):
         else:
             y_in = x_in
             upper = torch.searchsorted(knot_y, y_in[..., None])
-
         lower = upper - 1
 
         spline_parameters = dict()
@@ -191,7 +217,7 @@ class BinnedSplineBase(InvertibleModule):
 
         # gather all other parameter edges
         for key, value in parameters.items():
-            if key in ["left", "bottom", "widths", "heights"]:
+            if key in ["left", "bottom", "widths", "heights", "total_width"]:
                 continue
 
             v = value[inside]
