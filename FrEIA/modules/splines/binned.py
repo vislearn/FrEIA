@@ -182,10 +182,10 @@ class BinnedSplineBase(InvertibleModule):
 
         # find spline mask
         if not rev:
-            inside = (knot_x[..., 0] < x) & (x < knot_x[..., -1])
+            inside = (knot_x[..., 0] < x) & (x <= knot_x[..., -1])
         else:
             y = x
-            inside = (knot_y[..., 0] < y) & (y < knot_x[..., -1])
+            inside = (knot_y[..., 0] < y) & (y <= knot_y[..., -1])
 
         knot_x = knot_x[inside]
         knot_y = knot_y[inside]
@@ -205,7 +205,6 @@ class BinnedSplineBase(InvertibleModule):
         else:
             y_in = x_in
             upper = torch.searchsorted(knot_y, y_in[..., None])
-
         lower = upper - 1
 
         spline_parameters = dict()
