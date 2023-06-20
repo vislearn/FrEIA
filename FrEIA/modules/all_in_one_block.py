@@ -102,10 +102,13 @@ class AllInOneBlock(InvertibleModule):
         self.splits = [split_len1, split_len2]
 
         try:
-            self.permute_function = {0: F.linear,
-                                     1: F.conv1d,
-                                     2: F.conv2d,
-                                     3: F.conv3d}[self.input_rank]
+            if permute_soft or learned_householder_permutation:
+                self.permute_function = {0: F.linear,
+                                        1: F.conv1d,
+                                        2: F.conv2d,
+                                        3: F.conv3d}[self.input_rank]
+            else:
+                self.permute_function = lambda x, p: x[:, p]
         except KeyError:
             raise ValueError(f"Data is {1 + self.input_rank}D. Must be 1D-4D.")
 
@@ -143,6 +146,7 @@ class AllInOneBlock(InvertibleModule):
         if permute_soft:
             w = special_ortho_group.rvs(channels)
         else:
+            w_index = torch.randperm(channels, requires_grad=False)
             w = np.zeros((channels, channels))
             for i, j in enumerate(np.random.permutation(channels)):
                 w[i, j] = 1.
@@ -155,11 +159,14 @@ class AllInOneBlock(InvertibleModule):
             self.w_perm = None
             self.w_perm_inv = None
             self.w_0 = nn.Parameter(torch.FloatTensor(w), requires_grad=False)
-        else:
+        elif permute_soft:
             self.w_perm = nn.Parameter(torch.FloatTensor(w).view(channels, channels, *([1] * self.input_rank)),
                                        requires_grad=False)
             self.w_perm_inv = nn.Parameter(torch.FloatTensor(w.T).view(channels, channels, *([1] * self.input_rank)),
                                            requires_grad=False)
+        else:
+            self.w_perm = nn.Parameter(w_index, requires_grad=False)
+            self.w_perm_inv = nn.Parameter(torch.argsort(w_index), requires_grad=False)
 
         if subnet_constructor is None:
             raise ValueError("Please supply a callable subnet_constructor "
