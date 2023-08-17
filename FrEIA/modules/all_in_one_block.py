@@ -229,7 +229,7 @@ class AllInOneBlock(InvertibleModule):
         a *= 0.1
         ch = x.shape[1]
 
-        sub_jac = self.clamp * torch.tanh(a[:, :ch])
+        sub_jac = self.clamp * torch.tanh(a[:, :ch]/self.clamp)
         if self.GIN:
             sub_jac -= torch.mean(sub_jac, dim=self.sum_dims, keepdim=True)
 
