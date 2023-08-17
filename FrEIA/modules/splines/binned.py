@@ -10,28 +10,50 @@ from FrEIA.modules.coupling_layers import _BaseCouplingBlock
 from FrEIA.modules.base import InvertibleModule
 from FrEIA import utils
 
+
 class BinnedSpline(_BaseCouplingBlock):
-    def __init__(self, dims_in, dims_c=None, subnet_constructor: callable = None, 
-                 split_len: Union[float, int] = 0.5, **kwargs) -> None:
+    def __init__(
+        self,
+        dims_in,
+        dims_c=None,
+        subnet_constructor: callable = None,
+        split_len: Union[float, int] = 0.5,
+        **kwargs,
+    ) -> None:
         if dims_c is None:
             dims_c = []
 
-        super().__init__(dims_in, dims_c, clamp=0.0, clamp_activation=lambda u: u, split_len=split_len)
+        super().__init__(
+            dims_in,
+            dims_c,
+            clamp=0.0,
+            clamp_activation=lambda u: u,
+            split_len=split_len,
+        )
 
-        
         self.spline_base = BinnedSplineBase(dims_in, dims_c, **kwargs)
-        
+
         num_params = sum(self.spline_base.parameter_counts.values())
-        self.subnet1 = subnet_constructor(self.split_len2 + self.condition_length, self.split_len1 * num_params)
-        self.subnet2 = subnet_constructor(self.split_len1 + self.condition_length, self.split_len2 * num_params)
+        self.subnet1 = subnet_constructor(
+            self.split_len2 + self.condition_length, self.split_len1 * num_params
+        )
+        self.subnet2 = subnet_constructor(
+            self.split_len1 + self.condition_length, self.split_len2 * num_params
+        )
 
-    def _spline1(self, x1: torch.Tensor, parameters: Dict[str, torch.Tensor], rev: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _spline1(
+        self, x1: torch.Tensor, parameters: Dict[str, torch.Tensor], rev: bool = False
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         raise NotImplementedError
 
-    def _spline2(self, x2: torch.Tensor, parameters: Dict[str, torch.Tensor], rev: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _spline2(
+        self, x2: torch.Tensor, parameters: Dict[str, torch.Tensor], rev: bool = False
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         raise NotImplementedError
 
-    def _coupling1(self, x1: torch.Tensor, u2: torch.Tensor, rev: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _coupling1(
+        self, x1: torch.Tensor, u2: torch.Tensor, rev: bool = False
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         The full coupling consists of:
         1. Querying the parameter tensor from the subnetwork
@@ -43,17 +65,26 @@ class BinnedSpline(_BaseCouplingBlock):
         parameters = self.spline_base.split_parameters(parameters, self.split_len1)
         parameters = self.constrain_parameters(parameters)
 
-        return self.spline_base.binned_spline(x=x1, parameters=parameters, spline=self._spline1, rev=rev)
+        return self.spline_base.binned_spline(
+            x=x1, parameters=parameters, spline=self._spline1, rev=rev
+        )
 
-    def _coupling2(self, x2: torch.Tensor, u1: torch.Tensor, rev: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _coupling2(
+        self, x2: torch.Tensor, u1: torch.Tensor, rev: bool = False
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         parameters = self.subnet2(u1)
         parameters = self.spline_base.split_parameters(parameters, self.split_len2)
         parameters = self.constrain_parameters(parameters)
 
-        return self.spline_base.binned_spline(x=x2, parameters=parameters, spline=self._spline2, rev=rev)
+        return self.spline_base.binned_spline(
+            x=x2, parameters=parameters, spline=self._spline2, rev=rev
+        )
 
-    def constrain_parameters(self, parameters: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def constrain_parameters(
+        self, parameters: Dict[str, torch.Tensor]
+    ) -> Dict[str, torch.Tensor]:
         return self.spline_base.constrain_parameters(parameters)
+
 
 class BinnedSplineBase(InvertibleModule):
     """
@@ -62,9 +93,18 @@ class BinnedSplineBase(InvertibleModule):
     by a non-invertible coupling subnetwork
     """
 
-    def __init__(self, dims_in, dims_c=None, bins: int = 10, parameter_counts: Dict[str, int] = None, 
-                 min_bin_sizes: Tuple[float] = (0.1, 0.1), default_domain: Tuple[float] = (-3.0, 3.0, -3.0, 3.0),
-                 identity_tails: bool = False) -> None:
+    def __init__(
+        self,
+        dims_in,
+        dims_c=None,
+        bins: int = 10,
+        parameter_counts: Dict[str, int] = None,
+        min_bin_sizes: Tuple[float] = (0.1, 0.1),
+        default_domain: Tuple[float] = (-3.0, 3.0, -3.0, 3.0),
+        identity_tails: bool = False,
+        affine_clamping: float = 2.0,
+        log_domain: bool = False,
+    ) -> None:
         """
         Args:
             bins: number of bins to use
@@ -87,16 +127,32 @@ class BinnedSplineBase(InvertibleModule):
         assert all(s >= 0 for s in min_bin_sizes), "minimum bin size cannot be negative"
         assert default_domain[1] > default_domain[0], "x domain must be increasing"
         assert default_domain[3] > default_domain[2], "y domain must be increasing"
-        assert default_domain[1] - default_domain[0] >= min_bin_sizes[0] * bins, \
-        "{bins} bins of size {min_bin_sizes[0]} are too large for domain {default_domain[0]} to {default_domain[1]}"
-        assert default_domain[3] - default_domain[2] >= min_bin_sizes[1] * bins, \
-        "{bins} bins of size {min_bin_sizes[1]} are too large for domain {default_domain[2]} to {default_domain[3]}"
+        assert (
+            default_domain[1] - default_domain[0] >= min_bin_sizes[0] * bins
+        ), "{bins} bins of size {min_bin_sizes[0]} are too large for domain {default_domain[0]} to {default_domain[1]}"
+        assert (
+            default_domain[3] - default_domain[2] >= min_bin_sizes[1] * bins
+        ), "{bins} bins of size {min_bin_sizes[1]} are too large for domain {default_domain[2]} to {default_domain[3]}"
 
         self.register_buffer("bins", torch.tensor(bins, dtype=torch.int32))
-        self.register_buffer("min_bin_sizes", torch.as_tensor(min_bin_sizes, dtype=torch.float32))
-        self.register_buffer("default_domain", torch.as_tensor(default_domain, dtype=torch.float32))
-        self.register_buffer("identity_tails", torch.tensor(identity_tails, dtype=torch.bool))
-        self.register_buffer("default_width", torch.as_tensor(default_domain[1] - default_domain[0], dtype=torch.float32))
+        self.register_buffer(
+            "min_bin_sizes", torch.as_tensor(min_bin_sizes, dtype=torch.float32)
+        )
+        self.register_buffer(
+            "default_domain", torch.as_tensor(default_domain, dtype=torch.float32)
+        )
+        self.register_buffer(
+            "identity_tails", torch.tensor(identity_tails, dtype=torch.bool)
+        )
+        self.register_buffer(
+            "default_width",
+            torch.as_tensor(default_domain[1] - default_domain[0], dtype=torch.float32),
+        )
+
+        self.clamp_domain = lambda domain: affine_clamping * torch.tanh(
+            domain / affine_clamping
+        )
+        self.log_domain = log_domain
 
         # The default parameters are
         #       parameter                                       constraints             count
@@ -116,8 +172,9 @@ class BinnedSplineBase(InvertibleModule):
         # merge parameter counts with child classes
         self.parameter_counts = {**default_parameter_counts, **parameter_counts}
 
-
-    def split_parameters(self, parameters: torch.Tensor, split_len: int) -> Dict[str, torch.Tensor]:
+    def split_parameters(
+        self, parameters: torch.Tensor, split_len: int
+    ) -> Dict[str, torch.Tensor]:
         """
         Split parameter tensor into semantic parameters, as given by self.parameter_counts
         """
@@ -131,7 +188,9 @@ class BinnedSplineBase(InvertibleModule):
 
         return dict(zip(keys, values))
 
-    def constrain_parameters(self, parameters: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def constrain_parameters(
+        self, parameters: Dict[str, torch.Tensor]
+    ) -> Dict[str, torch.Tensor]:
         """
         Constrain Parameters to meet certain conditions (e.g. positivity)
         """
@@ -141,34 +200,56 @@ class BinnedSplineBase(InvertibleModule):
         # shift the softplus such that this is true, even with nonzero minimum bin sizes.
         if self.identity_tails:
             total_width = parameters["total_width"]
+            if self.log_domain:
+                total_width = torch.log(total_width + 1)
             shift = np.log(np.e - 1)
             total_width = self.default_width * F.softplus(total_width + shift)
+            total_width = self.clamp_domain(total_width)
             parameters["left"] = -total_width / 2
             parameters["bottom"] = -total_width / 2
 
             parameters["widths"] = total_width * F.softmax(parameters["widths"], dim=-1)
-            parameters["heights"] = total_width * F.softmax(parameters["heights"], dim=-1)
+            parameters["heights"] = total_width * F.softmax(
+                parameters["heights"], dim=-1
+            )
 
         else:
             parameters["left"] = parameters["left"] + self.default_domain[0]
             parameters["bottom"] = parameters["bottom"] + self.default_domain[2]
 
-            default_bin_width = (self.default_domain[1] - self.default_domain[0]) / self.bins
-            default_bin_height = (self.default_domain[3] - self.default_domain[2]) / self.bins
+            default_bin_width = (
+                self.default_domain[1] - self.default_domain[0]
+            ) / self.bins
+            default_bin_height = (
+                self.default_domain[3] - self.default_domain[2]
+            ) / self.bins
 
             xshift = torch.log(torch.exp(default_bin_width - self.min_bin_sizes[0]) - 1)
-            yshift = torch.log(torch.exp(default_bin_height - self.min_bin_sizes[1]) - 1)
+            yshift = torch.log(
+                torch.exp(default_bin_height - self.min_bin_sizes[1]) - 1
+            )
 
-            parameters["widths"] = self.min_bin_sizes[0] + F.softplus(parameters["widths"] + xshift)
-            parameters["heights"] = self.min_bin_sizes[1] + F.softplus(parameters["heights"] + yshift)
-            
+            parameters["widths"] = self.min_bin_sizes[0] + F.softplus(
+                parameters["widths"] + xshift
+            )
+            parameters["heights"] = self.min_bin_sizes[1] + F.softplus(
+                parameters["heights"] + yshift
+            )
 
         return parameters
 
-    def binned_spline(self, x: torch.Tensor, parameters: Dict[str, torch.Tensor], spline: callable, rev: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+    def binned_spline(
+        self,
+        x: torch.Tensor,
+        parameters: Dict[str, torch.Tensor],
+        spline: callable,
+        rev: bool = False,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Compute the spline for given bin and spline parameters
         """
+        eps = 1e-8
+
         x = x.movedim(1, -1)
 
         # find bin knots
@@ -178,7 +259,6 @@ class BinnedSplineBase(InvertibleModule):
         # concatenate leftmost edge
         knot_x = torch.cat((parameters["left"], knot_x), dim=-1)
         knot_y = torch.cat((parameters["bottom"], knot_y), dim=-1)
-
 
         # find spline mask
         if not rev:
@@ -193,7 +273,9 @@ class BinnedSplineBase(InvertibleModule):
         x_in = x[inside]
         x_out = x[~inside]
 
-        scale = torch.sum(parameters["heights"], dim=-1, keepdim=True) / torch.sum(parameters["widths"], dim=-1, keepdim=True)
+        scale = torch.sum(parameters["heights"], dim=-1, keepdim=True) / torch.sum(
+            parameters["widths"], dim=-1, keepdim=True
+        )
         shift = parameters["bottom"] - scale * parameters["left"]
 
         scale = scale[~inside].squeeze(-1)
@@ -210,9 +292,15 @@ class BinnedSplineBase(InvertibleModule):
         spline_parameters = dict()
 
         # gather bin edges from indices
-        spline_parameters["left"] = torch.gather(knot_x, dim=-1, index=lower).squeeze(-1)
-        spline_parameters["right"] = torch.gather(knot_x, dim=-1, index=upper).squeeze(-1)
-        spline_parameters["bottom"] = torch.gather(knot_y, dim=-1, index=lower).squeeze(-1)
+        spline_parameters["left"] = torch.gather(knot_x, dim=-1, index=lower).squeeze(
+            -1
+        )
+        spline_parameters["right"] = torch.gather(knot_x, dim=-1, index=upper).squeeze(
+            -1
+        )
+        spline_parameters["bottom"] = torch.gather(knot_y, dim=-1, index=lower).squeeze(
+            -1
+        )
         spline_parameters["top"] = torch.gather(knot_y, dim=-1, index=upper).squeeze(-1)
 
         # gather all other parameter edges
@@ -222,15 +310,19 @@ class BinnedSplineBase(InvertibleModule):
 
             v = value[inside]
 
-            spline_parameters[f"{key}_left"] = torch.gather(v, dim=-1, index=lower).squeeze(-1)
-            spline_parameters[f"{key}_right"] = torch.gather(v, dim=-1, index=upper).squeeze(-1)
+            spline_parameters[f"{key}_left"] = torch.gather(
+                v, dim=-1, index=lower
+            ).squeeze(-1)
+            spline_parameters[f"{key}_right"] = torch.gather(
+                v, dim=-1, index=upper
+            ).squeeze(-1)
 
         if not rev:
             y = torch.clone(x)
             log_jac = y.new_zeros(y.shape)
 
             y[inside], log_jac[inside] = spline(x_in, spline_parameters, rev=rev)
-            y[~inside], log_jac[~inside] = scale * x_out + shift, torch.log(scale)
+            y[~inside], log_jac[~inside] = scale * x_out + shift, torch.log(scale + eps)
 
             log_jac_det = utils.sum_except_batch(log_jac)
 
@@ -246,7 +338,9 @@ class BinnedSplineBase(InvertibleModule):
             log_jac = x.new_zeros(x.shape)
 
             x[inside], log_jac[inside] = spline(y_in, spline_parameters, rev=rev)
-            x[~inside], log_jac[~inside] = (y_out - shift) / scale, torch.log(scale)
+            x[~inside], log_jac[~inside] = (y_out - shift) / scale, torch.log(
+                scale + eps
+            )
 
             log_jac_det = -utils.sum_except_batch(log_jac)
 
