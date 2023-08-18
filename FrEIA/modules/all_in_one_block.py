@@ -155,11 +155,11 @@ class AllInOneBlock(InvertibleModule):
             self.vk_householder = nn.Parameter(0.2 * torch.randn(self.householder, channels), requires_grad=True)
             self.w_perm = None
             self.w_perm_inv = None
-            self.w_0 = nn.Parameter(torch.FloatTensor(w), requires_grad=False)
+            self.w_0 = nn.Parameter(torch.from_numpy(w), requires_grad=False)
         elif permute_soft:
-            self.w_perm = nn.Parameter(torch.FloatTensor(w).view(channels, channels, *([1] * self.input_rank)),
+            self.w_perm = nn.Parameter(torch.from_numpy(w).view(channels, channels, *([1] * self.input_rank)).contiguous(),
                                        requires_grad=False)
-            self.w_perm_inv = nn.Parameter(torch.FloatTensor(w.T).view(channels, channels, *([1] * self.input_rank)),
+            self.w_perm_inv = nn.Parameter(torch.from_numpy(w.T).view(channels, channels, *([1] * self.input_rank)).contiguous(),
                                            requires_grad=False)
         else:
             self.w_perm = nn.Parameter(w_index, requires_grad=False)
@@ -239,7 +239,7 @@ class AllInOneBlock(InvertibleModule):
 
     def forward(self, x, c=[], rev=False, jac=True):
         '''See base class docstring'''
-        if x.shape[0][1:] != self.dims_in[0][1:]:
+        if x[0].shape[1:] != self.dims_in[0][1:]:
             raise RuntimeError(f"Expected input of shape {self.dims_in[0]}, "
                              f"got {x.shape}.")
         if self.householder:
