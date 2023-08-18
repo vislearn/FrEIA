@@ -30,9 +30,8 @@ class ActNorm(InvertibleModule):
 
         self.register_buffer("is_initialized", torch.tensor(False))
 
-        dim = next(iter(dims_in))[0]
-        self.log_scale = nn.Parameter(torch.empty(1, dim))
-        self.loc = nn.Parameter(torch.empty(1, dim))
+        self.log_scale = nn.Parameter(torch.empty(1, *dims_in))
+        self.loc = nn.Parameter(torch.empty(1, *dims_in))
 
         if init_data is not None:
             self.initialize(init_data)
