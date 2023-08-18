@@ -94,18 +94,13 @@ class BinnedSplineBase(InvertibleModule):
         assert default_domain[3] - default_domain[2] >= min_bin_sizes[1] * bins, \
         "{bins} bins of size {min_bin_sizes[1]} are too large for domain {default_domain[2]} to {default_domain[3]}"
 
-        if domain_clamping is not None:
-            self.clamp_domain = lambda domain: domain_clamping * torch.tanh(
-                domain / domain_clamping
-            )
-        else:
-            self.clamp_domain = lambda domain: domain
-
         self.register_buffer("bins", torch.tensor(bins, dtype=torch.int32))
         self.register_buffer("min_bin_sizes", torch.as_tensor(min_bin_sizes, dtype=torch.float32))
         self.register_buffer("default_domain", torch.as_tensor(default_domain, dtype=torch.float32))
         self.register_buffer("identity_tails", torch.tensor(identity_tails, dtype=torch.bool))
         self.register_buffer("default_width", torch.as_tensor(default_domain[1] - default_domain[0], dtype=torch.float32))
+
+        self.domain_clamping = domain_clamping
 
         # The default parameters are
         #       parameter                                       constraints             count
@@ -139,6 +134,15 @@ class BinnedSplineBase(InvertibleModule):
         values = list(torch.split(parameters, lengths, dim=-1))
 
         return dict(zip(keys, values))
+
+    def clamp_domain(self, domain: torch.Tensor) -> torch.Tensor:
+        """
+        Clamp domain to the a size between (-domain_clamping, domain_clamping)
+        """
+        if self.domain_clamping is None:
+            return domain
+        else:
+            return self.domain_clamping * torch.tanh(domain / self.domain_clamping)
 
     def constrain_parameters(self, parameters: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         """
