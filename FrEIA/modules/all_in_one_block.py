@@ -239,7 +239,7 @@ class AllInOneBlock(InvertibleModule):
 
     def forward(self, x, c=[], rev=False, jac=True):
         '''See base class docstring'''
-        if x.shape[1:] != self.dims_in[0][1:]:
+        if x.shape[0][1:] != self.dims_in[0][1:]:
             raise RuntimeError(f"Expected input of shape {self.dims_in[0]}, "
                              f"got {x.shape}.")
         if self.householder:
