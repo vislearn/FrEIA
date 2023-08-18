@@ -239,9 +239,9 @@ class AllInOneBlock(InvertibleModule):
 
     def forward(self, x, c=[], rev=False, jac=True):
         '''See base class docstring'''
-        if x[0].shape[1:] != self.dims_in[0][1:]:
+        if tuple(x[0].shape[1:]) != self.dims_in[0]:
             raise RuntimeError(f"Expected input of shape {self.dims_in[0]}, "
-                             f"got {x.shape}.")
+                             f"got {tuple(x[0].shape[1:])}.")
         if self.householder:
             self.w_perm = self._construct_householder_permutation()
             if rev or self.reverse_pre_permute:
