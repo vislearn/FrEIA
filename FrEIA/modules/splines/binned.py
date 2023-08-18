@@ -75,7 +75,8 @@ class BinnedSplineBase(InvertibleModule):
             default_domain: tuple of (left, right, bottom, top) default spline domain values
                 these values will be used as the starting domain (when the network outputs zero)
             identity_tails: whether to use identity tails for the spline
-            domain_clamping: clamping value for the domain
+            domain_clamping: clamping value for the domain, if float,
+                clamp spline width and height to (-domain_clamping, domain_clamping)
         """
         if dims_c is None:
             dims_c = []

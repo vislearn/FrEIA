@@ -147,9 +147,6 @@ class AllInOneBlock(InvertibleModule):
             w = special_ortho_group.rvs(channels)
         else:
             w_index = torch.randperm(channels, requires_grad=False)
-            w = np.zeros((channels, channels))
-            for i, j in enumerate(np.random.permutation(channels)):
-                w[i, j] = 1.
 
         if self.householder:
             # instead of just the permutation matrix w, the learned housholder
