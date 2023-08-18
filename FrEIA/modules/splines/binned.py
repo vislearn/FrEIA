@@ -64,7 +64,7 @@ class BinnedSplineBase(InvertibleModule):
 
     def __init__(self, dims_in, dims_c=None, bins: int = 10, parameter_counts: Dict[str, int] = None, 
                  min_bin_sizes: Tuple[float] = (0.1, 0.1), default_domain: Tuple[float] = (-3.0, 3.0, -3.0, 3.0),
-                 identity_tails: bool = False) -> None:
+                 identity_tails: bool = False, domain_clamping: float = None) -> None:
         """
         Args:
             bins: number of bins to use
@@ -75,6 +75,7 @@ class BinnedSplineBase(InvertibleModule):
             default_domain: tuple of (left, right, bottom, top) default spline domain values
                 these values will be used as the starting domain (when the network outputs zero)
             identity_tails: whether to use identity tails for the spline
+            domain_clamping: clamping value for the domain
         """
         if dims_c is None:
             dims_c = []
@@ -91,6 +92,13 @@ class BinnedSplineBase(InvertibleModule):
         "{bins} bins of size {min_bin_sizes[0]} are too large for domain {default_domain[0]} to {default_domain[1]}"
         assert default_domain[3] - default_domain[2] >= min_bin_sizes[1] * bins, \
         "{bins} bins of size {min_bin_sizes[1]} are too large for domain {default_domain[2]} to {default_domain[3]}"
+
+        if domain_clamping is not None:
+            self.clamp_domain = lambda domain: domain_clamping * torch.tanh(
+                domain / domain_clamping
+            )
+        else:
+            self.clamp_domain = lambda domain: domain
 
         self.register_buffer("bins", torch.tensor(bins, dtype=torch.int32))
         self.register_buffer("min_bin_sizes", torch.as_tensor(min_bin_sizes, dtype=torch.float32))
@@ -143,6 +151,7 @@ class BinnedSplineBase(InvertibleModule):
             total_width = parameters["total_width"]
             shift = np.log(np.e - 1)
             total_width = self.default_width * F.softplus(total_width + shift)
+            total_width = self.clamp_domain(total_width)
             parameters["left"] = -total_width / 2
             parameters["bottom"] = -total_width / 2
 
@@ -161,7 +170,16 @@ class BinnedSplineBase(InvertibleModule):
 
             parameters["widths"] = self.min_bin_sizes[0] + F.softplus(parameters["widths"] + xshift)
             parameters["heights"] = self.min_bin_sizes[1] + F.softplus(parameters["heights"] + yshift)
-            
+
+            domain_width = torch.sum(parameters["widths"], dim=-1, keepdim=True)
+            domain_height = torch.sum(parameters["heights"], dim=-1, keepdim=True)
+            width_resize = self.clamp_domain(domain_width) / domain_width
+            height_resize = self.clamp_domain(domain_height) / domain_height
+
+            parameters["widths"] = parameters["widths"] * width_resize
+            parameters["heights"] = parameters["heights"] * height_resize
+            parameters["left"] = parameters["left"] * width_resize
+            parameters["bottom"] = parameters["bottom"] * height_resize
 
         return parameters
 
