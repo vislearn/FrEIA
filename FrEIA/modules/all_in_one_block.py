@@ -102,10 +102,13 @@ class AllInOneBlock(InvertibleModule):
         self.splits = [split_len1, split_len2]
 
         try:
-            self.permute_function = {0: F.linear,
-                                     1: F.conv1d,
-                                     2: F.conv2d,
-                                     3: F.conv3d}[self.input_rank]
+            if permute_soft or learned_householder_permutation:
+                self.permute_function = {0: F.linear,
+                                        1: F.conv1d,
+                                        2: F.conv2d,
+                                        3: F.conv3d}[self.input_rank]
+            else:
+                self.permute_function = lambda x, p: x[:, p]
         except KeyError:
             raise ValueError(f"Data is {1 + self.input_rank}D. Must be 1D-4D.")
 
@@ -143,9 +146,7 @@ class AllInOneBlock(InvertibleModule):
         if permute_soft:
             w = special_ortho_group.rvs(channels)
         else:
-            w = np.zeros((channels, channels))
-            for i, j in enumerate(np.random.permutation(channels)):
-                w[i, j] = 1.
+            w_index = torch.randperm(channels, requires_grad=False)
 
         if self.householder:
             # instead of just the permutation matrix w, the learned housholder
@@ -154,12 +155,15 @@ class AllInOneBlock(InvertibleModule):
             self.vk_householder = nn.Parameter(0.2 * torch.randn(self.householder, channels), requires_grad=True)
             self.w_perm = None
             self.w_perm_inv = None
-            self.w_0 = nn.Parameter(torch.FloatTensor(w), requires_grad=False)
-        else:
-            self.w_perm = nn.Parameter(torch.FloatTensor(w).view(channels, channels, *([1] * self.input_rank)),
+            self.w_0 = nn.Parameter(torch.from_numpy(w).float(), requires_grad=False)
+        elif permute_soft:
+            self.w_perm = nn.Parameter(torch.from_numpy(w).float().view(channels, channels, *([1] * self.input_rank)).contiguous(),
                                        requires_grad=False)
-            self.w_perm_inv = nn.Parameter(torch.FloatTensor(w.T).view(channels, channels, *([1] * self.input_rank)),
+            self.w_perm_inv = nn.Parameter(torch.from_numpy(w.T).float().view(channels, channels, *([1] * self.input_rank)).contiguous(),
                                            requires_grad=False)
+        else:
+            self.w_perm = nn.Parameter(w_index, requires_grad=False)
+            self.w_perm_inv = nn.Parameter(torch.argsort(w_index), requires_grad=False)
 
         if subnet_constructor is None:
             raise ValueError("Please supply a callable subnet_constructor "
@@ -222,7 +226,7 @@ class AllInOneBlock(InvertibleModule):
         a *= 0.1
         ch = x.shape[1]
 
-        sub_jac = self.clamp * torch.tanh(a[:, :ch])
+        sub_jac = self.clamp * torch.tanh(a[:, :ch]/self.clamp)
         if self.GIN:
             sub_jac -= torch.mean(sub_jac, dim=self.sum_dims, keepdim=True)
 
@@ -235,6 +239,9 @@ class AllInOneBlock(InvertibleModule):
 
     def forward(self, x, c=[], rev=False, jac=True):
         '''See base class docstring'''
+        if tuple(x[0].shape[1:]) != self.dims_in[0]:
+            raise RuntimeError(f"Expected input of shape {self.dims_in[0]}, "
+                             f"got {tuple(x[0].shape[1:])}.")
         if self.householder:
             self.w_perm = self._construct_householder_permutation()
             if rev or self.reverse_pre_permute:

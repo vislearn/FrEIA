@@ -64,7 +64,7 @@ class BinnedSplineBase(InvertibleModule):
 
     def __init__(self, dims_in, dims_c=None, bins: int = 10, parameter_counts: Dict[str, int] = None, 
                  min_bin_sizes: Tuple[float] = (0.1, 0.1), default_domain: Tuple[float] = (-3.0, 3.0, -3.0, 3.0),
-                 identity_tails: bool = False) -> None:
+                 identity_tails: bool = False, domain_clamping: float = None) -> None:
         """
         Args:
             bins: number of bins to use
@@ -75,6 +75,8 @@ class BinnedSplineBase(InvertibleModule):
             default_domain: tuple of (left, right, bottom, top) default spline domain values
                 these values will be used as the starting domain (when the network outputs zero)
             identity_tails: whether to use identity tails for the spline
+            domain_clamping: clamping value for the domain, if float,
+                clamp spline width and height to (-domain_clamping, domain_clamping)
         """
         if dims_c is None:
             dims_c = []
@@ -97,6 +99,8 @@ class BinnedSplineBase(InvertibleModule):
         self.register_buffer("default_domain", torch.as_tensor(default_domain, dtype=torch.float32))
         self.register_buffer("identity_tails", torch.tensor(identity_tails, dtype=torch.bool))
         self.register_buffer("default_width", torch.as_tensor(default_domain[1] - default_domain[0], dtype=torch.float32))
+
+        self.domain_clamping = domain_clamping
 
         # The default parameters are
         #       parameter                                       constraints             count
@@ -131,6 +135,15 @@ class BinnedSplineBase(InvertibleModule):
 
         return dict(zip(keys, values))
 
+    def clamp_domain(self, domain: torch.Tensor) -> torch.Tensor:
+        """
+        Clamp domain to the a size between (-domain_clamping, domain_clamping)
+        """
+        if self.domain_clamping is None:
+            return domain
+        else:
+            return self.domain_clamping * torch.tanh(domain / self.domain_clamping)
+
     def constrain_parameters(self, parameters: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         """
         Constrain Parameters to meet certain conditions (e.g. positivity)
@@ -143,6 +156,7 @@ class BinnedSplineBase(InvertibleModule):
             total_width = parameters["total_width"]
             shift = np.log(np.e - 1)
             total_width = self.default_width * F.softplus(total_width + shift)
+            total_width = self.clamp_domain(total_width)
             parameters["left"] = -total_width / 2
             parameters["bottom"] = -total_width / 2
 
@@ -161,7 +175,16 @@ class BinnedSplineBase(InvertibleModule):
 
             parameters["widths"] = self.min_bin_sizes[0] + F.softplus(parameters["widths"] + xshift)
             parameters["heights"] = self.min_bin_sizes[1] + F.softplus(parameters["heights"] + yshift)
-            
+
+            domain_width = torch.sum(parameters["widths"], dim=-1, keepdim=True)
+            domain_height = torch.sum(parameters["heights"], dim=-1, keepdim=True)
+            width_resize = self.clamp_domain(domain_width) / domain_width
+            height_resize = self.clamp_domain(domain_height) / domain_height
+
+            parameters["widths"] = parameters["widths"] * width_resize
+            parameters["heights"] = parameters["heights"] * height_resize
+            parameters["left"] = parameters["left"] * width_resize
+            parameters["bottom"] = parameters["bottom"] * height_resize
 
         return parameters
 

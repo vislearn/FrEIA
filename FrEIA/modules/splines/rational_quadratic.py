@@ -164,7 +164,8 @@ def rational_quadratic_spline(x: torch.Tensor,
 
         # Eq 29 in the appendix of the paper
         discriminant = b ** 2 - 4 * a * c
-        assert torch.all(discriminant >= 0)
+        if not torch.all(discriminant >= 0):
+            raise(RuntimeError(f"Discriminant must be positive, but is violated by {torch.min(discriminant)}"))
 
         xi = 2 * c / (-b - torch.sqrt(discriminant))
 
