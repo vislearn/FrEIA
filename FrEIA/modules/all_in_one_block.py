@@ -155,11 +155,11 @@ class AllInOneBlock(InvertibleModule):
             self.vk_householder = nn.Parameter(0.2 * torch.randn(self.householder, channels), requires_grad=True)
             self.w_perm = None
             self.w_perm_inv = None
-            self.w_0 = nn.Parameter(torch.from_numpy(w), requires_grad=False)
+            self.w_0 = nn.Parameter(torch.from_numpy(w).float(), requires_grad=False)
         elif permute_soft:
-            self.w_perm = nn.Parameter(torch.from_numpy(w).view(channels, channels, *([1] * self.input_rank)).contiguous(),
+            self.w_perm = nn.Parameter(torch.from_numpy(w).float().view(channels, channels, *([1] * self.input_rank)).contiguous(),
                                        requires_grad=False)
-            self.w_perm_inv = nn.Parameter(torch.from_numpy(w.T).view(channels, channels, *([1] * self.input_rank)).contiguous(),
+            self.w_perm_inv = nn.Parameter(torch.from_numpy(w.T).float().view(channels, channels, *([1] * self.input_rank)).contiguous(),
                                            requires_grad=False)
         else:
             self.w_perm = nn.Parameter(w_index, requires_grad=False)
