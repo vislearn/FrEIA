@@ -77,10 +77,10 @@ class ActNorm(InvertibleModule):
 
         if not rev:
             out = (x - self.loc) / self.scale
-            log_jac_det = -utils.sum_except_batch(self.log_scale)
+            log_jac_det = -utils.sum_except_batch(self.log_scale) * torch.prod(torch.tensor(x.shape[2:]).float())
         else:
             out = self.scale * x + self.loc
-            log_jac_det = utils.sum_except_batch(self.log_scale)
+            log_jac_det = utils.sum_except_batch(self.log_scale) * torch.prod(torch.tensor(x.shape[2:]).float())
 
         return (out,), log_jac_det
 
