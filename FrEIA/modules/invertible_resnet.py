@@ -30,7 +30,8 @@ class ActNorm(InvertibleModule):
 
         self.register_buffer("is_initialized", torch.tensor(False))
 
-        dims = next(iter(dims_in))
+        dims = list(next(iter(dims_in)))
+        dims[2:] = [1] * len(dims[2:])
         self.log_scale = nn.Parameter(torch.empty(1, *dims))
         self.loc = nn.Parameter(torch.empty(1, *dims))
 
@@ -42,9 +43,24 @@ class ActNorm(InvertibleModule):
         return torch.exp(self.log_scale)
 
     def initialize(self, batch: torch.Tensor):
+        if batch.ndim != self.log_scale.ndim:
+            raise ValueError(f"Expected batch of dimension {self.log_scale.ndim}, but got {batch.ndim}.")
+
+        # we draw the mean and std over all dimensions except the channel dimension
+        dims = [0] + list(range(2, batch.ndim))
+
+        loc = torch.mean(batch, dim=dims, keepdim=True)
+        scale = torch.std(batch, dim=dims, keepdim=True)
+
+        # check for zero std
+        if torch.any(torch.isclose(scale, torch.tensor(0.0))):
+            raise ValueError("Failed to initialize ActNorm: One or more channels have zero standard deviation.")
+
+        # slice here to avoid silent device move
+        self.log_scale.data[:] = torch.log(scale)
+        self.loc.data[:] = loc
+
         self.is_initialized.data = torch.tensor(True)
-        self.log_scale.data = torch.log(torch.std(batch, dim=0, keepdim=True))
-        self.loc.data = torch.mean(batch, dim=0, keepdim=True)
 
     def output_dims(self, input_dims):
         assert len(input_dims) == 1, "Can only use one input"

@@ -36,8 +36,12 @@ class ActNormTest(unittest.TestCase):
         self.assertStandardMoments(y_)
 
     def assertStandardMoments(self, data):
-        self.assertTrue(torch.allclose(torch.mean(data, dim=0), torch.zeros(data.shape[-1]), atol=1e-7))
-        self.assertTrue(torch.allclose(torch.std(data, dim=0), torch.ones(data.shape[-1])))
+        dims = [0] + list(range(2, data.ndim))
+        mean = torch.mean(data, dim=dims)
+        std = torch.std(data, dim=dims)
+
+        self.assertTrue(torch.allclose(mean, torch.zeros_like(mean), atol=1e-7))
+        self.assertTrue(torch.allclose(std,  torch.ones_like(std)))
 
 
 class IResNetTest(unittest.TestCase):
