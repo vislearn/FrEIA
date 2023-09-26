@@ -31,7 +31,7 @@ class ActNorm(InvertibleModule):
         self.register_buffer("is_initialized", torch.tensor(False))
 
         dims = list(next(iter(dims_in)))
-        dims[2:] = [1] * len(dims[2:])
+        dims[1:] = [1] * len(dims[1:])
         self.log_scale = nn.Parameter(torch.empty(1, *dims))
         self.loc = nn.Parameter(torch.empty(1, *dims))
 
