@@ -66,7 +66,7 @@ class GraphINN(InvertibleModule):
 
         self.global_out_shapes = global_out_shapes
         self.force_tuple_output = force_tuple_output
-        self.module_list = nn.ModuleList([n.module for n in self.node_list_fwd
+        self.module_list = nn.ModuleList([n.module for n in node_list
                                           if n.module is not None])
 
         if verbose:
