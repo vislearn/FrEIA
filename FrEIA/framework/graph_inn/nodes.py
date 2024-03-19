@@ -206,7 +206,7 @@ class Node(AbstractNode):
                 f"variables, but should return "
                 f"{len(self.inputs if rev else self.outputs)}.")
 
-        if not torch.is_tensor(mod_jac) or mod_jac.shape[0] != out[0].shape[0]:
+        if not torch.is_tensor(mod_jac) or mod_jac.shape == torch.Size([]) or mod_jac.shape[0] != out[0].shape[0]:
             if isinstance(mod_jac, (float, int, torch.Tensor)):
                 mod_jac = torch.zeros(out[0].shape[0]).to(out[0].device) \
                           + mod_jac
