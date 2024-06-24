@@ -1,5 +1,5 @@
 from . import InvertibleModule
-
+from utils import sum_except_batch
 from typing import Union, Iterable, Tuple
 
 import numpy as np
