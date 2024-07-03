@@ -39,7 +39,7 @@ Our following papers use FrEIA, with links to code given below.
 
 * Paper: `arxiv.org/abs/1907.02392 <https://arxiv.org/abs/1907.02392>`_
 * Supplement: `drive.google.com/file/d/1_OoiIGhLeVJGaZFeBt0OWOq8ZCtiI7li <https://drive.google.com/file/d/1_OoiIGhLeVJGaZFeBt0OWOq8ZCtiI7li>`_
-* Code: `github.com/vislearn/conditional_invertible_neural_networks <https://github.com/vislearn/conditional_invertible_neural_networks>`_
+* Code: `github.com/vislearn/conditional_INNs <https://github.com/vislearn/conditional_INNs>`_
 
 **"Analyzing inverse problems with invertible neural networks." (ICLR 2019)**
 
