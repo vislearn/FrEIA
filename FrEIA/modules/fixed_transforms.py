@@ -1,5 +1,5 @@
 from . import InvertibleModule
-
+from utils import sum_except_batch
 from typing import Union, Iterable, Tuple
 
 import numpy as np
@@ -175,8 +175,10 @@ class InvertibleSigmoid(InvertibleModule):
         # the following is the diagonal Jacobian as sigmoid is an element-wise op
         logJ = torch.log(1 / ((1 + torch.exp(_input)) * (1 + torch.exp(-_input))))
         # determinant of a log diagonal Jacobian is simply the sum of its diagonals
-        detLogJ = logJ.sum(1)
+        detLogJ = sum_except_batch(logJ)
+        
         if not rev:
             return ((result, ), detLogJ)
         else:
             return ((result, ), -detLogJ)
+            
